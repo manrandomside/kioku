@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans, Noto_Sans_JP, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const playfairDisplay = Playfair_Display({
@@ -12,12 +12,6 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
-
-const notoSansJP = Noto_Sans_JP({
-  variable: "--font-jp",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
 });
 
 const jetBrainsMono = JetBrains_Mono({
@@ -39,9 +33,15 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${playfairDisplay.variable} ${plusJakartaSans.variable} ${notoSansJP.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      className={`${playfairDisplay.variable} ${plusJakartaSans.variable} ${jetBrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

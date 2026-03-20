@@ -123,10 +123,10 @@ src/
 
 ### [P0] Setup & Foundation
 
-- [ ] Init Next.js 15 + TypeScript + Tailwind + shadcn/ui
-- [ ] Supabase project setup + env vars
-- [ ] Drizzle ORM config + schema definitions
-- [ ] DB migrations (all 20 tables + enums + RLS)
+- [x] Init Next.js 15 + TypeScript + Tailwind + shadcn/ui
+- [x] Supabase project setup + env vars
+- [x] Drizzle ORM config + schema definitions
+- [x] DB migrations (all 20 tables + enums + RLS)
 - [ ] Supabase Auth (Google OAuth + GitHub OAuth + magic link)
 - [ ] Auth middleware + protected routes
 - [ ] Seed data: kana (214 characters)
