@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Manrandomside/ProjectWebDev/next/**)",
+      "Bash(npx create-next-app@latest kioku-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack)",
+      "Bash(npx create-next-app@latest kioku-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack --no-git)",
+      "Bash(printf \"no\\\\nno\\\\n\")",
+      "Bash(npx create-next-app@latest kioku-temp --ts --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack --no-git)",
+      "Bash(yes \"\")",
+      "Bash(cd:*)",
+      "Bash(cp kioku-temp/eslint.config.mjs kioku-temp/next.config.ts kioku-temp/next-env.d.ts kioku-temp/package.json kioku-temp/package-lock.json kioku-temp/postcss.config.mjs kioku-temp/tsconfig.json kioku/)",
+      "Bash(cp -r kioku-temp/src kioku/)",
+      "Bash(cp -r kioku-temp/public kioku/)",
+      "Bash(cp kioku-temp/.gitignore kioku/)",
+      "Bash(npm install:*)",
+      "Bash(npx:*)"
+    ]
+  }
+}
