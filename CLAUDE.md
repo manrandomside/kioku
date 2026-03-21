@@ -139,7 +139,7 @@ src/
 
 - [x] Kana grid page (color-coded by SRS status)
 - [x] Kana flashcard session (flip + audio + FSRS rating)
-- [ ] Kana quiz session (romaji ↔ kana)
+- [x] Kana quiz session (romaji ↔ kana)
 - [ ] Chapter selection page (progress indicators)
 - [ ] Chapter detail page (vocab list + tabs)
 - [ ] Vocabulary flashcard session (furigana + flip + audio + FSRS)

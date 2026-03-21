@@ -1,0 +1,163 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+
+import type { QuizSessionResult } from "@/types/quiz";
+
+interface QuizSummaryProps {
+  result: QuizSessionResult;
+  script: string;
+  filter: string;
+  onRestart: () => void;
+}
+
+function formatTime(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function getGrade(percent: number): { label: string; color: string; message: string } {
+  if (percent === 100) return { label: "S", color: "text-yellow-500", message: "Sempurna! Luar biasa!" };
+  if (percent >= 90) return { label: "A", color: "text-green-500", message: "Hebat! Hampir sempurna!" };
+  if (percent >= 70) return { label: "B", color: "text-blue-500", message: "Bagus! Terus berlatih!" };
+  if (percent >= 50) return { label: "C", color: "text-orange-500", message: "Lumayan, coba lagi!" };
+  return { label: "D", color: "text-red-500", message: "Jangan menyerah, ayo ulangi!" };
+}
+
+export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryProps) {
+  const grade = getGrade(result.scorePercent);
+
+  return (
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-8 px-4">
+      {/* Grade Circle */}
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+        className="flex flex-col items-center gap-2"
+      >
+        <div className="flex size-28 items-center justify-center rounded-full border-4 border-primary/20 bg-card shadow-lg">
+          <span className={`font-display text-5xl font-bold ${grade.color}`}>
+            {grade.label}
+          </span>
+        </div>
+        <h2 className="font-display text-2xl font-bold tracking-tight">
+          Quiz Selesai!
+        </h2>
+        <p className="text-sm text-muted-foreground">{grade.message}</p>
+      </motion.div>
+
+      {/* Stats Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="grid w-full max-w-sm grid-cols-2 gap-3"
+      >
+        <StatCard
+          icon={<Target className="size-5 text-blue-500" />}
+          label="Skor"
+          value={`${result.scorePercent}%`}
+        />
+        <StatCard
+          icon={<Trophy className="size-5 text-yellow-500" />}
+          label="Benar"
+          value={`${result.correctCount}/${result.totalQuestions}`}
+        />
+        <StatCard
+          icon={<Zap className="size-5 text-green-500" />}
+          label="XP Diperoleh"
+          value={`+${result.xpEarned}`}
+        />
+        <StatCard
+          icon={<Clock className="size-5 text-purple-500" />}
+          label="Waktu"
+          value={formatTime(result.timeSpentMs)}
+        />
+      </motion.div>
+
+      {/* Perfect bonus note */}
+      {result.isPerfect && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+          className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-medium text-yellow-700 dark:text-yellow-400"
+        >
+          Bonus skor sempurna: +20 XP
+        </motion.div>
+      )}
+
+      {/* Answer Review */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="w-full max-w-sm"
+      >
+        <p className="mb-3 text-sm font-medium text-muted-foreground">Ringkasan Jawaban</p>
+        <div className="flex flex-wrap gap-1.5">
+          {result.answers.map((answer) => (
+            <div
+              key={answer.questionNumber}
+              className={`flex size-8 items-center justify-center rounded-lg text-xs font-bold ${
+                answer.isCorrect
+                  ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                  : "bg-red-500/15 text-red-600 dark:text-red-400"
+              }`}
+              title={`${answer.correctAnswer}: ${answer.isCorrect ? "Benar" : `Jawaban: ${answer.userAnswer}`}`}
+            >
+              {answer.questionNumber}
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Action Buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="flex w-full max-w-sm flex-col gap-3"
+      >
+        <Button onClick={onRestart} className="h-11 w-full gap-2">
+          <RotateCcw className="size-4" />
+          Ulangi Quiz
+        </Button>
+        <Link
+          href={`/learn/hirakata?script=${script}&filter=${filter}`}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background text-sm font-medium transition-colors hover:bg-muted"
+        >
+          <ArrowLeft className="size-4" />
+          Kembali ke Grid
+        </Link>
+      </motion.div>
+    </div>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
+      {icon}
+      <div className="flex flex-col">
+        <span className="text-lg font-bold">{value}</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
+      </div>
+    </div>
+  );
+}
