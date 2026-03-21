@@ -143,9 +143,9 @@ src/
 - [x] Chapter selection page (progress indicators)
 - [x] Chapter detail page (vocab list + tabs)
 - [x] Vocabulary flashcard session (furigana + flip + audio + FSRS)
-- [ ] FSRS engine integration (ts-fsrs scheduling + review submission)
+- [x] FSRS engine integration (ts-fsrs scheduling + review submission)
 - [ ] Quiz session (7 question types + audio + scoring)
-- [ ] Review session (due cards queue + daily summary)
+- [x] Review session (due cards queue + daily summary)
 - [ ] User onboarding flow (profile + JLPT target + hirakata assessment)
 - [ ] Progress tracking per chapter
 - [ ] Search vocabulary (global search bar)
