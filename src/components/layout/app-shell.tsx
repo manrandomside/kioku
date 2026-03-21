@@ -1,0 +1,36 @@
+import { Navbar } from "@/components/layout/navbar";
+import { Sidebar } from "@/components/layout/sidebar";
+import { BottomNav } from "@/components/layout/bottom-nav";
+
+interface AppShellProps {
+  children: React.ReactNode;
+  user: {
+    email?: string;
+    displayName?: string;
+    avatarUrl?: string;
+  };
+}
+
+export function AppShell({ children, user }: AppShellProps) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar user={user} />
+
+      <div className="flex flex-1">
+        <div className="hidden w-60 shrink-0 border-r border-border/50 lg:block xl:w-64">
+          <div className="sticky top-14 h-[calc(100vh-3.5rem)]">
+            <Sidebar />
+          </div>
+        </div>
+
+        <main className="flex-1 pb-20 lg:pb-0">
+          <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
+            {children}
+          </div>
+        </main>
+      </div>
+
+      <BottomNav />
+    </div>
+  );
+}

@@ -127,11 +127,11 @@ src/
 - [x] Supabase project setup + env vars
 - [x] Drizzle ORM config + schema definitions
 - [x] DB migrations (all 20 tables + enums + RLS)
-- [ ] Supabase Auth (Google OAuth + GitHub OAuth + magic link)
-- [ ] Auth middleware + protected routes
+- [x] Supabase Auth (Google OAuth + GitHub OAuth + magic link)
+- [x] Auth middleware + protected routes
 - [ ] Seed data: kana (214 characters)
 - [ ] Seed data: MNN vocabulary Bab 1-50 (from PDF + MinnaNoDS)
-- [ ] Basic layout: AppShell + Navbar + BottomNav + ThemeToggle
+- [x] Basic layout: AppShell + Navbar + BottomNav + ThemeToggle
 - [ ] Vercel deployment + GitHub Actions keep-alive cron
 - [ ] Pre-generate audio files (Edge TTS) + upload to Supabase Storage
 

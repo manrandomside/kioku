@@ -161,3 +161,26 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  .gradient-mesh {
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(166, 226, 172, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(194, 233, 89, 0.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(36, 130, 136, 0.15) 0%, transparent 50%);
+  }
+
+  .dark .gradient-mesh {
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(166, 226, 172, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(194, 233, 89, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(36, 130, 136, 0.05) 0%, transparent 50%);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+  }
+}
