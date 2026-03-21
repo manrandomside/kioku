@@ -142,7 +142,7 @@ src/
 - [x] Kana quiz session (romaji ↔ kana)
 - [x] Chapter selection page (progress indicators)
 - [x] Chapter detail page (vocab list + tabs)
-- [ ] Vocabulary flashcard session (furigana + flip + audio + FSRS)
+- [x] Vocabulary flashcard session (furigana + flip + audio + FSRS)
 - [ ] FSRS engine integration (ts-fsrs scheduling + review submission)
 - [ ] Quiz session (7 question types + audio + scoring)
 - [ ] Review session (due cards queue + daily summary)
