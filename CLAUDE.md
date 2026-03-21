@@ -144,7 +144,7 @@ src/
 - [x] Chapter detail page (vocab list + tabs)
 - [x] Vocabulary flashcard session (furigana + flip + audio + FSRS)
 - [x] FSRS engine integration (ts-fsrs scheduling + review submission)
-- [ ] Quiz session (7 question types + audio + scoring)
+- [x] Quiz session (7 question types + audio + scoring)
 - [x] Review session (due cards queue + daily summary)
 - [ ] User onboarding flow (profile + JLPT target + hirakata assessment)
 - [ ] Progress tracking per chapter
@@ -181,3 +181,4 @@ src/
 ## Catatan Teknis (Diupdate Seiring Development)
 
 - `meaningId` pada tabel vocabulary MNN masih English placeholder, perlu batch translation ke Indonesian nanti.
+- TODO: Tambahkan toggle switch Kanji/Kana di quiz dan flashcard. Saat ini tampilan terlalu kanji-heavy untuk pemula N5. User harus bisa pilih apakah ingin fokus kanji atau kana. Ini juga berlaku untuk tampilan kosakata di chapter detail — tulisan besar seharusnya bisa di-switch antara kanji dan kana.
