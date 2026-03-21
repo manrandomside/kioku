@@ -137,7 +137,7 @@ src/
 
 ### [P1] Core Features
 
-- [ ] Kana grid page (color-coded by SRS status)
+- [x] Kana grid page (color-coded by SRS status)
 - [ ] Kana flashcard session (flip + audio + FSRS rating)
 - [ ] Kana quiz session (romaji ↔ kana)
 - [ ] Chapter selection page (progress indicators)
