@@ -39,7 +39,7 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
+    <header className="fixed left-0 right-0 top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
       <div className="flex h-14 items-center gap-4 px-4 lg:px-6">
         <Sheet>
           <SheetTrigger className="inline-flex size-10 items-center justify-center rounded-lg text-sm font-medium transition-colors hover:bg-muted lg:hidden">

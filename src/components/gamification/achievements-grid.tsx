@@ -37,7 +37,7 @@ export function AchievementsGrid({ achievements }: AchievementsGridProps) {
   return (
     <div className="flex flex-col gap-5">
       {/* Category filter */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
+      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:pb-0">
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat.value;
           const categoryCount =

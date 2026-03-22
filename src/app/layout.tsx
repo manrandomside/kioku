@@ -60,7 +60,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#0A3A3A" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col overflow-x-hidden">
         <ThemeProvider>
           {children}
           <SwRegister />

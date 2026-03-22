@@ -13,17 +13,17 @@ interface AppShellProps {
 
 export function AppShell({ children, user }: AppShellProps) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col overflow-x-hidden">
       <Navbar user={user} />
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-14">
         <div className="hidden w-60 shrink-0 border-r border-border/50 lg:block xl:w-64">
           <div className="sticky top-14 h-[calc(100vh-3.5rem)]">
             <Sidebar />
           </div>
         </div>
 
-        <main className="flex-1 pb-[4.5rem] lg:pb-0">
+        <main className="min-w-0 flex-1 pb-24 lg:pb-0">
           <div className="mx-auto max-w-5xl px-4 py-4 sm:py-6 lg:px-8 lg:py-8">
             {children}
           </div>

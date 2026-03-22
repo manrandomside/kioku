@@ -227,7 +227,7 @@ export function ActivityHeatmap() {
       </div>
 
       {/* Heatmap grid - horizontally scrollable on mobile */}
-      <div className="-mx-3 mt-4 overflow-x-auto px-3 sm:mx-0 sm:px-0">
+      <div className="mt-4 overflow-x-auto">
         <div
           className="relative"
           data-heatmap
