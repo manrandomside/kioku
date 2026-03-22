@@ -10,6 +10,10 @@ import {
   type SrsRating,
   type SrsCardData,
 } from "@/lib/srs/fsrs-engine";
+import {
+  updateChapterProgress,
+  getChapterIdFromVocabulary,
+} from "@/lib/progress/update-chapter-progress";
 
 export async function submitReviewByCardId(
   cardId: string,
@@ -75,6 +79,14 @@ export async function submitReviewByCardId(
       newStatus: result.newStatus as "new" | "learning" | "review" | "relearning",
       reviewDurationMs,
     });
+
+    // Update chapter progress if this is a vocabulary card
+    if (card.vocabularyId) {
+      const chapterId = await getChapterIdFromVocabulary(card.vocabularyId);
+      if (chapterId) {
+        await updateChapterProgress(user.id, chapterId);
+      }
+    }
 
     return {
       success: true,

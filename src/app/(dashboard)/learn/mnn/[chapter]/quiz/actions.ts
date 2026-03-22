@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
+import { updateChapterProgress } from "@/lib/progress/update-chapter-progress";
 
 import type { VocabQuizAnswer, VocabQuestionType } from "@/types/vocab-quiz";
 
@@ -77,7 +78,7 @@ export async function submitVocabQuizResult(
       }))
     );
 
-    await db
+    const [updatedSession] = await db
       .update(quizSession)
       .set({
         correctCount,
@@ -88,7 +89,13 @@ export async function submitVocabQuizResult(
         isPerfect,
         completedAt: new Date().toISOString(),
       })
-      .where(eq(quizSession.id, sessionId));
+      .where(eq(quizSession.id, sessionId))
+      .returning({ chapterId: quizSession.chapterId });
+
+    // Update chapter progress after quiz completion
+    if (updatedSession?.chapterId) {
+      await updateChapterProgress(user.id, updatedSession.chapterId);
+    }
 
     return {
       success: true,

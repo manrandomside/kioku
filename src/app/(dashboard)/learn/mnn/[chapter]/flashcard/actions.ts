@@ -11,6 +11,10 @@ import {
   type SrsRating,
   type SrsCardData,
 } from "@/lib/srs/fsrs-engine";
+import {
+  updateChapterProgress,
+  getChapterIdFromVocabulary,
+} from "@/lib/progress/update-chapter-progress";
 
 async function ensureVocabSrsCard(userId: string, vocabularyId: string) {
   const existing = await db
@@ -97,6 +101,12 @@ export async function submitVocabReview(
       newStatus: result.newStatus as "new" | "learning" | "review" | "relearning",
       reviewDurationMs,
     });
+
+    // Update chapter progress after SRS review
+    const chapterId = await getChapterIdFromVocabulary(vocabularyId);
+    if (chapterId) {
+      await updateChapterProgress(user.id, chapterId);
+    }
 
     return {
       success: true,
