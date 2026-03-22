@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Volume2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { playFlipSound } from "@/lib/audio/sound-effects";
 import { Button } from "@/components/ui/button";
 
 import type { KanaWithSrs } from "@/types/kana";
@@ -46,7 +47,10 @@ export function FlashcardCard({ kana, isFlipped, onFlip }: FlashcardCardProps) {
       className="mx-auto w-full max-w-sm cursor-pointer"
       style={{ perspective: 1000 }}
       onClick={() => {
-        if (!isFlipped) onFlip();
+        if (!isFlipped) {
+          playFlipSound();
+          onFlip();
+        }
       }}
     >
       <motion.div

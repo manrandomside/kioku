@@ -6,6 +6,7 @@ import { ArrowLeft, Volume2, X } from "lucide-react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { playCorrectSound, playIncorrectSound } from "@/lib/audio/sound-effects";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { QuizSummary } from "@/components/quiz/quiz-summary";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
@@ -72,7 +73,10 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
       setSelectedAnswer(option);
       setIsRevealed(true);
 
-      if (!isCorrect) {
+      if (isCorrect) {
+        playCorrectSound();
+      } else {
+        playIncorrectSound();
         setHearts((prev) => prev - 1);
       }
 

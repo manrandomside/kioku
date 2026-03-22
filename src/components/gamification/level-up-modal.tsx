@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Zap } from "lucide-react";
 
+import { playLevelUpSound } from "@/lib/audio/sound-effects";
+
 interface LevelUpModalProps {
   level: number | null;
   onDismiss: () => void;
@@ -19,6 +21,7 @@ export function LevelUpModal({ level, onDismiss }: LevelUpModalProps) {
       return;
     }
     setVisible(true);
+    playLevelUpSound();
 
     // Fire confetti burst
     const duration = 1500;

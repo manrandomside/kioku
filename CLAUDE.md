@@ -160,7 +160,7 @@ src/
 - [x] Dashboard: activity heatmap (365 days)
 - [x] Dashboard: SRS distribution chart
 - [x] Animations: card flip, XP increment, level-up confetti, streak fire
-- [ ] Sound effects: correct/incorrect ding
+- [x] Sound effects: correct/incorrect ding
 - [ ] PWA: service worker + manifest + offline cache
 - [ ] Responsive polish (mobile + tablet)
 - [ ] Dark mode complete pass

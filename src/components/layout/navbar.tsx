@@ -13,6 +13,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/common/theme-toggle";
+import { SoundToggle } from "@/components/ui/sound-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { SearchBar } from "@/components/search/search-bar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -83,6 +84,7 @@ export function Navbar({ user }: NavbarProps) {
 
         <div className="ml-auto flex items-center gap-2">
           <SearchBar />
+          <SoundToggle />
           <ThemeToggle />
           <UserMenu user={user} />
         </div>

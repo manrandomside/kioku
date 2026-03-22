@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Volume2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { playFlipSound } from "@/lib/audio/sound-effects";
 import { Button } from "@/components/ui/button";
 import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
 
@@ -33,7 +34,10 @@ export function ReviewCard({ card, isFlipped, onFlip }: ReviewCardProps) {
       className="mx-auto w-full max-w-sm cursor-pointer"
       style={{ perspective: 1000 }}
       onClick={() => {
-        if (!isFlipped) onFlip();
+        if (!isFlipped) {
+          playFlipSound();
+          onFlip();
+        }
       }}
     >
       <motion.div

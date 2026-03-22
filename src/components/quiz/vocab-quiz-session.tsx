@@ -6,6 +6,7 @@ import { Volume2, X } from "lucide-react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { playCorrectSound, playIncorrectSound } from "@/lib/audio/sound-effects";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { VocabQuizSummary } from "@/components/quiz/vocab-quiz-summary";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
@@ -90,7 +91,10 @@ export function VocabQuizSession({
     (userAnswer: string, correct: boolean) => {
       if (!currentQuestion) return;
 
-      if (!correct) {
+      if (correct) {
+        playCorrectSound();
+      } else {
+        playIncorrectSound();
         setHearts((prev) => prev - 1);
       }
 
