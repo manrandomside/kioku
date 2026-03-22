@@ -4,6 +4,8 @@ import { Playfair_Display, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/g
 import { Toaster } from "sonner";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { SwRegister } from "@/components/pwa/sw-register";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 
 import "./globals.css";
 
@@ -28,6 +30,15 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Kioku - Belajar Kosakata Jepang",
   description: "Platform belajar kosakata bahasa Jepang dengan SRS, quiz, dan AI tutor",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Kioku",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -46,10 +57,14 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
+        <meta name="theme-color" content="#0A3A3A" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           {children}
+          <SwRegister />
+          <InstallPrompt />
           <Toaster
             position="bottom-center"
             toastOptions={{
