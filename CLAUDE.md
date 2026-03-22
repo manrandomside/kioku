@@ -159,7 +159,7 @@ src/
 - [x] Dashboard: stats overview + streak + XP bar + due cards count
 - [x] Dashboard: activity heatmap (365 days)
 - [x] Dashboard: SRS distribution chart
-- [ ] Animations: card flip, XP increment, level-up confetti, streak fire
+- [x] Animations: card flip, XP increment, level-up confetti, streak fire
 - [ ] Sound effects: correct/incorrect ding
 - [ ] PWA: service worker + manifest + offline cache
 - [ ] Responsive polish (mobile + tablet)

@@ -14,6 +14,14 @@ interface QuizOptionProps {
   disabled: boolean;
 }
 
+const shakeVariants = {
+  idle: { x: 0 },
+  wrong: {
+    x: [0, -8, 8, -6, 6, -3, 3, 0],
+    transition: { duration: 0.4 },
+  },
+};
+
 export function QuizOption({ label, state, isJapanese, onClick, disabled }: QuizOptionProps) {
   return (
     <motion.button
@@ -21,6 +29,8 @@ export function QuizOption({ label, state, isJapanese, onClick, disabled }: Quiz
       onClick={onClick}
       disabled={disabled}
       whileTap={!disabled ? { scale: 0.97 } : undefined}
+      variants={shakeVariants}
+      animate={state === "selected-wrong" ? "wrong" : "idle"}
       className={cn(
         "relative w-full rounded-xl border-2 px-5 py-4 text-left font-medium transition-colors",
         isJapanese ? "font-jp text-2xl" : "font-mono text-lg",

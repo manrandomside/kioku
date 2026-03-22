@@ -8,6 +8,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { VocabQuizSummary } from "@/components/quiz/vocab-quiz-summary";
+import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
+import { LevelUpModal } from "@/components/gamification/level-up-modal";
 import {
   createVocabQuizSession,
   submitVocabQuizResult,
@@ -39,6 +41,8 @@ export function VocabQuizSession({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [startTime] = useState(() => Date.now());
   const [hearts, setHearts] = useState(3);
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const { events: xpEvents, showXp } = useXpPopup();
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -178,9 +182,18 @@ export function VocabQuizSession({
     setSessionResult(result);
 
     if (sessionId) {
-      submitVocabQuizResult(sessionId, answers, timeSpentMs);
+      submitVocabQuizResult(sessionId, answers, timeSpentMs).then((res) => {
+        if (res.success && res.data?.xp) {
+          if (res.data.xp.awarded > 0) {
+            showXp(res.data.xp.awarded);
+          }
+          if (res.data.xp.leveledUp) {
+            setLevelUpLevel(res.data.xp.currentLevel);
+          }
+        }
+      });
     }
-  }, [isCompleted, sessionResult, answers, startTime, hearts, sessionId]);
+  }, [isCompleted, sessionResult, answers, startTime, hearts, sessionId, showXp]);
 
   function getOptionState(option: string) {
     if (!isRevealed) return "idle" as const;
@@ -428,6 +441,13 @@ export function VocabQuizSession({
           </motion.div>
         </AnimatePresence>
       )}
+
+      {/* XP popup + Level up modal */}
+      <XpPopup events={xpEvents} />
+      <LevelUpModal
+        level={levelUpLevel}
+        onDismiss={() => setLevelUpLevel(null)}
+      />
     </div>
   );
 }

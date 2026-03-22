@@ -8,6 +8,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { QuizSummary } from "@/components/quiz/quiz-summary";
+import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
+import { LevelUpModal } from "@/components/gamification/level-up-modal";
 import { createQuizSession, submitQuizResult } from "@/app/(dashboard)/learn/hirakata/quiz/actions";
 
 import type { QuizQuestion, QuizAnswer, QuizSessionResult } from "@/types/quiz";
@@ -30,6 +32,8 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [startTime] = useState(() => Date.now());
   const [hearts, setHearts] = useState(3);
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const { events: xpEvents, showXp } = useXpPopup();
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCompleted = currentIndex >= questions.length || hearts <= 0;
@@ -140,9 +144,18 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
     setSessionResult(result);
 
     if (sessionId) {
-      submitQuizResult(sessionId, answers, timeSpentMs);
+      submitQuizResult(sessionId, answers, timeSpentMs).then((res) => {
+        if (res.success && res.data?.xp) {
+          if (res.data.xp.awarded > 0) {
+            showXp(res.data.xp.awarded);
+          }
+          if (res.data.xp.leveledUp) {
+            setLevelUpLevel(res.data.xp.currentLevel);
+          }
+        }
+      });
     }
-  }, [isCompleted, sessionResult, answers, startTime, hearts, sessionId]);
+  }, [isCompleted, sessionResult, answers, startTime, hearts, sessionId, showXp]);
 
   function getOptionState(option: string) {
     if (!isRevealed) return "idle" as const;
@@ -313,6 +326,13 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
           </motion.div>
         </AnimatePresence>
       )}
+
+      {/* XP popup + Level up modal */}
+      <XpPopup events={xpEvents} />
+      <LevelUpModal
+        level={levelUpLevel}
+        onDismiss={() => setLevelUpLevel(null)}
+      />
     </div>
   );
 }

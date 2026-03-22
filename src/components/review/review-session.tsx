@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ReviewCard } from "@/components/review/review-card";
 import { RatingButtons } from "@/components/flashcard/rating-buttons";
+import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
+import { LevelUpModal } from "@/components/gamification/level-up-modal";
 import { getSchedulingPreview } from "@/lib/srs/fsrs-engine";
 import { submitReviewByCardId } from "@/app/(dashboard)/review/actions";
 
@@ -34,6 +36,8 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
   const [results, setResults] = useState<ReviewResult[]>([]);
   const [reviewStartTime, setReviewStartTime] = useState(() => Date.now());
   const [sessionStartTime] = useState(() => Date.now());
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const { events: xpEvents, showXp } = useXpPopup();
 
   const isCompleted = currentIndex >= dueCards.length;
   const currentCard = isCompleted ? null : dueCards[currentIndex];
@@ -71,6 +75,16 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
         prevStatus: currentCard.status,
         newStatus: response.success && response.data ? response.data.newStatus : currentCard.status,
       };
+
+      // Show XP popup and level-up modal
+      if (response.success && response.data?.xp) {
+        if (response.data.xp.awarded > 0) {
+          showXp(response.data.xp.awarded);
+        }
+        if (response.data.xp.leveledUp) {
+          setLevelUpLevel(response.data.xp.currentLevel);
+        }
+      }
 
       setResults((prev) => [...prev, result]);
       setIsSubmitting(false);
@@ -313,6 +327,13 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
           Ketuk kartu untuk melihat jawaban
         </p>
       )}
+
+      {/* XP popup + Level up modal */}
+      <XpPopup events={xpEvents} />
+      <LevelUpModal
+        level={levelUpLevel}
+        onDismiss={() => setLevelUpLevel(null)}
+      />
     </div>
   );
 }

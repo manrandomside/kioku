@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  Flame,
   Clock,
   BookOpen,
   ArrowRight,
@@ -11,7 +10,6 @@ import {
   BarChart3,
   Shield,
   Trophy,
-  Star,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +20,7 @@ import { DailyGoalRing } from "@/components/gamification/daily-goal-ring";
 import { SrsDistribution } from "@/components/gamification/srs-distribution";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
+import { StreakFlame } from "@/components/gamification/streak-flame";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -120,11 +119,7 @@ export default async function HomePage() {
                 : "bg-muted"
             }`}
           >
-            <Flame
-              className={`size-7 ${
-                data.streak.current > 0 ? "text-orange-500" : "text-muted-foreground"
-              }`}
-            />
+            <StreakFlame streak={data.streak.current} />
           </div>
           <div className="flex-1">
             <p className="text-3xl font-bold leading-none">

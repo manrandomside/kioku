@@ -8,6 +8,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { VocabFlashcardCard } from "@/components/flashcard/vocab-flashcard-card";
 import { RatingButtons } from "@/components/flashcard/rating-buttons";
+import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
+import { LevelUpModal } from "@/components/gamification/level-up-modal";
 import { getSchedulingPreview, createNewCardData } from "@/lib/srs/fsrs-engine";
 import { submitVocabReview } from "@/app/(dashboard)/learn/mnn/[chapter]/flashcard/actions";
 
@@ -33,6 +35,8 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<VocabFlashcardResult[]>([]);
   const [reviewStartTime, setReviewStartTime] = useState(() => Date.now());
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const { events: xpEvents, showXp } = useXpPopup();
 
   const isCompleted = currentIndex >= cards.length;
   const currentCard = isCompleted ? null : cards[currentIndex];
@@ -58,6 +62,16 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
       const durationMs = Date.now() - reviewStartTime;
 
       const response = await submitVocabReview(currentCard.id, rating, durationMs);
+
+      // Show XP popup and level-up modal
+      if (response.success && response.data?.xp) {
+        if (response.data.xp.awarded > 0) {
+          showXp(response.data.xp.awarded);
+        }
+        if (response.data.xp.leveledUp) {
+          setLevelUpLevel(response.data.xp.currentLevel);
+        }
+      }
 
       const result: VocabFlashcardResult = {
         vocabId: currentCard.id,
@@ -214,6 +228,13 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
           Ketuk kartu untuk melihat jawaban
         </p>
       )}
+
+      {/* XP popup + Level up modal */}
+      <XpPopup events={xpEvents} />
+      <LevelUpModal
+        level={levelUpLevel}
+        onDismiss={() => setLevelUpLevel(null)}
+      />
     </div>
   );
 }

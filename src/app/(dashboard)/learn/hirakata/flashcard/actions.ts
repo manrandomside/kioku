@@ -12,6 +12,9 @@ import {
   type SrsRating,
   type SrsCardData,
 } from "@/lib/srs/fsrs-engine";
+import { awardReviewXp } from "@/lib/gamification/xp-service";
+import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
+import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 
 // Ensure SRS card exists for a kana, create if needed
 async function ensureSrsCard(userId: string, kanaId: string) {
@@ -102,11 +105,23 @@ export async function submitKanaReview(
       reviewDurationMs,
     });
 
+    // Award XP and check streak
+    await checkAndUpdateStreak(user.id);
+    const xpResult = await awardReviewXp(user.id, card.id);
+    const newAchievements = await checkAndUnlockAchievements(user.id);
+
     return {
       success: true,
       data: {
         newStatus: result.updatedCard.status,
         isLapse: rating === "again" && cardData.status === "review",
+        xp: {
+          awarded: xpResult.xpAwarded,
+          total: xpResult.totalXp,
+          leveledUp: xpResult.leveledUp,
+          currentLevel: xpResult.currentLevel,
+        },
+        achievements: newAchievements,
       },
     };
   } catch (error) {

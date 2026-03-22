@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { FlashcardCard } from "@/components/flashcard/flashcard-card";
 import { RatingButtons } from "@/components/flashcard/rating-buttons";
 import { FlashcardSummary } from "@/components/flashcard/session-summary";
+import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
+import { LevelUpModal } from "@/components/gamification/level-up-modal";
 import { getSchedulingPreview, createNewCardData } from "@/lib/srs/fsrs-engine";
 import { submitKanaReview } from "@/app/(dashboard)/learn/hirakata/flashcard/actions";
 
@@ -27,6 +29,8 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<FlashcardResult[]>([]);
   const [reviewStartTime, setReviewStartTime] = useState(() => Date.now());
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const { events: xpEvents, showXp } = useXpPopup();
 
   const isCompleted = currentIndex >= cards.length;
   const currentCard = isCompleted ? null : cards[currentIndex];
@@ -54,6 +58,16 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
       const durationMs = Date.now() - reviewStartTime;
 
       const response = await submitKanaReview(currentCard.id, rating, durationMs);
+
+      // Show XP popup and level-up modal
+      if (response.success && response.data?.xp) {
+        if (response.data.xp.awarded > 0) {
+          showXp(response.data.xp.awarded);
+        }
+        if (response.data.xp.leveledUp) {
+          setLevelUpLevel(response.data.xp.currentLevel);
+        }
+      }
 
       const result: FlashcardResult = {
         kanaId: currentCard.id,
@@ -189,6 +203,13 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
           Ketuk kartu untuk melihat jawaban
         </p>
       )}
+
+      {/* XP popup + Level up modal */}
+      <XpPopup events={xpEvents} />
+      <LevelUpModal
+        level={levelUpLevel}
+        onDismiss={() => setLevelUpLevel(null)}
+      />
     </div>
   );
 }
