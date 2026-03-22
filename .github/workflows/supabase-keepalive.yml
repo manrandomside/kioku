@@ -14,12 +14,15 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
+          body=$(curl -s -w "\n%{http_code}" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/")
+            "$SUPABASE_URL/rest/v1/book?select=id&limit=1")
+          response=$(echo "$body" | tail -n 1)
           echo "Response status: $response"
           if [ "$response" -ne 200 ]; then
+            echo "Response body:"
+            echo "$body" | sed '$d'
             echo "::error::Supabase ping failed with status $response"
             exit 1
           fi
