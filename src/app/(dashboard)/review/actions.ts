@@ -14,6 +14,8 @@ import {
   updateChapterProgress,
   getChapterIdFromVocabulary,
 } from "@/lib/progress/update-chapter-progress";
+import { awardReviewXp } from "@/lib/gamification/xp-service";
+import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 
 export async function submitReviewByCardId(
   cardId: string,
@@ -88,11 +90,21 @@ export async function submitReviewByCardId(
       }
     }
 
+    // Award XP and check streak
+    await checkAndUpdateStreak(user.id);
+    const xpResult = await awardReviewXp(user.id, card.id);
+
     return {
       success: true,
       data: {
         newStatus: result.updatedCard.status,
         isLapse: rating === "again" && cardData.status === "review",
+        xp: {
+          awarded: xpResult.xpAwarded,
+          total: xpResult.totalXp,
+          leveledUp: xpResult.leveledUp,
+          currentLevel: xpResult.currentLevel,
+        },
       },
     };
   } catch (error) {

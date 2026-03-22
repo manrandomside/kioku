@@ -6,6 +6,8 @@ import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
 import { updateChapterProgress } from "@/lib/progress/update-chapter-progress";
+import { awardQuizXp } from "@/lib/gamification/xp-service";
+import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 
 import type { VocabQuizAnswer, VocabQuestionType } from "@/types/vocab-quiz";
 
@@ -97,9 +99,24 @@ export async function submitVocabQuizResult(
       await updateChapterProgress(user.id, updatedSession.chapterId);
     }
 
+    // Award XP and check streak
+    await checkAndUpdateStreak(user.id);
+    const xpResult = await awardQuizXp(user.id, sessionId, isPerfect);
+
     return {
       success: true,
-      data: { correctCount, scorePercent, xpEarned, isPerfect },
+      data: {
+        correctCount,
+        scorePercent,
+        xpEarned: xpResult.xpAwarded,
+        isPerfect,
+        xp: {
+          awarded: xpResult.xpAwarded,
+          total: xpResult.totalXp,
+          leveledUp: xpResult.leveledUp,
+          currentLevel: xpResult.currentLevel,
+        },
+      },
     };
   } catch (error) {
     console.error("[submitVocabQuizResult]", error);

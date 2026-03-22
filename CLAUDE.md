@@ -152,8 +152,8 @@ src/
 
 ### [P2] Gamification & Polish
 
-- [ ] XP system (earn + transactions + level calculation)
-- [ ] Streak system (daily check + freeze + notifications)
+- [x] XP system (earn + transactions + level calculation)
+- [x] Streak system (daily check + freeze + notifications)
 - [ ] Achievement definitions (seed ~50 badges)
 - [ ] Achievement unlock logic + UI
 - [ ] Dashboard: stats overview + streak + XP bar + due cards count
