@@ -154,7 +154,7 @@ src/
 
 - [x] XP system (earn + transactions + level calculation)
 - [x] Streak system (daily check + freeze + notifications)
-- [ ] Achievement definitions (seed ~50 badges)
+- [x] Achievement definitions (seed ~50 badges)
 - [ ] Achievement unlock logic + UI
 - [ ] Dashboard: stats overview + streak + XP bar + due cards count
 - [ ] Dashboard: activity heatmap (365 days)

@@ -51,11 +51,14 @@ export const xpTransaction = pgTable("xp_transaction", {
 export const achievement = pgTable("achievement", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
+  nameEn: varchar("name_en", { length: 255 }),
   description: text("description").notNull(),
   icon: varchar("icon", { length: 100 }).notNull(),
+  badgeColor: varchar("badge_color", { length: 7 }),
   type: achievementTypeEnum("type").notNull(),
   condition: jsonb("condition").notNull(),
   xpReward: integer("xp_reward").notNull().default(0),
+  sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at").notNull().default("now()"),
 });
 

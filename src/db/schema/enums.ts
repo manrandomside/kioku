@@ -79,7 +79,9 @@ export const achievementTypeEnum = pgEnum("achievement_type", [
   "streak",
   "review_count",
   "quiz_score",
+  "quiz_speed",
   "words_learned",
+  "chapter_complete",
   "level",
   "special",
 ]);
