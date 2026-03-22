@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { srsCard, reviewLog } from "@/db/schema/srs";
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import {
   processReview,
   createNewCardData,
@@ -64,7 +65,12 @@ export async function submitVocabReview(
       return { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } };
     }
 
-    const card = await ensureVocabSrsCard(user.id, vocabularyId);
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
+    }
+
+    const card = await ensureVocabSrsCard(userId, vocabularyId);
 
     const cardData: SrsCardData = {
       status: card.status,
@@ -93,7 +99,7 @@ export async function submitVocabReview(
       .where(eq(srsCard.id, card.id));
 
     await db.insert(reviewLog).values({
-      userId: user.id,
+      userId,
       cardId: card.id,
       rating,
       prevStability: result.prevStability,
@@ -108,13 +114,13 @@ export async function submitVocabReview(
     // Update chapter progress after SRS review
     const chapterId = await getChapterIdFromVocabulary(vocabularyId);
     if (chapterId) {
-      await updateChapterProgress(user.id, chapterId);
+      await updateChapterProgress(userId, chapterId);
     }
 
     // Award XP and check streak
-    await checkAndUpdateStreak(user.id);
-    const xpResult = await awardReviewXp(user.id, card.id);
-    const newAchievements = await checkAndUnlockAchievements(user.id);
+    await checkAndUpdateStreak(userId);
+    const xpResult = await awardReviewXp(userId, card.id);
+    const newAchievements = await checkAndUnlockAchievements(userId);
 
     return {
       success: true,

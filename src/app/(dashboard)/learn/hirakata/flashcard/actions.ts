@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { srsCard } from "@/db/schema/srs";
 import { reviewLog } from "@/db/schema/srs";
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import {
   processReview,
   createNewCardData,
@@ -62,7 +63,12 @@ export async function submitKanaReview(
       return { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } };
     }
 
-    const card = await ensureSrsCard(user.id, kanaId);
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
+    }
+
+    const card = await ensureSrsCard(userId, kanaId);
 
     const cardData: SrsCardData = {
       status: card.status,
@@ -93,7 +99,7 @@ export async function submitKanaReview(
 
     // Log the review
     await db.insert(reviewLog).values({
-      userId: user.id,
+      userId,
       cardId: card.id,
       rating,
       prevStability: result.prevStability,
@@ -106,9 +112,9 @@ export async function submitKanaReview(
     });
 
     // Award XP and check streak
-    await checkAndUpdateStreak(user.id);
-    const xpResult = await awardReviewXp(user.id, card.id);
-    const newAchievements = await checkAndUnlockAchievements(user.id);
+    await checkAndUpdateStreak(userId);
+    const xpResult = await awardReviewXp(userId, card.id);
+    const newAchievements = await checkAndUnlockAchievements(userId);
 
     return {
       success: true,

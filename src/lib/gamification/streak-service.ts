@@ -55,7 +55,7 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakCheckR
   const [userData] = await db
     .select({ dailyGoalXp: user.dailyGoalXp })
     .from(user)
-    .where(eq(user.supabaseAuthId, userId))
+    .where(eq(user.id, userId))
     .limit(1);
 
   const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "30", 10);

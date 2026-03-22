@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { getAllAchievementsWithStatus } from "@/lib/gamification/achievement-service";
 
 import { AchievementsGrid } from "@/components/gamification/achievements-grid";
@@ -19,7 +20,12 @@ export default async function AchievementsPage() {
     redirect("/login");
   }
 
-  const data = await getAllAchievementsWithStatus(user.id);
+  const userId = await getInternalUserId(user.id);
+  if (!userId) {
+    redirect("/login");
+  }
+
+  const data = await getAllAchievementsWithStatus(userId);
 
   return (
     <div className="flex flex-col gap-6">

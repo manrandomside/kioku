@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { awardQuizXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
@@ -27,10 +28,15 @@ export async function createQuizSession(
       return { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } };
     }
 
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
+    }
+
     const [session] = await db
       .insert(quizSession)
       .values({
-        userId: user.id,
+        userId,
         kanaCategory: kanaCategory as "hiragana_basic" | "hiragana_dakuten" | "hiragana_combo" | "katakana_basic" | "katakana_dakuten" | "katakana_combo",
         totalQuestions,
       })
@@ -56,6 +62,11 @@ export async function submitQuizResult(
 
     if (!user) {
       return { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } };
+    }
+
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
     }
 
     const correctCount = answers.filter((a) => a.isCorrect).length;
@@ -96,9 +107,9 @@ export async function submitQuizResult(
       .where(eq(quizSession.id, sessionId));
 
     // Award XP and check streak
-    await checkAndUpdateStreak(user.id);
-    const xpResult = await awardQuizXp(user.id, sessionId, isPerfect);
-    const newAchievements = await checkAndUnlockAchievements(user.id);
+    await checkAndUpdateStreak(userId);
+    const xpResult = await awardQuizXp(userId, sessionId, isPerfect);
+    const newAchievements = await checkAndUnlockAchievements(userId);
 
     return {
       success: true,

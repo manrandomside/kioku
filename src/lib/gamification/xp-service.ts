@@ -82,7 +82,7 @@ async function awardXpInternal(
   const [userData] = await db
     .select({ dailyGoalXp: user.dailyGoalXp })
     .from(user)
-    .where(eq(user.supabaseAuthId, userId))
+    .where(eq(user.id, userId))
     .limit(1);
 
   const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "30", 10);
@@ -317,7 +317,7 @@ export async function getXpOverview(userId: string) {
   const [userData] = await db
     .select({ dailyGoalXp: user.dailyGoalXp })
     .from(user)
-    .where(eq(user.supabaseAuthId, userId))
+    .where(eq(user.id, userId))
     .limit(1);
 
   const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "30", 10);

@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { srsCard, reviewLog } from "@/db/schema/srs";
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import {
   processReview,
   type SrsRating,
@@ -33,6 +34,11 @@ export async function submitReviewByCardId(
       return { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } };
     }
 
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
+    }
+
     // Fetch the card
     const [card] = await db
       .select()
@@ -40,7 +46,7 @@ export async function submitReviewByCardId(
       .where(eq(srsCard.id, cardId))
       .limit(1);
 
-    if (!card || card.userId !== user.id) {
+    if (!card || card.userId !== userId) {
       return { success: false, error: { code: "NOT_FOUND", message: "Kartu tidak ditemukan" } };
     }
 
@@ -71,7 +77,7 @@ export async function submitReviewByCardId(
       .where(eq(srsCard.id, card.id));
 
     await db.insert(reviewLog).values({
-      userId: user.id,
+      userId,
       cardId: card.id,
       rating,
       prevStability: result.prevStability,
@@ -87,14 +93,14 @@ export async function submitReviewByCardId(
     if (card.vocabularyId) {
       const chapterId = await getChapterIdFromVocabulary(card.vocabularyId);
       if (chapterId) {
-        await updateChapterProgress(user.id, chapterId);
+        await updateChapterProgress(userId, chapterId);
       }
     }
 
     // Award XP and check streak
-    await checkAndUpdateStreak(user.id);
-    const xpResult = await awardReviewXp(user.id, card.id);
-    const newAchievements = await checkAndUnlockAchievements(user.id);
+    await checkAndUpdateStreak(userId);
+    const xpResult = await awardReviewXp(userId, card.id);
+    const newAchievements = await checkAndUnlockAchievements(userId);
 
     return {
       success: true,

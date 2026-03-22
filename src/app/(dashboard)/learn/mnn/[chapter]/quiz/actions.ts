@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { updateChapterProgress } from "@/lib/progress/update-chapter-progress";
 import { awardQuizXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
@@ -29,10 +30,15 @@ export async function createVocabQuizSession(
       return { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } };
     }
 
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
+    }
+
     const [session] = await db
       .insert(quizSession)
       .values({
-        userId: user.id,
+        userId,
         chapterId,
         totalQuestions,
       })
@@ -58,6 +64,11 @@ export async function submitVocabQuizResult(
 
     if (!user) {
       return { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } };
+    }
+
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
     }
 
     const correctCount = answers.filter((a) => a.isCorrect).length;
@@ -97,13 +108,13 @@ export async function submitVocabQuizResult(
 
     // Update chapter progress after quiz completion
     if (updatedSession?.chapterId) {
-      await updateChapterProgress(user.id, updatedSession.chapterId);
+      await updateChapterProgress(userId, updatedSession.chapterId);
     }
 
     // Award XP and check streak
-    await checkAndUpdateStreak(user.id);
-    const xpResult = await awardQuizXp(user.id, sessionId, isPerfect);
-    const newAchievements = await checkAndUnlockAchievements(user.id);
+    await checkAndUpdateStreak(userId);
+    const xpResult = await awardQuizXp(userId, sessionId, isPerfect);
+    const newAchievements = await checkAndUnlockAchievements(userId);
 
     return {
       success: true,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 
 export async function POST() {
@@ -17,7 +18,15 @@ export async function POST() {
       );
     }
 
-    const result = await checkAndUpdateStreak(user.id);
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } },
+        { status: 404 }
+      );
+    }
+
+    const result = await checkAndUpdateStreak(userId);
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

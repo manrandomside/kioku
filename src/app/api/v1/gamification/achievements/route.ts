@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { getAllAchievementsWithStatus } from "@/lib/gamification/achievement-service";
 
 export async function GET() {
@@ -17,7 +18,15 @@ export async function GET() {
       );
     }
 
-    const data = await getAllAchievementsWithStatus(user.id);
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } },
+        { status: 404 }
+      );
+    }
+
+    const data = await getAllAchievementsWithStatus(userId);
 
     return NextResponse.json({
       success: true,
