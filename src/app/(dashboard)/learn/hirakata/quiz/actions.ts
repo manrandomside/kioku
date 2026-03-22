@@ -5,6 +5,7 @@ import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
 import { awardQuizXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
+import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 
 import type { QuizAnswer } from "@/types/quiz";
 import type { KanaQuestionType } from "@/types/quiz";
@@ -97,6 +98,7 @@ export async function submitQuizResult(
     // Award XP and check streak
     await checkAndUpdateStreak(user.id);
     const xpResult = await awardQuizXp(user.id, sessionId, isPerfect);
+    const newAchievements = await checkAndUnlockAchievements(user.id);
 
     return {
       success: true,
@@ -111,6 +113,7 @@ export async function submitQuizResult(
           leveledUp: xpResult.leveledUp,
           currentLevel: xpResult.currentLevel,
         },
+        achievements: newAchievements,
       },
     };
   } catch (error) {

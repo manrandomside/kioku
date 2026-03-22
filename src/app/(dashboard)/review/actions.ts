@@ -16,6 +16,7 @@ import {
 } from "@/lib/progress/update-chapter-progress";
 import { awardReviewXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
+import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 
 export async function submitReviewByCardId(
   cardId: string,
@@ -93,6 +94,7 @@ export async function submitReviewByCardId(
     // Award XP and check streak
     await checkAndUpdateStreak(user.id);
     const xpResult = await awardReviewXp(user.id, card.id);
+    const newAchievements = await checkAndUnlockAchievements(user.id);
 
     return {
       success: true,
@@ -105,6 +107,7 @@ export async function submitReviewByCardId(
           leveledUp: xpResult.leveledUp,
           currentLevel: xpResult.currentLevel,
         },
+        achievements: newAchievements,
       },
     };
   } catch (error) {

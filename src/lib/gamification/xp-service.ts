@@ -285,6 +285,22 @@ export async function checkAndAwardStreakMilestone(
   return { awarded: true, xp: xpReward, freezes: freezesAwarded };
 }
 
+// Award XP for achievement unlock
+export async function awardAchievementXp(
+  userId: string,
+  amount: number,
+  achievementName: string,
+  achievementId: string
+): Promise<void> {
+  await awardXpInternal(
+    userId,
+    amount,
+    "achievement",
+    `Achievement: ${achievementName}`,
+    achievementId
+  );
+}
+
 // Get XP overview for a user
 export async function getXpOverview(userId: string) {
   const [gamification] = await db

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 
+import { Toaster } from "sonner";
+
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
 import "./globals.css";
@@ -46,7 +48,18 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              unstyled: true,
+              classNames: {
+                toast: "w-full max-w-md",
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );
