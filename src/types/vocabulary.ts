@@ -52,6 +52,21 @@ export type BookWithChapters = {
   chapters: ChapterWithProgress[];
 };
 
+export type VocabularySearchResult = {
+  id: string;
+  kanji: string | null;
+  hiragana: string;
+  romaji: string;
+  meaningId: string;
+  meaningEn: string;
+  wordType: WordType;
+  jlptLevel: string;
+  audioUrl: string | null;
+  chapterId: string;
+  chapterNumber: number;
+  chapterSlug: string;
+};
+
 export const WORD_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
   noun: { label: "Kata Benda", className: "bg-word-noun/15 text-word-noun" },
   verb: { label: "Kata Kerja", className: "bg-word-verb/15 text-word-verb" },

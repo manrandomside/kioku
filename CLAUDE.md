@@ -148,7 +148,7 @@ src/
 - [x] Review session (due cards queue + daily summary)
 - [x] User onboarding flow (profile + JLPT target + hirakata assessment)
 - [x] Progress tracking per chapter
-- [ ] Search vocabulary (global search bar)
+- [x] Search vocabulary (global search bar)
 
 ### [P2] Gamification & Polish
 

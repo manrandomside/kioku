@@ -42,6 +42,7 @@ export async function updateSession(request: NextRequest) {
     "/quiz",
     "/chat",
     "/profile",
+    "/search",
   ];
 
   const authRoutes = ["/login", "/register"];

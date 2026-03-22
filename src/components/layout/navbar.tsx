@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
+import { SearchBar } from "@/components/search/search-bar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/layout/sidebar";
 
@@ -81,6 +82,7 @@ export function Navbar({ user }: NavbarProps) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <SearchBar />
           <ThemeToggle />
           <UserMenu user={user} />
         </div>
