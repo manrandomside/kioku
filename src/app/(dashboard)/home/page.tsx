@@ -21,6 +21,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DailyGoalRing } from "@/components/gamification/daily-goal-ring";
 import { SrsDistribution } from "@/components/gamification/srs-distribution";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
+import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -303,6 +304,9 @@ export default async function HomePage() {
           </p>
         )}
       </div>
+
+      {/* Activity Heatmap */}
+      <ActivityHeatmap />
     </div>
   );
 }

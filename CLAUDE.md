@@ -157,7 +157,7 @@ src/
 - [x] Achievement definitions (seed ~50 badges)
 - [x] Achievement unlock logic + UI
 - [x] Dashboard: stats overview + streak + XP bar + due cards count
-- [ ] Dashboard: activity heatmap (365 days)
+- [x] Dashboard: activity heatmap (365 days)
 - [x] Dashboard: SRS distribution chart
 - [ ] Animations: card flip, XP increment, level-up confetti, streak fire
 - [ ] Sound effects: correct/incorrect ding
