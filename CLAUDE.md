@@ -132,7 +132,7 @@ src/
 - [x] Seed data: kana (214 characters)
 - [x] Seed data: MNN vocabulary Bab 1-50 (from PDF + MinnaNoDS)
 - [x] Basic layout: AppShell + Navbar + BottomNav + ThemeToggle
-- [ ] Vercel deployment + GitHub Actions keep-alive cron
+- [x] Vercel deployment + GitHub Actions keep-alive cron
 - [ ] Pre-generate audio files (Edge TTS) + upload to Supabase Storage
 
 ### [P1] Core Features
