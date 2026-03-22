@@ -27,7 +27,7 @@ export function KanaCell({ kana, onClick }: KanaCellProps) {
         "group relative flex flex-col items-center justify-center rounded-xl border p-1.5 transition-all",
         "hover:scale-105 hover:shadow-md active:scale-95",
         "focus-visible:ring-2 focus-visible:outline-none",
-        "aspect-square min-h-[52px] min-w-[52px]",
+        "aspect-square min-h-[44px] min-w-[44px] sm:min-h-[52px] sm:min-w-[52px]",
         statusStyle
       )}
     >
@@ -42,5 +42,5 @@ export function KanaCell({ kana, onClick }: KanaCellProps) {
 }
 
 export function KanaEmptyCell() {
-  return <div className="aspect-square min-h-[52px] min-w-[52px]" />;
+  return <div className="aspect-square min-h-[44px] min-w-[44px] sm:min-h-[52px] sm:min-w-[52px]" />;
 }

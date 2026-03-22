@@ -32,8 +32,8 @@ export function QuizOption({ label, state, isJapanese, onClick, disabled }: Quiz
       variants={shakeVariants}
       animate={state === "selected-wrong" ? "wrong" : "idle"}
       className={cn(
-        "relative w-full rounded-xl border-2 px-5 py-4 text-left font-medium transition-colors",
-        isJapanese ? "font-jp text-2xl" : "font-mono text-lg",
+        "relative w-full rounded-xl border-2 px-4 py-3.5 text-left font-medium transition-colors sm:px-5 sm:py-4",
+        isJapanese ? "font-jp text-xl sm:text-2xl" : "font-mono text-base sm:text-lg",
         state === "idle" &&
           "border-border bg-card text-foreground hover:border-primary/50 hover:bg-primary/5",
         state === "selected-correct" &&

@@ -26,7 +26,7 @@ export default async function VocabQuizPage({ params }: VocabQuizPageProps) {
   const questions = generateVocabQuiz(vocabList);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg">
       <VocabQuizSession
         questions={questions}
         chapterId={chapterInfo.id}

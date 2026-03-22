@@ -38,7 +38,7 @@ const RATING_CONFIG: Record<
 
 export function RatingButtons({ previews, onRate, disabled }: RatingButtonsProps) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
       {previews.map((preview) => {
         const config = RATING_CONFIG[preview.rating];
         return (
@@ -47,17 +47,17 @@ export function RatingButtons({ previews, onRate, disabled }: RatingButtonsProps
             onClick={() => onRate(preview.rating)}
             disabled={disabled}
             className={cn(
-              "flex flex-col items-center gap-1 rounded-xl border px-2 py-3 text-sm font-medium transition-all",
+              "flex flex-col items-center gap-0.5 rounded-xl border px-1.5 py-3 text-sm font-medium transition-all sm:gap-1 sm:px-2",
               "focus-visible:ring-2 focus-visible:outline-none",
               "disabled:cursor-not-allowed disabled:opacity-50",
               "active:scale-95",
               config.className
             )}
           >
-            <span className="text-xs font-normal opacity-70">
+            <span className="text-[10px] font-normal opacity-70 sm:text-xs">
               {preview.intervalLabel}
             </span>
-            <span>{config.label}</span>
+            <span className="text-xs sm:text-sm">{config.label}</span>
           </button>
         );
       })}

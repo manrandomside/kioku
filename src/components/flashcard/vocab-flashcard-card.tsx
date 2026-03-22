@@ -40,7 +40,7 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip }: VocabFlashcardC
       }}
     >
       <motion.div
-        className="relative h-96 w-full"
+        className="relative h-80 w-full sm:h-96"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
         style={{ transformStyle: "preserve-3d" }}

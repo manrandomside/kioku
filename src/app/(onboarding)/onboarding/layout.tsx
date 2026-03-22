@@ -17,7 +17,7 @@ export default async function OnboardingLayout({
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-8">
       <div className="gradient-mesh pointer-events-none absolute inset-0" />
       <div className="relative z-10 w-full max-w-[520px]">
         {children}

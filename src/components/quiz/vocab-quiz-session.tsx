@@ -318,15 +318,15 @@ export function VocabQuizSession({
             </p>
 
             {/* Question display */}
-            <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-8 shadow-sm">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm sm:p-8">
               {isAudioOnly ? (
                 // Audio-only: big speaker icon
                 <button
                   type="button"
                   onClick={handlePlayAudio}
-                  className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+                  className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20 sm:size-20"
                 >
-                  <Volume2 className="size-10" />
+                  <Volume2 className="size-8 sm:size-10" />
                 </button>
               ) : (
                 // Text display
@@ -334,8 +334,8 @@ export function VocabQuizSession({
                   className={cn(
                     "text-center leading-tight",
                     isJapaneseDisplay
-                      ? "font-jp text-5xl font-medium text-foreground sm:text-6xl"
-                      : "text-2xl font-semibold text-primary sm:text-3xl"
+                      ? "font-jp text-4xl font-medium text-foreground sm:text-5xl md:text-6xl"
+                      : "text-xl font-semibold text-primary sm:text-2xl md:text-3xl"
                   )}
                 >
                   {currentQuestion.questionText}
@@ -357,7 +357,7 @@ export function VocabQuizSession({
 
             {/* Multiple choice options */}
             {currentQuestion.mode === "multiple_choice" && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
                 {currentQuestion.options.map((option) => (
                   <QuizOption
                     key={option}
@@ -386,7 +386,7 @@ export function VocabQuizSession({
                     placeholder="Ketik jawaban dalam hiragana..."
                     disabled={isRevealed}
                     className={cn(
-                      "h-14 w-full rounded-xl border-2 px-4 font-jp text-xl outline-none transition-colors placeholder:font-sans placeholder:text-sm placeholder:text-muted-foreground",
+                      "h-12 w-full rounded-xl border-2 px-4 font-jp text-lg outline-none transition-colors placeholder:font-sans placeholder:text-sm placeholder:text-muted-foreground sm:h-14 sm:text-xl",
                       isRevealed && selectedAnswer === currentQuestion.correctAnswer
                         ? "border-green-500 bg-green-500/5"
                         : isRevealed

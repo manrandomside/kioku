@@ -310,7 +310,7 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="mx-auto w-full max-w-sm"
+            className="mx-auto w-full max-w-sm px-2 sm:px-0"
           >
             <RatingButtons
               previews={schedulingPreviews}

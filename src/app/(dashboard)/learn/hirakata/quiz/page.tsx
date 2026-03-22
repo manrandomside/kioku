@@ -28,7 +28,7 @@ export default async function KanaQuizPage({ searchParams }: QuizPageProps) {
   const questions = generateKanaQuiz(filteredKana);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg">
       <KanaQuizSession
         questions={questions}
         script={script}

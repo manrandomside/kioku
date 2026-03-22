@@ -162,7 +162,7 @@ src/
 - [x] Animations: card flip, XP increment, level-up confetti, streak fire
 - [x] Sound effects: correct/incorrect ding
 - [x] PWA: service worker + manifest + offline cache
-- [ ] Responsive polish (mobile + tablet)
+- [x] Responsive polish (mobile + tablet)
 - [ ] Dark mode complete pass
 
 ### [P3] AI Features

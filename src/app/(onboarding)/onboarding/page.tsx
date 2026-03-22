@@ -103,7 +103,7 @@ export default function OnboardingPage() {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="text-center">
-        <h1 className="font-display text-3xl font-bold tracking-tight">
+        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
           Selamat Datang!
         </h1>
         <p className="mt-2 text-muted-foreground">
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Step Content */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/80 p-8 shadow-lg backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/80 p-4 shadow-lg backdrop-blur-sm sm:p-8">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}

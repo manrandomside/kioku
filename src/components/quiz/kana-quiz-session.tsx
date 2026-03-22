@@ -262,13 +262,13 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
             </p>
 
             {/* Question display */}
-            <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-8 shadow-sm">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm sm:p-8">
               <span
                 className={cn(
                   "leading-none",
                   currentQuestion.type === "meaning_to_word"
-                    ? "font-mono text-4xl font-bold text-primary sm:text-5xl"
-                    : "font-jp text-6xl font-medium text-foreground sm:text-7xl"
+                    ? "font-mono text-3xl font-bold text-primary sm:text-4xl md:text-5xl"
+                    : "font-jp text-5xl font-medium text-foreground sm:text-6xl md:text-7xl"
                 )}
               >
                 {currentQuestion.questionText}
@@ -286,7 +286,7 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
             </div>
 
             {/* Options */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
               {currentQuestion.options.map((option) => (
                 <QuizOption
                   key={option}

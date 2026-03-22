@@ -188,7 +188,7 @@ export function ChapterDetailView({
       </div>
 
       {/* Word Type Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab.key}
@@ -206,7 +206,7 @@ export function ChapterDetailView({
       </div>
 
       {/* SRS Status Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         {(["all", "new", "learning", "review", "relearning"] as const).map((f) => {
           const labels: Record<SrsFilter, string> = {
             all: "Semua",

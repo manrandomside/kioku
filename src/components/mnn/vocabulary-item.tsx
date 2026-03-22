@@ -92,7 +92,7 @@ export function VocabularyItem({ vocab, showRomaji = true }: VocabularyItemProps
           <button
             type="button"
             onClick={playAudio}
-            className="flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Putar audio"
           >
             <Volume2 className="size-3.5" />

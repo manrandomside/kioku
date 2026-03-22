@@ -43,7 +43,7 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           kioku
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">

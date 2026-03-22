@@ -54,7 +54,7 @@ export function FlashcardCard({ kana, isFlipped, onFlip }: FlashcardCardProps) {
       }}
     >
       <motion.div
-        className="relative h-80 w-full"
+        className="relative h-72 w-full sm:h-80"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
         style={{ transformStyle: "preserve-3d" }}

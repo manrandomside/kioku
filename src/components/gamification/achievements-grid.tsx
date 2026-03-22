@@ -37,7 +37,7 @@ export function AchievementsGrid({ achievements }: AchievementsGridProps) {
   return (
     <div className="flex flex-col gap-5">
       {/* Category filter */}
-      <div className="flex flex-wrap gap-2">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat.value;
           const categoryCount =
@@ -49,7 +49,7 @@ export function AchievementsGrid({ achievements }: AchievementsGridProps) {
             <button
               key={cat.value}
               onClick={() => setActiveCategory(cat.value)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
                 isActive
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
@@ -72,7 +72,7 @@ export function AchievementsGrid({ achievements }: AchievementsGridProps) {
       {/* Badge grid */}
       <motion.div
         layout
-        className="grid grid-cols-4 gap-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8"
+        className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 sm:gap-4"
       >
         {filtered.map((ach) => (
           <motion.div

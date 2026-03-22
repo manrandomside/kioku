@@ -220,14 +220,14 @@ export function ActivityHeatmap() {
   const svgHeight = monthLabelHeight + 7 * step;
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-5">
+    <div className="rounded-2xl border border-border/50 bg-card p-3 sm:p-5">
       <div className="flex items-center gap-2">
         <CalendarDays className="size-4.5 text-[#248288]" />
         <h3 className="text-sm font-semibold">Aktivitas Belajar</h3>
       </div>
 
       {/* Heatmap grid - horizontally scrollable on mobile */}
-      <div className="mt-4 overflow-x-auto">
+      <div className="-mx-3 mt-4 overflow-x-auto px-3 sm:mx-0 sm:px-0">
         <div
           className="relative"
           data-heatmap
@@ -302,8 +302,8 @@ export function ActivityHeatmap() {
       </div>
 
       {/* Legend + Summary */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+        <p className="text-[11px] text-muted-foreground sm:text-xs">
           {activeDays} hari aktif dalam 365 hari terakhir
         </p>
         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">

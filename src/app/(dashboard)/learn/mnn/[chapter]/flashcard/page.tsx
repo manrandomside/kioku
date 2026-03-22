@@ -27,7 +27,7 @@ export default async function VocabFlashcardPage({ params }: VocabFlashcardPageP
   const shuffled = [...vocabList].sort(() => Math.random() - 0.5);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg">
       <VocabFlashcardSession
         cards={shuffled}
         chapterSlug={chapterInfo.slug}

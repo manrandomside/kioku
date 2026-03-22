@@ -18,7 +18,7 @@ export default async function ReviewPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg">
       <ReviewSession dueCards={dueCards} stats={stats} />
     </div>
   );

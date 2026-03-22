@@ -48,9 +48,9 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Welcome + Level + Daily Goal */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="relative">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="relative shrink-0">
             <Avatar size="lg">
               {data.profile.avatarUrl ? (
                 <AvatarImage src={data.profile.avatarUrl} alt={name} />
@@ -63,8 +63,8 @@ export default async function HomePage() {
               {data.level.current}
             </span>
           </div>
-          <div>
-            <h1 className="font-display text-xl font-bold tracking-tight lg:text-2xl">
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-lg font-bold tracking-tight sm:text-xl lg:text-2xl">
               Halo, {name}!
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -73,16 +73,16 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4 sm:gap-5">
           {/* XP Progress */}
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 md:flex-initial">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Zap className="size-3.5 text-[#C2E959]" />
-              <span>
+              <Zap className="size-3.5 shrink-0 text-[#C2E959]" />
+              <span className="truncate">
                 {data.level.xpInLevel} / {data.level.xpNeeded} XP
               </span>
             </div>
-            <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
+            <div className="h-2 w-full max-w-32 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#248288] to-[#C2E959] transition-all"
                 style={{ width: `${data.level.progressPercent}%` }}
@@ -169,7 +169,7 @@ export default async function HomePage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Link
           href="/review"
           className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
@@ -211,7 +211,7 @@ export default async function HomePage() {
       </div>
 
       {/* Stats + SRS Distribution */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3 lg:col-span-2">
           <StatCard
@@ -318,13 +318,13 @@ function StatCard({
   bg: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
-      <div className={`flex size-9 items-center justify-center rounded-lg ${bg}`}>
+    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-3 sm:p-4">
+      <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9 ${bg}`}>
         {icon}
       </div>
-      <div>
-        <p className="text-lg font-bold leading-tight">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="min-w-0">
+        <p className="text-base font-bold leading-tight sm:text-lg">{value}</p>
+        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{label}</p>
       </div>
     </div>
   );
