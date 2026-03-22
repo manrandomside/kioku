@@ -78,9 +78,10 @@ export interface DashboardData {
 export async function getDashboardData(
   authUserId: string
 ): Promise<DashboardData | null> {
-  // Get user profile
+  // Get user profile (includes internal user.id)
   const [userData] = await db
     .select({
+      id: user.id,
       displayName: user.displayName,
       preferredName: user.preferredName,
       avatarUrl: user.avatarUrl,
@@ -93,20 +94,32 @@ export async function getDashboardData(
 
   if (!userData) return null;
 
+  const internalUserId = userData.id;
   const dailyGoalXp = parseInt(userData.dailyGoalXp ?? "30", 10);
 
-  // Get gamification stats
+  // Get gamification stats using internal user ID (not auth ID)
   const [gamification] = await db
     .select()
     .from(userGamification)
-    .where(eq(userGamification.userId, authUserId))
+    .where(eq(userGamification.userId, internalUserId))
     .limit(1);
 
-  if (!gamification) return null;
+  // Default gamification values if row doesn't exist yet
+  const gam = gamification ?? {
+    totalXp: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    streakFreezes: 0,
+    lastActivityDate: null,
+    totalReviews: 0,
+    totalWordsLearned: 0,
+    dailyXpEarned: 0,
+    dailyGoalMet: false,
+  };
 
-  const { level, xpInLevel, xpNeeded } = calculateLevel(gamification.totalXp);
+  const { level, xpInLevel, xpNeeded } = calculateLevel(gam.totalXp);
   const today = new Date().toISOString().split("T")[0];
-  const isActiveToday = gamification.lastActivityDate === today;
+  const isActiveToday = gam.lastActivityDate === today;
 
   // Check if streak is at risk
   const yesterday = new Date();
@@ -114,21 +127,21 @@ export async function getDashboardData(
   const yesterdayStr = yesterday.toISOString().split("T")[0];
   const atRisk =
     !isActiveToday &&
-    gamification.lastActivityDate === yesterdayStr &&
-    gamification.currentStreak > 0;
+    gam.lastActivityDate === yesterdayStr &&
+    gam.currentStreak > 0;
 
   // Fetch quiz stats, SRS stats, and achievement data in parallel
   const [quizStats, srsStats, recentAchievementRows, achievementCounts] =
     await Promise.all([
-      getQuizStatsForDashboard(authUserId),
-      getSrsStats(authUserId),
-      getRecentAchievements(authUserId, 5),
-      getAchievementCounts(authUserId),
+      getQuizStatsForDashboard(internalUserId),
+      getSrsStats(internalUserId),
+      getRecentAchievements(internalUserId, 5),
+      getAchievementCounts(internalUserId),
     ]);
 
   // Reset daily counters display if new day
-  const dailyXpEarned = isActiveToday ? gamification.dailyXpEarned : 0;
-  const dailyGoalMet = isActiveToday ? gamification.dailyGoalMet : false;
+  const dailyXpEarned = isActiveToday ? gam.dailyXpEarned : 0;
+  const dailyGoalMet = isActiveToday ? gam.dailyGoalMet : false;
 
   return {
     profile: {
@@ -140,15 +153,15 @@ export async function getDashboardData(
     },
     level: {
       current: level,
-      totalXp: gamification.totalXp,
+      totalXp: gam.totalXp,
       xpInLevel,
       xpNeeded,
       progressPercent: xpNeeded > 0 ? Math.round((xpInLevel / xpNeeded) * 100) : 0,
     },
     streak: {
-      current: gamification.currentStreak,
-      longest: gamification.longestStreak,
-      freezes: gamification.streakFreezes,
+      current: gam.currentStreak,
+      longest: gam.longestStreak,
+      freezes: gam.streakFreezes,
       isActiveToday,
       atRisk,
     },
@@ -161,8 +174,8 @@ export async function getDashboardData(
         : 0,
     },
     stats: {
-      totalReviews: gamification.totalReviews,
-      totalWordsLearned: gamification.totalWordsLearned,
+      totalReviews: gam.totalReviews,
+      totalWordsLearned: gam.totalWordsLearned,
       quizCompleted: quizStats.completed,
       quizAvgScore: quizStats.avgScore,
     },
