@@ -146,7 +146,7 @@ src/
 - [x] FSRS engine integration (ts-fsrs scheduling + review submission)
 - [x] Quiz session (7 question types + audio + scoring)
 - [x] Review session (due cards queue + daily summary)
-- [ ] User onboarding flow (profile + JLPT target + hirakata assessment)
+- [x] User onboarding flow (profile + JLPT target + hirakata assessment)
 - [ ] Progress tracking per chapter
 - [ ] Search vocabulary (global search bar)
 

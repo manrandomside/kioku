@@ -54,6 +54,8 @@ export async function updateSession(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
 
+  const isOnboardingRoute = pathname === "/onboarding";
+
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -61,10 +63,39 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (isOnboardingRoute && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/home";
     return NextResponse.redirect(url);
+  }
+
+  // Redirect un-onboarded users to /onboarding from dashboard routes
+  if (user && (isProtectedRoute || isOnboardingRoute)) {
+    const { data: profile } = await supabase
+      .from("user")
+      .select("onboarding_done")
+      .eq("supabase_auth_id", user.id)
+      .single();
+
+    const onboardingDone = profile?.onboarding_done ?? false;
+
+    if (!onboardingDone && !isOnboardingRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
+
+    if (onboardingDone && isOnboardingRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

@@ -14,6 +14,7 @@ export const user = pgTable("user", {
   supabaseAuthId: uuid("supabase_auth_id").notNull().unique(),
   email: varchar("email", { length: 255 }).notNull(),
   displayName: varchar("display_name", { length: 100 }),
+  preferredName: varchar("preferred_name", { length: 50 }),
   avatarUrl: text("avatar_url"),
   jlptTarget: jlptLevelEnum("jlpt_target").default("N5"),
   dailyGoalXp: dailyGoalXpEnum("daily_goal_xp").default("30"),
