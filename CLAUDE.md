@@ -156,9 +156,9 @@ src/
 - [x] Streak system (daily check + freeze + notifications)
 - [x] Achievement definitions (seed ~50 badges)
 - [x] Achievement unlock logic + UI
-- [ ] Dashboard: stats overview + streak + XP bar + due cards count
+- [x] Dashboard: stats overview + streak + XP bar + due cards count
 - [ ] Dashboard: activity heatmap (365 days)
-- [ ] Dashboard: SRS distribution chart
+- [x] Dashboard: SRS distribution chart
 - [ ] Animations: card flip, XP increment, level-up confetti, streak fire
 - [ ] Sound effects: correct/incorrect ding
 - [ ] PWA: service worker + manifest + offline cache
