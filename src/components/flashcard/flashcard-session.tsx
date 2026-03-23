@@ -51,41 +51,34 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
   }, []);
 
   const handleRate = useCallback(
-    async (rating: SrsRating) => {
+    (rating: SrsRating) => {
       if (!currentCard || isSubmitting) return;
 
       setIsSubmitting(true);
       const durationMs = Date.now() - reviewStartTime;
+      const cardId = currentCard.id;
+      const prevStatus = currentCard.srsStatus ?? "new";
 
-      const response = await submitKanaReview(currentCard.id, rating, durationMs);
-
-      // Show XP popup and level-up modal
-      if (response.success && response.data?.xp) {
-        if (response.data.xp.awarded > 0) {
-          showXp(response.data.xp.awarded);
-        }
-        if (response.data.xp.leveledUp) {
-          setLevelUpLevel(response.data.xp.currentLevel);
-        }
-      }
-
-      const result: FlashcardResult = {
-        kanaId: currentCard.id,
-        rating,
-        prevStatus: currentCard.srsStatus ?? "new",
-        newStatus: response.success && response.data ? response.data.newStatus : "new",
-      };
-
-      setResults((prev) => [...prev, result]);
-      setIsSubmitting(false);
-
-      // Move to next card
+      // Optimistic: record result and advance card immediately
+      setResults((prev) => [...prev, { kanaId: cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
-      // Small delay to let the flip-back animation play before switching card
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setReviewStartTime(Date.now());
+        setIsSubmitting(false);
       }, 300);
+
+      // Fire server action in background
+      submitKanaReview(cardId, rating, durationMs).then((response) => {
+        if (response.success && response.data?.xp) {
+          if (response.data.xp.awarded > 0) {
+            showXp(response.data.xp.awarded);
+          }
+          if (response.data.xp.leveledUp) {
+            setLevelUpLevel(response.data.xp.currentLevel);
+          }
+        }
+      });
     },
     [currentCard, isSubmitting, reviewStartTime]
   );

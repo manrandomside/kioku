@@ -6,6 +6,7 @@ import { chapter } from "@/db/schema/content";
 import { userChapterProgress } from "@/db/schema/gamification";
 import { quizSession } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 
 export async function GET() {
   try {
@@ -18,6 +19,14 @@ export async function GET() {
       return NextResponse.json(
         { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } },
         { status: 401 }
+      );
+    }
+
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } },
+        { status: 404 }
       );
     }
 
@@ -37,7 +46,7 @@ export async function GET() {
       })
       .from(userChapterProgress)
       .innerJoin(chapter, eq(userChapterProgress.chapterId, chapter.id))
-      .where(eq(userChapterProgress.userId, user.id));
+      .where(eq(userChapterProgress.userId, userId));
 
     // Get quiz attempt counts per chapter
     const quizCounts = await db
@@ -48,7 +57,7 @@ export async function GET() {
       .from(quizSession)
       .where(
         and(
-          eq(quizSession.userId, user.id),
+          eq(quizSession.userId, userId),
           eq(quizSession.isCompleted, true)
         )
       )

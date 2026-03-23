@@ -44,7 +44,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full flex-col gap-2 overflow-y-auto bg-sidebar p-4 pt-6">
+    <aside className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden bg-sidebar p-4 pt-6">
       <Link
         href="/home"
         className="mb-4 px-2 font-display text-xl font-bold tracking-tight text-sidebar-foreground lg:hidden"

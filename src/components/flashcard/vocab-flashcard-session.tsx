@@ -55,39 +55,34 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
   }, []);
 
   const handleRate = useCallback(
-    async (rating: SrsRating) => {
+    (rating: SrsRating) => {
       if (!currentCard || isSubmitting) return;
 
       setIsSubmitting(true);
       const durationMs = Date.now() - reviewStartTime;
+      const cardId = currentCard.id;
+      const prevStatus = currentCard.srsStatus ?? "new";
 
-      const response = await submitVocabReview(currentCard.id, rating, durationMs);
-
-      // Show XP popup and level-up modal
-      if (response.success && response.data?.xp) {
-        if (response.data.xp.awarded > 0) {
-          showXp(response.data.xp.awarded);
-        }
-        if (response.data.xp.leveledUp) {
-          setLevelUpLevel(response.data.xp.currentLevel);
-        }
-      }
-
-      const result: VocabFlashcardResult = {
-        vocabId: currentCard.id,
-        rating,
-        prevStatus: currentCard.srsStatus ?? "new",
-        newStatus: response.success && response.data ? response.data.newStatus : "new",
-      };
-
-      setResults((prev) => [...prev, result]);
-      setIsSubmitting(false);
-
+      // Optimistic: record result and advance card immediately
+      setResults((prev) => [...prev, { vocabId: cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setReviewStartTime(Date.now());
+        setIsSubmitting(false);
       }, 300);
+
+      // Fire server action in background
+      submitVocabReview(cardId, rating, durationMs).then((response) => {
+        if (response.success && response.data?.xp) {
+          if (response.data.xp.awarded > 0) {
+            showXp(response.data.xp.awarded);
+          }
+          if (response.data.xp.leveledUp) {
+            setLevelUpLevel(response.data.xp.currentLevel);
+          }
+        }
+      });
     },
     [currentCard, isSubmitting, reviewStartTime]
   );

@@ -61,39 +61,34 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
   }, []);
 
   const handleRate = useCallback(
-    async (rating: SrsRating) => {
+    (rating: SrsRating) => {
       if (!currentCard || isSubmitting) return;
 
       setIsSubmitting(true);
       const durationMs = Date.now() - reviewStartTime;
+      const cardId = currentCard.cardId;
+      const prevStatus = currentCard.status;
 
-      const response = await submitReviewByCardId(currentCard.cardId, rating, durationMs);
-
-      const result: ReviewResult = {
-        cardId: currentCard.cardId,
-        rating,
-        prevStatus: currentCard.status,
-        newStatus: response.success && response.data ? response.data.newStatus : currentCard.status,
-      };
-
-      // Show XP popup and level-up modal
-      if (response.success && response.data?.xp) {
-        if (response.data.xp.awarded > 0) {
-          showXp(response.data.xp.awarded);
-        }
-        if (response.data.xp.leveledUp) {
-          setLevelUpLevel(response.data.xp.currentLevel);
-        }
-      }
-
-      setResults((prev) => [...prev, result]);
-      setIsSubmitting(false);
-
+      // Optimistic: record result and advance card immediately
+      setResults((prev) => [...prev, { cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
         setReviewStartTime(Date.now());
+        setIsSubmitting(false);
       }, 300);
+
+      // Fire server action in background
+      submitReviewByCardId(cardId, rating, durationMs).then((response) => {
+        if (response.success && response.data?.xp) {
+          if (response.data.xp.awarded > 0) {
+            showXp(response.data.xp.awarded);
+          }
+          if (response.data.xp.leveledUp) {
+            setLevelUpLevel(response.data.xp.currentLevel);
+          }
+        }
+      });
     },
     [currentCard, isSubmitting, reviewStartTime]
   );

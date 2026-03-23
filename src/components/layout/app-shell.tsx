@@ -18,7 +18,7 @@ export function AppShell({ children, user }: AppShellProps) {
 
       <div className="flex flex-1 pt-14">
         <div className="hidden w-60 shrink-0 border-r border-border/50 lg:block xl:w-64">
-          <div className="sticky top-14 h-[calc(100vh-3.5rem)]">
+          <div className="sticky top-14 h-[calc(100vh-3.5rem)] overflow-hidden">
             <Sidebar />
           </div>
         </div>

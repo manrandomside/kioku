@@ -22,8 +22,6 @@ const STREAK_MILESTONES: [number, number, number][] = [
 ];
 
 // Level formula: XP needed to reach level N = 50 * N^2
-// Level 1: 0 XP, Level 2: 200 XP (50*2^2), Level 3: 450 XP (50*3^2), etc.
-// Cumulative XP for level N = sum(50 * i^2) for i from 2 to N
 function calculateLevel(totalXp: number): { level: number; xpForCurrentLevel: number; xpForNextLevel: number } {
   let level = 1;
   let cumulativeXp = 0;
@@ -42,7 +40,6 @@ function calculateLevel(totalXp: number): { level: number; xpForCurrentLevel: nu
   }
 }
 
-// Get today's date string in YYYY-MM-DD format
 function getTodayDate(): string {
   return new Date().toISOString().split("T")[0];
 }
@@ -59,7 +56,7 @@ export interface AwardXpResult {
   dailyGoalJustCompleted: boolean;
 }
 
-// Core function to award XP and update gamification state
+// Core function to award XP using atomic SQL increments
 async function awardXpInternal(
   userId: string,
   amount: number,
@@ -67,17 +64,6 @@ async function awardXpInternal(
   description: string,
   referenceId?: string
 ): Promise<AwardXpResult> {
-  // Get current gamification state
-  const [gamification] = await db
-    .select()
-    .from(userGamification)
-    .where(eq(userGamification.userId, userId))
-    .limit(1);
-
-  if (!gamification) {
-    throw new Error("Data gamifikasi tidak ditemukan");
-  }
-
   // Get user's daily goal setting
   const [userData] = await db
     .select({ dailyGoalXp: user.dailyGoalXp })
@@ -87,20 +73,6 @@ async function awardXpInternal(
 
   const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "30", 10);
   const today = getTodayDate();
-  const isNewDay = gamification.lastActivityDate !== today;
-
-  // Reset daily counters if new day
-  const currentDailyXp = isNewDay ? 0 : gamification.dailyXpEarned;
-  const currentDailyGoalMet = isNewDay ? false : gamification.dailyGoalMet;
-
-  const newTotalXp = gamification.totalXp + amount;
-  const newDailyXp = currentDailyXp + amount;
-  const prevLevel = gamification.currentLevel;
-  const { level: newLevel, xpForCurrentLevel, xpForNextLevel } = calculateLevel(newTotalXp);
-  const leveledUp = newLevel > prevLevel;
-
-  // Check if daily goal just completed
-  const dailyGoalJustCompleted = !currentDailyGoalMet && newDailyXp >= dailyGoalXp;
 
   // Insert XP transaction
   await db.insert(xpTransaction).values({
@@ -111,41 +83,63 @@ async function awardXpInternal(
     referenceId: referenceId ?? null,
   });
 
-  // Update gamification stats
-  await db
+  // Atomic increment: update total_xp and daily_xp using SQL expressions
+  // Also reset daily counters if it's a new day
+  const [updated] = await db
     .update(userGamification)
     .set({
-      totalXp: newTotalXp,
-      currentLevel: newLevel,
-      dailyXpEarned: newDailyXp,
-      dailyGoalMet: currentDailyGoalMet || dailyGoalJustCompleted,
+      totalXp: sql`${userGamification.totalXp} + ${amount}`,
+      dailyXpEarned: sql`CASE WHEN ${userGamification.lastActivityDate} = ${today} THEN ${userGamification.dailyXpEarned} + ${amount} ELSE ${amount} END`,
+      dailyGoalMet: sql`CASE WHEN ${userGamification.lastActivityDate} = ${today} THEN (${userGamification.dailyGoalMet} OR (${userGamification.dailyXpEarned} + ${amount} >= ${dailyGoalXp})) ELSE (${amount} >= ${dailyGoalXp}) END`,
       lastActivityDate: today,
       updatedAt: new Date().toISOString(),
     })
-    .where(eq(userGamification.userId, userId));
+    .where(eq(userGamification.userId, userId))
+    .returning();
+
+  if (!updated) {
+    throw new Error("Data gamifikasi tidak ditemukan");
+  }
+
+  const newTotalXp = updated.totalXp;
+  const newDailyXp = updated.dailyXpEarned;
+  const prevLevel = updated.currentLevel;
+  const { level: newLevel } = calculateLevel(newTotalXp);
+  const leveledUp = newLevel > prevLevel;
+
+  // Update level if changed
+  if (leveledUp) {
+    await db
+      .update(userGamification)
+      .set({ currentLevel: newLevel })
+      .where(eq(userGamification.userId, userId));
+  }
+
+  // Check if daily goal was just completed this call
+  const dailyGoalJustCompleted = updated.dailyGoalMet && (newDailyXp - amount) < dailyGoalXp;
 
   // Update daily activity
-  await upsertDailyActivity(userId, today, { xpEarned: amount, goalMet: dailyGoalJustCompleted || currentDailyGoalMet });
+  await upsertDailyActivity(userId, today, { xpEarned: amount, goalMet: updated.dailyGoalMet });
 
   return {
     xpAwarded: amount,
     totalXp: newTotalXp,
-    currentLevel: newLevel,
+    currentLevel: leveledUp ? newLevel : prevLevel,
     leveledUp,
     dailyXpEarned: newDailyXp,
-    dailyGoalMet: currentDailyGoalMet || dailyGoalJustCompleted,
+    dailyGoalMet: updated.dailyGoalMet,
     dailyGoalJustCompleted,
   };
 }
 
-// Upsert daily activity row
+// Upsert daily activity row using atomic increments
 async function upsertDailyActivity(
   userId: string,
   date: string,
   updates: { reviewsCount?: number; quizCount?: number; xpEarned?: number; goalMet?: boolean }
 ) {
   const existing = await db
-    .select()
+    .select({ id: dailyActivity.id })
     .from(dailyActivity)
     .where(
       and(
@@ -156,16 +150,25 @@ async function upsertDailyActivity(
     .limit(1);
 
   if (existing.length > 0) {
-    const row = existing[0];
-    await db
-      .update(dailyActivity)
-      .set({
-        reviewsCount: row.reviewsCount + (updates.reviewsCount ?? 0),
-        quizCount: row.quizCount + (updates.quizCount ?? 0),
-        xpEarned: row.xpEarned + (updates.xpEarned ?? 0),
-        goalMet: updates.goalMet ?? row.goalMet,
-      })
-      .where(eq(dailyActivity.id, row.id));
+    const setClause: Record<string, unknown> = {};
+    if (updates.reviewsCount) {
+      setClause.reviewsCount = sql`${dailyActivity.reviewsCount} + ${updates.reviewsCount}`;
+    }
+    if (updates.quizCount) {
+      setClause.quizCount = sql`${dailyActivity.quizCount} + ${updates.quizCount}`;
+    }
+    if (updates.xpEarned) {
+      setClause.xpEarned = sql`${dailyActivity.xpEarned} + ${updates.xpEarned}`;
+    }
+    if (updates.goalMet !== undefined) {
+      setClause.goalMet = updates.goalMet;
+    }
+    if (Object.keys(setClause).length > 0) {
+      await db
+        .update(dailyActivity)
+        .set(setClause)
+        .where(eq(dailyActivity.id, existing[0].id));
+    }
   } else {
     await db.insert(dailyActivity).values({
       userId,

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { getDueCards, getSrsStats } from "@/lib/queries/review";
 import { ReviewSession } from "@/components/review/review-session";
 
@@ -12,9 +13,12 @@ export default async function ReviewPage() {
 
   if (!user) redirect("/login");
 
+  const userId = await getInternalUserId(user.id);
+  if (!userId) redirect("/login");
+
   const [dueCards, stats] = await Promise.all([
-    getDueCards(user.id),
-    getSrsStats(user.id),
+    getDueCards(userId),
+    getSrsStats(userId),
   ]);
 
   return (

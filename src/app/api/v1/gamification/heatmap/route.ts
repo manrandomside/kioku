@@ -4,6 +4,7 @@ import { eq, and, gte, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { dailyActivity } from "@/db/schema/gamification";
 import { createClient } from "@/lib/supabase/server";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 
 export async function GET() {
   try {
@@ -16,6 +17,14 @@ export async function GET() {
       return NextResponse.json(
         { success: false, error: { code: "UNAUTHORIZED", message: "Belum login" } },
         { status: 401 }
+      );
+    }
+
+    const userId = await getInternalUserId(user.id);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } },
+        { status: 404 }
       );
     }
 
@@ -37,7 +46,7 @@ export async function GET() {
       .from(dailyActivity)
       .where(
         and(
-          eq(dailyActivity.userId, user.id),
+          eq(dailyActivity.userId, userId),
           gte(dailyActivity.activityDate, startStr),
           lte(dailyActivity.activityDate, endStr)
         )
