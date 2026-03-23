@@ -7,6 +7,8 @@ import {
   jsonb,
   varchar,
   date,
+  index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 import { xpSourceEnum, achievementTypeEnum } from "./enums";
@@ -35,17 +37,23 @@ export const userGamification = pgTable("user_gamification", {
 });
 
 // XP transaction log
-export const xpTransaction = pgTable("xp_transaction", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  source: xpSourceEnum("source").notNull(),
-  amount: integer("amount").notNull(),
-  description: text("description"),
-  referenceId: uuid("reference_id"),
-  createdAt: text("created_at").notNull().default("now()"),
-});
+export const xpTransaction = pgTable(
+  "xp_transaction",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    source: xpSourceEnum("source").notNull(),
+    amount: integer("amount").notNull(),
+    description: text("description"),
+    referenceId: uuid("reference_id"),
+    createdAt: text("created_at").notNull().default("now()"),
+  },
+  (table) => [
+    index("idx_xp_transaction_user_id").on(table.userId),
+  ]
+);
 
 // Achievement definitions
 export const achievement = pgTable("achievement", {
@@ -63,45 +71,68 @@ export const achievement = pgTable("achievement", {
 });
 
 // Achievement unlocks per user
-export const achievementUnlock = pgTable("achievement_unlock", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  achievementId: uuid("achievement_id")
-    .notNull()
-    .references(() => achievement.id, { onDelete: "cascade" }),
-  unlockedAt: text("unlocked_at").notNull().default("now()"),
-});
+export const achievementUnlock = pgTable(
+  "achievement_unlock",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    achievementId: uuid("achievement_id")
+      .notNull()
+      .references(() => achievement.id, { onDelete: "cascade" }),
+    unlockedAt: text("unlocked_at").notNull().default("now()"),
+  },
+  (table) => [
+    uniqueIndex("achievement_unlock_user_achievement_unique").on(
+      table.userId,
+      table.achievementId
+    ),
+    index("idx_achievement_unlock_user_id").on(table.userId),
+  ]
+);
 
 // User chapter progress
-export const userChapterProgress = pgTable("user_chapter_progress", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  chapterId: uuid("chapter_id")
-    .notNull()
-    .references(() => chapter.id, { onDelete: "cascade" }),
-  vocabSeen: integer("vocab_seen").notNull().default(0),
-  vocabLearning: integer("vocab_learning").notNull().default(0),
-  vocabReview: integer("vocab_review").notNull().default(0),
-  completionPercent: integer("completion_percent").notNull().default(0),
-  bestQuizScore: integer("best_quiz_score"),
-  createdAt: text("created_at").notNull().default("now()"),
-  updatedAt: text("updated_at").notNull().default("now()"),
-});
+export const userChapterProgress = pgTable(
+  "user_chapter_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    chapterId: uuid("chapter_id")
+      .notNull()
+      .references(() => chapter.id, { onDelete: "cascade" }),
+    vocabSeen: integer("vocab_seen").notNull().default(0),
+    vocabLearning: integer("vocab_learning").notNull().default(0),
+    vocabReview: integer("vocab_review").notNull().default(0),
+    completionPercent: integer("completion_percent").notNull().default(0),
+    bestQuizScore: integer("best_quiz_score"),
+    createdAt: text("created_at").notNull().default("now()"),
+    updatedAt: text("updated_at").notNull().default("now()"),
+  },
+  (table) => [
+    index("idx_user_chapter_progress_user_id").on(table.userId),
+  ]
+);
 
 // Daily activity log
-export const dailyActivity = pgTable("daily_activity", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  activityDate: date("activity_date").notNull(),
-  reviewsCount: integer("reviews_count").notNull().default(0),
-  quizCount: integer("quiz_count").notNull().default(0),
-  xpEarned: integer("xp_earned").notNull().default(0),
-  goalMet: boolean("goal_met").notNull().default(false),
-  createdAt: text("created_at").notNull().default("now()"),
-});
+export const dailyActivity = pgTable(
+  "daily_activity",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    activityDate: date("activity_date").notNull(),
+    reviewsCount: integer("reviews_count").notNull().default(0),
+    quizCount: integer("quiz_count").notNull().default(0),
+    xpEarned: integer("xp_earned").notNull().default(0),
+    goalMet: boolean("goal_met").notNull().default(false),
+    createdAt: text("created_at").notNull().default("now()"),
+  },
+  (table) => [
+    index("idx_daily_activity_user_id").on(table.userId),
+    index("idx_daily_activity_user_id_date").on(table.userId, table.activityDate),
+  ]
+);

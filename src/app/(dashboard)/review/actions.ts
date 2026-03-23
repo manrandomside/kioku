@@ -1,6 +1,7 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, and, gte, desc } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/db";
 import { srsCard, reviewLog } from "@/db/schema/srs";
@@ -19,12 +20,22 @@ import { awardReviewXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 
+const submitReviewSchema = z.object({
+  cardId: z.string().uuid(),
+  rating: z.enum(["again", "hard", "good", "easy"]),
+  reviewDurationMs: z.number().int().nonnegative().max(600_000),
+});
+
 export async function submitReviewByCardId(
   cardId: string,
   rating: SrsRating,
   reviewDurationMs: number
 ) {
   try {
+    const parsed = submitReviewSchema.safeParse({ cardId, rating, reviewDurationMs });
+    if (!parsed.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: "Input tidak valid" } };
+    }
     const supabase = await createClient();
     const {
       data: { user },
@@ -48,6 +59,25 @@ export async function submitReviewByCardId(
 
     if (!card || card.userId !== userId) {
       return { success: false, error: { code: "NOT_FOUND", message: "Kartu tidak ditemukan" } };
+    }
+
+    // Dedup check: skip if same card was reviewed within last 10 seconds
+    const tenSecondsAgo = new Date(Date.now() - 10_000).toISOString();
+    const [recentReview] = await db
+      .select({ id: reviewLog.id })
+      .from(reviewLog)
+      .where(
+        and(
+          eq(reviewLog.cardId, cardId),
+          eq(reviewLog.userId, userId),
+          gte(reviewLog.reviewedAt, tenSecondsAgo)
+        )
+      )
+      .orderBy(desc(reviewLog.reviewedAt))
+      .limit(1);
+
+    if (recentReview) {
+      return { success: false, error: { code: "DUPLICATE_REVIEW", message: "Review sudah tercatat" } };
     }
 
     const cardData: SrsCardData = {

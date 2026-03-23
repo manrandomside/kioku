@@ -20,19 +20,10 @@ import { awardReviewXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 
+// Ensure SRS card exists for a vocab, create if needed (race-safe via unique index)
 async function ensureVocabSrsCard(userId: string, vocabularyId: string) {
-  const existing = await db
-    .select()
-    .from(srsCard)
-    .where(and(eq(srsCard.userId, userId), eq(srsCard.vocabularyId, vocabularyId)))
-    .limit(1);
-
-  if (existing.length > 0) {
-    return existing[0];
-  }
-
   const newCard = createNewCardData();
-  const [created] = await db
+  await db
     .insert(srsCard)
     .values({
       userId,
@@ -45,9 +36,15 @@ async function ensureVocabSrsCard(userId: string, vocabularyId: string) {
       reps: newCard.reps,
       lapses: newCard.lapses,
     })
-    .returning();
+    .onConflictDoNothing();
 
-  return created;
+  const [existing] = await db
+    .select()
+    .from(srsCard)
+    .where(and(eq(srsCard.userId, userId), eq(srsCard.vocabularyId, vocabularyId)))
+    .limit(1);
+
+  return existing;
 }
 
 export async function submitVocabReview(

@@ -163,13 +163,16 @@ export async function checkAndUnlockAchievements(
 
   // Insert unlock records and award XP for each
   if (newlyUnlocked.length > 0) {
-    await db.insert(achievementUnlock).values(
-      newlyUnlocked.map((ach) => ({
-        userId,
-        achievementId: ach.id,
-        unlockedAt: new Date().toISOString(),
-      }))
-    );
+    await db
+      .insert(achievementUnlock)
+      .values(
+        newlyUnlocked.map((ach) => ({
+          userId,
+          achievementId: ach.id,
+          unlockedAt: new Date().toISOString(),
+        }))
+      )
+      .onConflictDoNothing();
 
     // Award achievement XP (import inline to avoid circular dependency)
     const { awardAchievementXp } = await import("./xp-service");

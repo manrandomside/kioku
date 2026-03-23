@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
@@ -16,11 +17,25 @@ import type { VocabQuizAnswer, VocabQuestionType } from "@/types/vocab-quiz";
 const XP_PER_CORRECT = 5;
 const XP_PERFECT_BONUS = 20;
 
+const createSessionSchema = z.object({
+  chapterId: z.string().uuid(),
+  totalQuestions: z.number().int().min(1).max(50),
+});
+
+const submitResultSchema = z.object({
+  sessionId: z.string().uuid(),
+  timeSpentMs: z.number().int().nonnegative().max(3_600_000),
+});
+
 export async function createVocabQuizSession(
   chapterId: string,
   totalQuestions: number
 ) {
   try {
+    const parsed = createSessionSchema.safeParse({ chapterId, totalQuestions });
+    if (!parsed.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: "Input tidak valid" } };
+    }
     const supabase = await createClient();
     const {
       data: { user },
@@ -57,6 +72,11 @@ export async function submitVocabQuizResult(
   timeSpentMs: number
 ) {
   try {
+    const parsed = submitResultSchema.safeParse({ sessionId, timeSpentMs });
+    if (!parsed.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: "Input tidak valid" } };
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
