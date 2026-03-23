@@ -101,7 +101,7 @@ interface AchievementBadgeProps {
 }
 
 export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeProps) {
-  const IconComponent = ICON_MAP[achievement.icon] ?? Star;
+  const IconComponent = ICON_MAP[achievement.icon?.toLowerCase().trim()] ?? Star;
   const color = achievement.badgeColor ?? "#9CA3AF";
 
   const sizeClasses = {

@@ -17,7 +17,7 @@ export function AppShell({ children, user }: AppShellProps) {
       <Navbar user={user} />
 
       <div className="flex flex-1 pt-14">
-        <div className="hidden w-56 min-w-[220px] shrink-0 border-r border-border/50 lg:block xl:w-64 xl:min-w-[256px]">
+        <div className="hidden w-56 min-w-[220px] shrink-0 border-r border-border/50 bg-sidebar lg:block xl:w-64 xl:min-w-[256px]">
           <div className="sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto overflow-x-hidden">
             <Sidebar />
           </div>
