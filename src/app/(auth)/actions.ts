@@ -7,93 +7,125 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signInWithEmail(formData: FormData) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    revalidatePath("/", "layout");
+  } catch (error) {
+    console.error("[signInWithEmail]", error);
+    return { error: "Terjadi kesalahan saat login" };
   }
 
-  revalidatePath("/", "layout");
   redirect("/home");
 }
 
 export async function signUpWithEmail(formData: FormData) {
-  const supabase = await createClient();
-  const headersList = await headers();
-  const origin = headersList.get("origin") ?? "";
+  try {
+    const supabase = await createClient();
+    const headersList = await headers();
+    const origin = headersList.get("origin") ?? "";
 
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
-  });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback`,
+      },
+    });
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    revalidatePath("/", "layout");
+  } catch (error) {
+    console.error("[signUpWithEmail]", error);
+    return { error: "Terjadi kesalahan saat mendaftar" };
   }
 
-  revalidatePath("/", "layout");
   redirect("/login?message=check_email");
 }
 
 export async function signInWithOAuth(provider: "google" | "github") {
-  const supabase = await createClient();
-  const headersList = await headers();
-  const origin = headersList.get("origin") ?? "";
+  let redirectUrl: string | undefined;
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: `${origin}/auth/callback`,
-    },
-  });
+  try {
+    const supabase = await createClient();
+    const headersList = await headers();
+    const origin = headersList.get("origin") ?? "";
 
-  if (error) {
-    return { error: error.message };
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    redirectUrl = data.url;
+  } catch (error) {
+    console.error("[signInWithOAuth]", error);
+    return { error: "Terjadi kesalahan saat login OAuth" };
   }
 
-  if (data.url) {
-    redirect(data.url);
+  if (redirectUrl) {
+    redirect(redirectUrl);
   }
 }
 
 export async function signInWithMagicLink(formData: FormData) {
-  const supabase = await createClient();
-  const headersList = await headers();
-  const origin = headersList.get("origin") ?? "";
+  try {
+    const supabase = await createClient();
+    const headersList = await headers();
+    const origin = headersList.get("origin") ?? "";
 
-  const email = formData.get("email") as string;
+    const email = formData.get("email") as string;
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
-  });
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback`,
+      },
+    });
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("[signInWithMagicLink]", error);
+    return { error: "Terjadi kesalahan saat mengirim magic link" };
   }
-
-  return { success: true };
 }
 
 export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  revalidatePath("/", "layout");
+  try {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    revalidatePath("/", "layout");
+  } catch (error) {
+    console.error("[signOut]", error);
+    return { error: "Terjadi kesalahan saat logout" };
+  }
+
   redirect("/login");
 }

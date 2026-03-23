@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 interface XpEvent {
   id: number;
@@ -12,14 +12,24 @@ let nextId = 0;
 
 export function useXpPopup() {
   const [events, setEvents] = useState<XpEvent[]>([]);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current.clear();
+    };
+  }, []);
 
   const showXp = useCallback((amount: number) => {
     if (amount <= 0) return;
     const id = nextId++;
     setEvents((prev) => [...prev, { id, amount }]);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setEvents((prev) => prev.filter((e) => e.id !== id));
+      timersRef.current.delete(timer);
     }, 1200);
+    timersRef.current.add(timer);
   }, []);
 
   return { events, showXp };

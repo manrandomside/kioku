@@ -69,6 +69,22 @@ export async function submitQuizResult(
       return { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } };
     }
 
+    // Idempotency check: prevent double-submission
+    const { eq } = await import("drizzle-orm");
+    const [existingSession] = await db
+      .select({ isCompleted: quizSession.isCompleted, userId: quizSession.userId })
+      .from(quizSession)
+      .where(eq(quizSession.id, sessionId))
+      .limit(1);
+
+    if (!existingSession || existingSession.userId !== userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "Sesi quiz tidak ditemukan" } };
+    }
+
+    if (existingSession.isCompleted) {
+      return { success: false, error: { code: "ALREADY_COMPLETED", message: "Quiz sudah diselesaikan" } };
+    }
+
     const correctCount = answers.filter((a) => a.isCorrect).length;
     const totalQuestions = answers.length;
     const scorePercent = Math.round((correctCount / totalQuestions) * 100);
@@ -92,7 +108,6 @@ export async function submitQuizResult(
     );
 
     // Update session
-    const { eq } = await import("drizzle-orm");
     await db
       .update(quizSession)
       .set({
