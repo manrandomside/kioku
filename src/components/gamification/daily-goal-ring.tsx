@@ -35,14 +35,14 @@ export function DailyGoalRing({ earned, goal, met }: DailyGoalRingProps) {
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className={met ? "text-[#C2E959]" : "text-[#248288]"}
+          className={met ? "text-accent" : "text-[#248288]"}
           stroke="currentColor"
           style={{ transition: "stroke-dashoffset 0.5s ease" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {met ? (
-          <span className="text-xs font-bold text-[#C2E959]">Done!</span>
+          <span className="text-xs font-bold text-accent">Done!</span>
         ) : (
           <>
             <span className="text-xs font-bold leading-none">{percent}%</span>

@@ -98,7 +98,7 @@ export function LevelUpModal({ level, onDismiss }: LevelUpModalProps) {
             </motion.div>
 
             <div className="text-center">
-              <p className="text-sm font-medium text-[#C2E959]">Level Up!</p>
+              <p className="text-sm font-medium text-accent">Level Up!</p>
               <p className="font-display text-3xl font-bold tracking-tight">
                 Level {level}
               </p>

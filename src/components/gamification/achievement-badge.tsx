@@ -240,7 +240,7 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
               <p className="text-muted-foreground">{achievement.description}</p>
             )}
             <div className="mt-0.5 flex items-center gap-2">
-              <span className="font-medium text-[#C2E959]">+{achievement.xpReward} XP</span>
+              <span className="font-medium text-accent">+{achievement.xpReward} XP</span>
               {formattedDate && (
                 <span className="text-muted-foreground">Terbuka {formattedDate}</span>
               )}

@@ -77,7 +77,7 @@ export default async function HomePage() {
           {/* XP Progress */}
           <div className="flex min-w-0 flex-1 flex-col gap-1 md:flex-initial">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Zap className="size-3.5 shrink-0 text-[#C2E959]" />
+              <Zap className="size-3.5 shrink-0 text-accent" />
               <span className="truncate">
                 {data.level.xpInLevel} / {data.level.xpNeeded} XP
               </span>
@@ -221,10 +221,10 @@ export default async function HomePage() {
             bg="bg-green-500/10"
           />
           <StatCard
-            icon={<Zap className="size-4.5 text-[#C2E959]" />}
+            icon={<Zap className="size-4.5 text-accent" />}
             label="Total Review"
             value={data.stats.totalReviews.toLocaleString("id-ID")}
-            bg="bg-[#C2E959]/10"
+            bg="bg-accent/10"
           />
           <StatCard
             icon={<Target className="size-4.5 text-blue-500" />}

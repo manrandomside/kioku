@@ -100,7 +100,7 @@ export function showAchievementToast(achievement: UnlockedAchievement) {
           <p className="text-xs text-muted-foreground">
             {achievement.description}
           </p>
-          <p className="mt-0.5 text-xs font-semibold text-green-500">
+          <p className="mt-0.5 text-xs font-semibold text-success">
             +{achievement.xpReward} XP
           </p>
         </div>

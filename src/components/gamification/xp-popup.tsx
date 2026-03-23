@@ -40,7 +40,7 @@ export function XpPopup({ events }: XpPopupProps) {
             animate={{ opacity: 1, y: -40 - i * 30, scale: 1 }}
             exit={{ opacity: 0, y: -80, scale: 0.6 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="absolute text-lg font-bold text-[#C2E959] drop-shadow-md"
+            className="absolute text-lg font-bold text-accent drop-shadow-md"
           >
             +{ev.amount} XP
           </motion.div>

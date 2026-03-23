@@ -120,7 +120,7 @@ export default function OnboardingPage() {
                 s === step
                   ? "bg-primary text-primary-foreground"
                   : s < step
-                    ? "bg-[#C2E959] text-[#0A3A3A]"
+                    ? "bg-accent text-accent-foreground"
                     : "bg-muted text-muted-foreground"
               }`}
             >
@@ -135,7 +135,7 @@ export default function OnboardingPage() {
             {s < TOTAL_STEPS && (
               <div
                 className={`h-0.5 w-8 transition-colors ${
-                  s < step ? "bg-[#C2E959]" : "bg-muted"
+                  s < step ? "bg-accent" : "bg-muted"
                 }`}
               />
             )}
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
 
         {/* Error */}
         {error && (
-          <p className="mt-4 text-center text-sm text-[#EF4444]">{error}</p>
+          <p className="mt-4 text-center text-sm text-destructive">{error}</p>
         )}
 
         {/* Navigation */}
@@ -298,7 +298,7 @@ function StepTarget({
               onClick={() => setJlptTarget(option.value)}
               className={`flex flex-col gap-1 rounded-xl border-2 p-4 text-left transition-all ${
                 jlptTarget === option.value
-                  ? "border-[#C2E959] bg-[#C2E959]/10"
+                  ? "border-accent bg-accent/10"
                   : "border-border hover:border-border/80 hover:bg-muted/50"
               }`}
             >
@@ -322,12 +322,12 @@ function StepTarget({
               onClick={() => setDailyGoalXp(option.value)}
               className={`flex flex-col items-center gap-1 rounded-xl border-2 p-4 transition-all ${
                 dailyGoalXp === option.value
-                  ? "border-[#C2E959] bg-[#C2E959]/10"
+                  ? "border-accent bg-accent/10"
                   : "border-border hover:border-border/80 hover:bg-muted/50"
               }`}
             >
               <span className="font-semibold">{option.label}</span>
-              <span className="text-sm font-medium text-[#C2E959]">
+              <span className="text-sm font-medium text-accent">
                 {option.description}
               </span>
               <span className="text-xs text-muted-foreground">
