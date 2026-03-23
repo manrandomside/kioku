@@ -63,7 +63,8 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
       const cardId = currentCard.id;
       const prevStatus = currentCard.srsStatus ?? "new";
 
-      // Optimistic: record result and advance card immediately
+      // Optimistic: show XP popup, record result, and advance card immediately
+      showXp(5);
       setResults((prev) => [...prev, { vocabId: cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
       setTimeout(() => {
@@ -72,15 +73,10 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
         setIsSubmitting(false);
       }, 300);
 
-      // Fire server action in background
+      // Fire server action in background (handle level-up from server response)
       submitVocabReview(cardId, rating, durationMs).then((response) => {
-        if (response.success && response.data?.xp) {
-          if (response.data.xp.awarded > 0) {
-            showXp(response.data.xp.awarded);
-          }
-          if (response.data.xp.leveledUp) {
-            setLevelUpLevel(response.data.xp.currentLevel);
-          }
+        if (response.success && response.data?.xp?.leveledUp) {
+          setLevelUpLevel(response.data.xp.currentLevel);
         }
       });
     },

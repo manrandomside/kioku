@@ -285,7 +285,7 @@ export default async function HomePage() {
                   icon: ach.icon,
                   badgeColor: ach.badgeColor,
                   type: "",
-                  xpReward: 0,
+                  xpReward: ach.xpReward,
                   isUnlocked: true,
                   unlockedAt: ach.unlockedAt,
                 }}

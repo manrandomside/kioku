@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Zap } from "lucide-react";
@@ -14,6 +14,8 @@ interface LevelUpModalProps {
 
 export function LevelUpModal({ level, onDismiss }: LevelUpModalProps) {
   const [visible, setVisible] = useState(false);
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
 
   useEffect(() => {
     if (level === null) {
@@ -51,16 +53,16 @@ export function LevelUpModal({ level, onDismiss }: LevelUpModalProps) {
     // Auto-dismiss after 3 seconds
     const timer = setTimeout(() => {
       setVisible(false);
-      onDismiss();
+      onDismissRef.current();
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [level, onDismiss]);
+  }, [level]);
 
   const handleClick = useCallback(() => {
     setVisible(false);
-    onDismiss();
-  }, [onDismiss]);
+    onDismissRef.current();
+  }, []);
 
   return (
     <AnimatePresence>

@@ -70,6 +70,7 @@ export interface DashboardData {
     name: string;
     icon: string;
     badgeColor: string | null;
+    xpReward: number;
     unlockedAt: string;
   }[];
   totalAchievements: { unlocked: number; total: number };
@@ -215,6 +216,7 @@ async function getRecentAchievements(userId: string, limit: number) {
       name: achievement.name,
       icon: achievement.icon,
       badgeColor: achievement.badgeColor,
+      xpReward: achievement.xpReward,
       unlockedAt: achievementUnlock.unlockedAt,
     })
     .from(achievementUnlock)

@@ -69,7 +69,8 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
       const cardId = currentCard.cardId;
       const prevStatus = currentCard.status;
 
-      // Optimistic: record result and advance card immediately
+      // Optimistic: show XP popup, record result, and advance card immediately
+      showXp(5);
       setResults((prev) => [...prev, { cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
       setTimeout(() => {
@@ -78,15 +79,10 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
         setIsSubmitting(false);
       }, 300);
 
-      // Fire server action in background
+      // Fire server action in background (handle level-up from server response)
       submitReviewByCardId(cardId, rating, durationMs).then((response) => {
-        if (response.success && response.data?.xp) {
-          if (response.data.xp.awarded > 0) {
-            showXp(response.data.xp.awarded);
-          }
-          if (response.data.xp.leveledUp) {
-            setLevelUpLevel(response.data.xp.currentLevel);
-          }
+        if (response.success && response.data?.xp?.leveledUp) {
+          setLevelUpLevel(response.data.xp.currentLevel);
         }
       });
     },
