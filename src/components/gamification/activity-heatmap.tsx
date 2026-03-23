@@ -155,6 +155,7 @@ export function ActivityHeatmap() {
     x: number;
     y: number;
     day: HeatmapDay;
+    flipBelow: boolean;
   } | null>(null);
   const isDark = useIsDark();
 
@@ -186,10 +187,14 @@ export function ActivityHeatmap() {
     (e: React.MouseEvent<SVGRectElement>, day: HeatmapDay, cellSize: number) => {
       const rect = (e.target as SVGRectElement).getBoundingClientRect();
       const parent = (e.target as SVGRectElement).closest("[data-heatmap]")!.getBoundingClientRect();
+      const flipBelow = day.dayOfWeek <= 1;
       setTooltip({
         x: rect.left - parent.left + cellSize / 2,
-        y: rect.top - parent.top - 8,
+        y: flipBelow
+          ? rect.bottom - parent.top + 8
+          : rect.top - parent.top - 8,
         day,
+        flipBelow,
       });
     },
     []
@@ -279,6 +284,7 @@ export function ActivityHeatmap() {
                   className="cursor-pointer"
                   onMouseEnter={(e) => handleMouseEnter(e, day, cellSize)}
                   onMouseLeave={clearTooltip}
+                  onClick={(e) => handleMouseEnter(e as unknown as React.MouseEvent<SVGRectElement>, day, cellSize)}
                 />
               );
             })}
@@ -287,7 +293,9 @@ export function ActivityHeatmap() {
           {/* Tooltip */}
           {tooltip && (
             <div
-              className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md"
+              className={`pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md ${
+                tooltip.flipBelow ? "translate-y-0" : "-translate-y-full"
+              }`}
               style={{ left: tooltip.x, top: tooltip.y }}
             >
               <p className="font-medium">{formatDate(tooltip.day.date)}</p>

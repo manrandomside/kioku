@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
 import {
   Flame,
   FlameKindling,
@@ -37,13 +37,6 @@ import {
   CalendarCheck,
   type LucideIcon,
 } from "lucide-react";
-
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
 
 // Map icon name strings to Lucide components
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -103,6 +96,8 @@ interface AchievementBadgeProps {
 export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeProps) {
   const IconComponent = ICON_MAP[achievement.icon?.toLowerCase().trim()] ?? Star;
   const color = achievement.badgeColor ?? "#9CA3AF";
+  const [showInfo, setShowInfo] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const sizeClasses = {
     sm: "size-12",
@@ -124,59 +119,80 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
       })
     : null;
 
+  // Close popover when clicking outside
+  useEffect(() => {
+    if (!showInfo) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowInfo(false);
+      }
+    }
+
+    document.addEventListener("click", handleClickOutside, true);
+    return () => document.removeEventListener("click", handleClickOutside, true);
+  }, [showInfo]);
+
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <div className="flex flex-col items-center gap-1.5">
-            <div
-              className={`${sizeClasses[size]} flex items-center justify-center rounded-2xl border-2 transition-all ${
-                achievement.isUnlocked
-                  ? "shadow-md"
-                  : "border-border/50 opacity-40 grayscale"
-              }`}
-              style={
-                achievement.isUnlocked
-                  ? {
-                      borderColor: color,
-                      backgroundColor: `${color}15`,
-                    }
-                  : undefined
-              }
-            >
-              <IconComponent
-                className={iconSizes[size]}
-                style={
-                  achievement.isUnlocked ? { color } : { color: "#9CA3AF" }
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setShowInfo((prev) => !prev)}
+        className="flex flex-col items-center gap-1.5"
+      >
+        <div
+          className={`${sizeClasses[size]} flex items-center justify-center rounded-2xl border-2 transition-all ${
+            achievement.isUnlocked
+              ? "shadow-md"
+              : "border-border/50 opacity-40 grayscale"
+          }`}
+          style={
+            achievement.isUnlocked
+              ? {
+                  borderColor: color,
+                  backgroundColor: `${color}15`,
                 }
-              />
-            </div>
-            {size !== "sm" && (
-              <span
-                className={`max-w-[5rem] text-center text-[11px] leading-tight font-medium ${
-                  achievement.isUnlocked
-                    ? "text-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {achievement.name}
-              </span>
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="flex flex-col gap-1 py-1">
+              : undefined
+          }
+        >
+          <IconComponent
+            className={iconSizes[size]}
+            style={
+              achievement.isUnlocked ? { color } : { color: "#9CA3AF" }
+            }
+          />
+        </div>
+        {size !== "sm" && (
+          <span
+            className={`max-w-[5rem] text-center text-[11px] leading-tight font-medium ${
+              achievement.isUnlocked
+                ? "text-foreground"
+                : "text-muted-foreground"
+            }`}
+          >
+            {achievement.name}
+          </span>
+        )}
+      </button>
+
+      {showInfo && (
+        <div className="absolute left-1/2 bottom-full z-20 mb-2 w-48 -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs shadow-lg">
+          <div className="flex flex-col gap-1">
             <p className="font-semibold">{achievement.name}</p>
-            <p className="text-xs opacity-80">{achievement.description}</p>
-            <div className="mt-0.5 flex items-center gap-2 text-xs">
-              <span>+{achievement.xpReward} XP</span>
+            {achievement.description && (
+              <p className="text-muted-foreground">{achievement.description}</p>
+            )}
+            <div className="mt-0.5 flex items-center gap-2">
+              <span className="font-medium text-[#C2E959]">+{achievement.xpReward} XP</span>
               {formattedDate && (
-                <span className="opacity-60">Terbuka {formattedDate}</span>
+                <span className="text-muted-foreground">Terbuka {formattedDate}</span>
               )}
             </div>
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+          <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-border" />
+          <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px border-4 border-transparent border-t-popover" />
+        </div>
+      )}
+    </div>
   );
 }
