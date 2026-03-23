@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Flame,
   FlameKindling,
@@ -98,6 +99,8 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
   const color = achievement.badgeColor ?? "#9CA3AF";
   const [showInfo, setShowInfo] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({});
 
   const sizeClasses = {
     sm: "size-12",
@@ -119,12 +122,44 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
       })
     : null;
 
+  // Position popover within viewport
+  const positionPopover = useCallback(() => {
+    const button = containerRef.current;
+    const popover = popoverRef.current;
+    if (!button || !popover) return;
+
+    const btnRect = button.getBoundingClientRect();
+    const popW = popover.offsetWidth;
+    const vw = window.innerWidth;
+    const padding = 8;
+
+    // Center popover horizontally on the button
+    let left = btnRect.left + btnRect.width / 2 - popW / 2;
+
+    // Clamp to viewport
+    if (left < padding) left = padding;
+    if (left + popW > vw - padding) left = vw - padding - popW;
+
+    // Position above the button
+    const top = btnRect.top - popover.offsetHeight - 8;
+
+    setPopoverStyle({
+      position: "fixed",
+      left,
+      top: top < padding ? btnRect.bottom + 8 : top,
+      width: popW,
+    });
+  }, []);
+
   // Close popover when clicking outside
   useEffect(() => {
     if (!showInfo) return;
 
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target as Node) &&
+        popoverRef.current && !popoverRef.current.contains(e.target as Node)
+      ) {
         setShowInfo(false);
       }
     }
@@ -133,50 +168,72 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
     return () => document.removeEventListener("click", handleClickOutside, true);
   }, [showInfo]);
 
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setShowInfo((prev) => !prev)}
-        className="flex flex-col items-center gap-1.5"
-      >
-        <div
-          className={`${sizeClasses[size]} flex items-center justify-center rounded-2xl border-2 transition-all ${
-            achievement.isUnlocked
-              ? "shadow-md"
-              : "border-border/50 opacity-40 grayscale"
-          }`}
-          style={
-            achievement.isUnlocked
-              ? {
-                  borderColor: color,
-                  backgroundColor: `${color}15`,
-                }
-              : undefined
-          }
-        >
-          <IconComponent
-            className={iconSizes[size]}
-            style={
-              achievement.isUnlocked ? { color } : { color: "#9CA3AF" }
-            }
-          />
-        </div>
-        {size !== "sm" && (
-          <span
-            className={`max-w-[5rem] text-center text-[11px] leading-tight font-medium ${
-              achievement.isUnlocked
-                ? "text-foreground"
-                : "text-muted-foreground"
-            }`}
-          >
-            {achievement.name}
-          </span>
-        )}
-      </button>
+  // Reposition on show and scroll
+  useEffect(() => {
+    if (!showInfo) return;
 
-      {showInfo && (
-        <div className="absolute left-1/2 bottom-full z-20 mb-2 w-48 -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs shadow-lg">
+    // Use requestAnimationFrame to measure after render
+    const raf = requestAnimationFrame(positionPopover);
+
+    window.addEventListener("scroll", positionPopover, true);
+    window.addEventListener("resize", positionPopover);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", positionPopover, true);
+      window.removeEventListener("resize", positionPopover);
+    };
+  }, [showInfo, positionPopover]);
+
+  return (
+    <>
+      <div ref={containerRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setShowInfo((prev) => !prev)}
+          className="flex flex-col items-center gap-1.5"
+        >
+          <div
+            className={`${sizeClasses[size]} flex items-center justify-center rounded-2xl border-2 transition-all ${
+              achievement.isUnlocked
+                ? "shadow-md"
+                : "border-border/50 opacity-40 grayscale"
+            }`}
+            style={
+              achievement.isUnlocked
+                ? {
+                    borderColor: color,
+                    backgroundColor: `${color}15`,
+                  }
+                : undefined
+            }
+          >
+            <IconComponent
+              className={iconSizes[size]}
+              style={
+                achievement.isUnlocked ? { color } : { color: "#9CA3AF" }
+              }
+            />
+          </div>
+          {size !== "sm" && (
+            <span
+              className={`max-w-[5rem] text-center text-[11px] leading-tight font-medium ${
+                achievement.isUnlocked
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {achievement.name}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {showInfo && createPortal(
+        <div
+          ref={popoverRef}
+          className="fixed z-50 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs shadow-lg"
+          style={popoverStyle}
+        >
           <div className="flex flex-col gap-1">
             <p className="font-semibold">{achievement.name}</p>
             {achievement.description && (
@@ -189,10 +246,9 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
               )}
             </div>
           </div>
-          <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-border" />
-          <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px border-4 border-transparent border-t-popover" />
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

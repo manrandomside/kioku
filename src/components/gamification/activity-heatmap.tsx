@@ -156,6 +156,7 @@ export function ActivityHeatmap() {
     y: number;
     day: HeatmapDay;
     flipBelow: boolean;
+    hAlign: "left" | "center" | "right";
   } | null>(null);
   const isDark = useIsDark();
 
@@ -188,6 +189,10 @@ export function ActivityHeatmap() {
       const rect = (e.target as SVGRectElement).getBoundingClientRect();
       const parent = (e.target as SVGRectElement).closest("[data-heatmap]")!.getBoundingClientRect();
       const flipBelow = day.dayOfWeek <= 1;
+      const viewportX = rect.left + cellSize / 2;
+      const vw = window.innerWidth;
+      const hAlign: "left" | "center" | "right" =
+        viewportX < vw * 0.33 ? "left" : viewportX > vw * 0.66 ? "right" : "center";
       setTooltip({
         x: rect.left - parent.left + cellSize / 2,
         y: flipBelow
@@ -195,6 +200,7 @@ export function ActivityHeatmap() {
           : rect.top - parent.top - 8,
         day,
         flipBelow,
+        hAlign,
       });
     },
     []
@@ -291,21 +297,30 @@ export function ActivityHeatmap() {
           </svg>
 
           {/* Tooltip */}
-          {tooltip && (
-            <div
-              className={`pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md ${
-                tooltip.flipBelow ? "translate-y-0" : "-translate-y-full"
-              }`}
-              style={{ left: tooltip.x, top: tooltip.y }}
-            >
-              <p className="font-medium">{formatDate(tooltip.day.date)}</p>
-              <p className="mt-0.5 text-muted-foreground">
-                {tooltip.day.xp} XP
-                {tooltip.day.reviews > 0 && ` | ${tooltip.day.reviews} review`}
-                {tooltip.day.quizzes > 0 && ` | ${tooltip.day.quizzes} quiz`}
-              </p>
-            </div>
-          )}
+          {tooltip && (() => {
+            const yTransform = tooltip.flipBelow ? "" : "translateY(-100%)";
+            const xTransform =
+              tooltip.hAlign === "left" ? "" :
+              tooltip.hAlign === "right" ? "translateX(-100%)" :
+              "translateX(-50%)";
+            return (
+              <div
+                className="pointer-events-none absolute z-10 w-max rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md"
+                style={{
+                  left: tooltip.x,
+                  top: tooltip.y,
+                  transform: `${xTransform} ${yTransform}`.trim() || undefined,
+                }}
+              >
+                <p className="font-medium">{formatDate(tooltip.day.date)}</p>
+                <p className="mt-0.5 text-muted-foreground">
+                  {tooltip.day.xp} XP
+                  {tooltip.day.reviews > 0 && ` | ${tooltip.day.reviews} review`}
+                  {tooltip.day.quizzes > 0 && ` | ${tooltip.day.quizzes} quiz`}
+                </p>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
