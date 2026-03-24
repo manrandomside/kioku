@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getChapterBySlug, getVocabularyForChapter } from "@/lib/queries/chapters";
 import { generateVocabQuiz } from "@/lib/quiz/vocab-quiz-generator";
+import { generateVocabQuizFromTemplates } from "@/lib/quiz/template-quiz-generator";
+import { getRandomTemplates } from "@/lib/queries/quiz-templates";
 import { VocabQuizSession } from "@/components/quiz/vocab-quiz-session";
 
 interface VocabQuizPageProps {
@@ -23,7 +25,13 @@ export default async function VocabQuizPage({ params }: VocabQuizPageProps) {
   if (!chapterInfo) notFound();
 
   const vocabList = await getVocabularyForChapter(chapterInfo.id, user.id);
-  const questions = generateVocabQuiz(vocabList);
+
+  // Try AI-generated templates first, fallback to programmatic generation
+  const templates = await getRandomTemplates(chapterInfo.id, 20);
+  const questions =
+    templates.length >= 10
+      ? generateVocabQuizFromTemplates(templates, vocabList)
+      : generateVocabQuiz(vocabList);
 
   return (
     <div className="mx-auto max-w-lg">

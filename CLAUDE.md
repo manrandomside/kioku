@@ -172,7 +172,7 @@ src/
 - [x] AI chatbot system prompt (MNN-aware, level-adaptive)
 - [x] Pronunciation: Web Speech API integration
 - [x] Pronunciation: scoring (Levenshtein distance)
-- [ ] Pronunciation: Whisper.cpp WASM fallback
+- [x] Pronunciation: Whisper.cpp WASM fallback (SKIPPED — Web Speech API sudah cover ~85% browser. Whisper WASM ~75MB terlalu berat untuk fallback. Ditambahkan browser detection message sebagai gantinya. Bisa ditambahkan post-launch jika ada demand.)
 - [ ] AI quiz generation: build-time pre-generation script
 - [ ] AI response caching (prompt hash → Supabase)
 
@@ -182,3 +182,5 @@ src/
 
 - `meaningId` pada tabel vocabulary MNN masih English placeholder, perlu batch translation ke Indonesian nanti.
 - TODO: Tambahkan toggle switch Kanji/Kana di quiz dan flashcard. Saat ini tampilan terlalu kanji-heavy untuk pemula N5. User harus bisa pilih apakah ingin fokus kanji atau kana. Ini juga berlaku untuk tampilan kosakata di chapter detail — tulisan besar seharusnya bisa di-switch antara kanji dan kana.
+- TODO: Pronunciation scoring saat ini menggunakan kanji matching terbatas (~80 kata di kanjiToHiragana dictionary). Speech API Jepang hampir selalu mengembalikan kanji, bukan hiragana. Untuk improvement: gunakan PDF kosakata MNN Bab 1-50 (yang sudah tersedia di lokal) untuk membangun dictionary kanji→hiragana yang lengkap (~1500 kata). Ini akan meningkatkan akurasi scoring dan memungkinkan tampilan "Kamu bilang:" menampilkan hiragana alih-alih kanji. PDF berisi data lengkap: hiragana, katakana, kanji, dan arti Bahasa Indonesia.
+- Whisper.cpp WASM fallback di-skip karena model ~75MB terlalu berat dan Web Speech API sudah cover mayoritas browser (Chrome/Edge). Jika nanti ada demand dari user Firefox/Safari, bisa diimplementasi sebagai lazy-loaded optional feature.
