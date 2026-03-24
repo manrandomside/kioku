@@ -11,13 +11,21 @@ export interface AIStreamOptions {
   messages?: Array<{ role: "user" | "assistant" | "system"; content: string }>;
 }
 
-// Stream AI response with waterfall fallback.
-// Compatible with Vercel AI SDK useChat hook via toDataStreamResponse().
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface ValidatedStream {
+  // ReadableStream of text bytes, ready to pipe to a Response body
+  body: ReadableStream<Uint8Array>;
+  // Resolves with the full response text after stream completes
+  fullText: Promise<string>;
+  providerUsed: ProviderName;
+}
+
+// Stream AI response with proper waterfall fallback.
+// Validates each provider by reading the first text chunk before returning,
+// so quota errors and invalid models are caught and the next provider is tried.
 export async function streamAI(
   prompt: string,
   options?: AIStreamOptions
-): Promise<{ stream: ReturnType<typeof streamText>; providerUsed: ProviderName }> {
+): Promise<ValidatedStream> {
   const providers = getAvailableProviders();
 
   if (providers.length === 0) {
@@ -32,7 +40,6 @@ export async function streamAI(
     try {
       const model = createLanguageModel(provider);
 
-      // Build the call params — use messages array if provided, else single prompt
       const params = options?.messages
         ? {
             model,
@@ -51,16 +58,60 @@ export async function streamAI(
             abortSignal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
           };
 
-      const stream = streamText(params);
+      const result = streamText(params);
 
-      // Verify the provider works by awaiting the first chunk setup
-      // streamText itself doesn't throw on creation — errors surface on consumption.
-      // We trust the provider config is valid and let errors propagate at consumption time.
+      // Validate: read the first text chunk to confirm the provider works.
+      // streamText() never throws on creation — errors only surface on consumption.
+      const iterator = result.textStream[Symbol.asyncIterator]();
+      const first = await iterator.next();
+
+      if (first.done) {
+        throw new Error("Provider returned empty response");
+      }
+
       console.log(
-        `[AI Stream] Menggunakan provider: ${provider.name} (${provider.model})`
+        `[AI Stream] Berhasil menggunakan provider: ${provider.name} (${provider.model})`
       );
 
-      return { stream, providerUsed: provider.name };
+      // Build a ReadableStream that emits the validated first chunk + remaining chunks
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          controller.enqueue(encoder.encode(first.value));
+          try {
+            while (true) {
+              const { value, done } = await iterator.next();
+              if (done) break;
+              controller.enqueue(encoder.encode(value));
+            }
+            controller.close();
+          } catch (err) {
+            controller.error(err);
+          }
+        },
+      });
+
+      // Tee the stream: one branch for the HTTP response, one to collect full text
+      const [responseBranch, collectorBranch] = stream.tee();
+
+      const fullText = (async () => {
+        const decoder = new TextDecoder();
+        const reader = collectorBranch.getReader();
+        let text = "";
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          text += decoder.decode(value, { stream: true });
+        }
+        text += decoder.decode();
+        return text;
+      })();
+
+      return {
+        body: responseBranch,
+        fullText,
+        providerUsed: provider.name,
+      };
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unknown error";

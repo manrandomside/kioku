@@ -168,8 +168,8 @@ src/
 ### [P3] AI Features
 
 - [x] AI provider waterfall (Gemini → Groq → OpenRouter → WebLLM)
-- [ ] AI chatbot UI (streaming + message history)
-- [ ] AI chatbot system prompt (MNN-aware, level-adaptive)
+- [x] AI chatbot UI (streaming + message history)
+- [x] AI chatbot system prompt (MNN-aware, level-adaptive)
 - [ ] Pronunciation: Web Speech API integration
 - [ ] Pronunciation: scoring (Levenshtein distance)
 - [ ] Pronunciation: Whisper.cpp WASM fallback

@@ -20,7 +20,7 @@ export function getAvailableProviders(): ProviderConfig[] {
   if (env.GEMINI_API_KEY) {
     providers.push({
       name: "gemini",
-      model: "gemini-2.5-flash-lite-preview-06-17",
+      model: "gemini-2.0-flash-lite",
       available: true,
     });
   }
