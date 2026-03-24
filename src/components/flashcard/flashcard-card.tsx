@@ -15,6 +15,7 @@ interface FlashcardCardProps {
   kana: KanaWithSrs;
   isFlipped: boolean;
   onFlip: () => void;
+  onPronunciationChange?: (open: boolean) => void;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -33,8 +34,13 @@ const SRS_BADGE: Record<string, { label: string; className: string }> = {
   relearning: { label: "Ulang", className: "bg-srs-relearning/15 text-srs-relearning" },
 };
 
-export function FlashcardCard({ kana, isFlipped, onFlip }: FlashcardCardProps) {
+export function FlashcardCard({ kana, isFlipped, onFlip, onPronunciationChange }: FlashcardCardProps) {
   const [showPronunciation, setShowPronunciation] = useState(false);
+
+  function setPronunciationOpen(open: boolean) {
+    setShowPronunciation(open);
+    onPronunciationChange?.(open);
+  }
   const status = kana.srsStatus ?? "new";
   const badge = SRS_BADGE[status] ?? SRS_BADGE.new;
 
@@ -122,7 +128,7 @@ export function FlashcardCard({ kana, isFlipped, onFlip }: FlashcardCardProps) {
               className="gap-2"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowPronunciation(true);
+                setPronunciationOpen(true);
               }}
               title="Latihan pengucapan"
             >
@@ -143,7 +149,7 @@ export function FlashcardCard({ kana, isFlipped, onFlip }: FlashcardCardProps) {
           audioUrl: kana.audioUrl,
         }}
         isOpen={showPronunciation}
-        onClose={() => setShowPronunciation(false)}
+        onClose={() => setPronunciationOpen(false)}
       />
     </div>
   );

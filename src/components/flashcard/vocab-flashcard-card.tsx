@@ -16,10 +16,16 @@ interface VocabFlashcardCardProps {
   vocab: VocabularyWithSrs;
   isFlipped: boolean;
   onFlip: () => void;
+  onPronunciationChange?: (open: boolean) => void;
 }
 
-export function VocabFlashcardCard({ vocab, isFlipped, onFlip }: VocabFlashcardCardProps) {
+export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationChange }: VocabFlashcardCardProps) {
   const [showPronunciation, setShowPronunciation] = useState(false);
+
+  function setPronunciationOpen(open: boolean) {
+    setShowPronunciation(open);
+    onPronunciationChange?.(open);
+  }
   const status = vocab.srsStatus ?? "new";
   const srsBadge = SRS_STATUS_CONFIG[status] ?? SRS_STATUS_CONFIG.new;
   const wordConfig = WORD_TYPE_CONFIG[vocab.wordType] ?? WORD_TYPE_CONFIG.noun;
@@ -162,7 +168,7 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip }: VocabFlashcardC
               className="gap-2"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowPronunciation(true);
+                setPronunciationOpen(true);
               }}
               title="Latihan pengucapan"
             >
@@ -184,7 +190,7 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip }: VocabFlashcardC
           audioUrl: vocab.audioUrl,
         }}
         isOpen={showPronunciation}
-        onClose={() => setShowPronunciation(false)}
+        onClose={() => setPronunciationOpen(false)}
       />
     </div>
   );

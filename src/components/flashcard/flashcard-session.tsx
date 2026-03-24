@@ -30,6 +30,7 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
   const [results, setResults] = useState<FlashcardResult[]>([]);
   const [reviewStartTime, setReviewStartTime] = useState(() => Date.now());
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const [pronunciationOpen, setPronunciationOpen] = useState(false);
   const { events: xpEvents, showXp } = useXpPopup();
 
   const isCompleted = currentIndex >= cards.length;
@@ -162,14 +163,15 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
               kana={currentCard}
               isFlipped={isFlipped}
               onFlip={handleFlip}
+              onPronunciationChange={setPronunciationOpen}
             />
           </motion.div>
         </AnimatePresence>
       )}
 
-      {/* Rating buttons (only visible when flipped) */}
+      {/* Rating buttons (hidden when pronunciation modal is open) */}
       <AnimatePresence>
-        {isFlipped && (
+        {isFlipped && !pronunciationOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

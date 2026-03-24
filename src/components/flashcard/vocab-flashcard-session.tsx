@@ -36,6 +36,7 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
   const [results, setResults] = useState<VocabFlashcardResult[]>([]);
   const [reviewStartTime, setReviewStartTime] = useState(() => Date.now());
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const [pronunciationOpen, setPronunciationOpen] = useState(false);
   const { events: xpEvents, showXp } = useXpPopup();
 
   const isCompleted = currentIndex >= cards.length;
@@ -189,14 +190,15 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
               vocab={currentCard}
               isFlipped={isFlipped}
               onFlip={handleFlip}
+              onPronunciationChange={setPronunciationOpen}
             />
           </motion.div>
         </AnimatePresence>
       )}
 
-      {/* Rating buttons */}
+      {/* Rating buttons (hidden when pronunciation modal is open) */}
       <AnimatePresence>
-        {isFlipped && (
+        {isFlipped && !pronunciationOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
