@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Volume2 } from "lucide-react";
+import { Volume2, Mic } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { playFlipSound } from "@/lib/audio/sound-effects";
 import { Button } from "@/components/ui/button";
+import { PronunciationRecorder } from "@/components/audio/pronunciation-recorder";
 
 import type { KanaWithSrs } from "@/types/kana";
 
@@ -32,6 +34,7 @@ const SRS_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 export function FlashcardCard({ kana, isFlipped, onFlip }: FlashcardCardProps) {
+  const [showPronunciation, setShowPronunciation] = useState(false);
   const status = kana.srsStatus ?? "new";
   const badge = SRS_BADGE[status] ?? SRS_BADGE.new;
 
@@ -99,21 +102,49 @@ export function FlashcardCard({ kana, isFlipped, onFlip }: FlashcardCardProps) {
           <span className="text-sm text-muted-foreground">
             {CATEGORY_LABEL[kana.category] ?? kana.category}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 gap-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              playAudio();
-            }}
-            disabled={!kana.audioUrl}
-          >
-            <Volume2 className="size-4" />
-            {kana.audioUrl ? "Dengarkan" : "Audio belum tersedia"}
-          </Button>
+          <div className="mt-2 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                playAudio();
+              }}
+              disabled={!kana.audioUrl}
+            >
+              <Volume2 className="size-4" />
+              {kana.audioUrl ? "Dengarkan" : "Audio belum tersedia"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPronunciation(true);
+              }}
+              title="Latihan pengucapan"
+            >
+              <Mic className="size-4" />
+              Ucapkan
+            </Button>
+          </div>
         </div>
       </motion.div>
+
+      <PronunciationRecorder
+        target={{
+          id: kana.id,
+          type: "kana",
+          hiragana: kana.character,
+          romaji: kana.romaji,
+          meaning: kana.romaji,
+          audioUrl: kana.audioUrl,
+        }}
+        isOpen={showPronunciation}
+        onClose={() => setShowPronunciation(false)}
+      />
     </div>
   );
 }

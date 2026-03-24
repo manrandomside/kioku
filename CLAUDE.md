@@ -170,8 +170,8 @@ src/
 - [x] AI provider waterfall (Gemini → Groq → OpenRouter → WebLLM)
 - [x] AI chatbot UI (streaming + message history)
 - [x] AI chatbot system prompt (MNN-aware, level-adaptive)
-- [ ] Pronunciation: Web Speech API integration
-- [ ] Pronunciation: scoring (Levenshtein distance)
+- [x] Pronunciation: Web Speech API integration
+- [x] Pronunciation: scoring (Levenshtein distance)
 - [ ] Pronunciation: Whisper.cpp WASM fallback
 - [ ] AI quiz generation: build-time pre-generation script
 - [ ] AI response caching (prompt hash → Supabase)

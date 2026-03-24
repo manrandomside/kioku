@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Volume2 } from "lucide-react";
+import { Volume2, Mic } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { playFlipSound } from "@/lib/audio/sound-effects";
 import { Button } from "@/components/ui/button";
 import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
+import { PronunciationRecorder } from "@/components/audio/pronunciation-recorder";
 
 import type { VocabularyWithSrs } from "@/types/vocabulary";
 
@@ -17,6 +19,7 @@ interface VocabFlashcardCardProps {
 }
 
 export function VocabFlashcardCard({ vocab, isFlipped, onFlip }: VocabFlashcardCardProps) {
+  const [showPronunciation, setShowPronunciation] = useState(false);
   const status = vocab.srsStatus ?? "new";
   const srsBadge = SRS_STATUS_CONFIG[status] ?? SRS_STATUS_CONFIG.new;
   const wordConfig = WORD_TYPE_CONFIG[vocab.wordType] ?? WORD_TYPE_CONFIG.noun;
@@ -138,22 +141,51 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip }: VocabFlashcardC
             </div>
           )}
 
-          {/* Audio button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 gap-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              playAudio();
-            }}
-            disabled={!vocab.audioUrl}
-          >
-            <Volume2 className="size-4" />
-            {vocab.audioUrl ? "Dengarkan" : "Audio belum tersedia"}
-          </Button>
+          {/* Audio + Pronunciation buttons */}
+          <div className="mt-2 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                playAudio();
+              }}
+              disabled={!vocab.audioUrl}
+            >
+              <Volume2 className="size-4" />
+              {vocab.audioUrl ? "Dengarkan" : "Audio belum tersedia"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPronunciation(true);
+              }}
+              title="Latihan pengucapan"
+            >
+              <Mic className="size-4" />
+              Ucapkan
+            </Button>
+          </div>
         </div>
       </motion.div>
+
+      <PronunciationRecorder
+        target={{
+          id: vocab.id,
+          type: "vocabulary",
+          hiragana: vocab.hiragana,
+          kanji: vocab.kanji,
+          romaji: vocab.romaji,
+          meaning: vocab.meaningId,
+          audioUrl: vocab.audioUrl,
+        }}
+        isOpen={showPronunciation}
+        onClose={() => setShowPronunciation(false)}
+      />
     </div>
   );
 }
