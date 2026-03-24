@@ -178,7 +178,7 @@ export function ChatInterface() {
   const isStreamingResponse = status === "streaming" && lastMessage?.role === "assistant";
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-3.5rem)]">
+    <div className="flex h-full">
       <ChatSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -226,7 +226,7 @@ export function ChatInterface() {
           ) : messages.length === 0 ? (
             <SuggestedPrompts onSelect={handleSuggestedPrompt} />
           ) : (
-            <div className="mx-auto flex max-w-2xl flex-col gap-4">
+            <div className="mx-auto flex max-w-3xl flex-col gap-4">
               <AnimatePresence initial={false}>
                 {messages.map((message) => (
                   <MessageBubble
@@ -267,7 +267,7 @@ export function ChatInterface() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mx-auto mt-4 flex max-w-2xl items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+              className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
             >
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>Gagal menghubungi Sensei. Silakan coba lagi.</span>
@@ -277,7 +277,7 @@ export function ChatInterface() {
 
         {/* Input area */}
         <div className="border-t border-border/50 bg-background/80 px-4 py-3 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-2xl items-end gap-2">
+          <div className="mx-auto flex max-w-3xl items-end gap-2">
             <div className="relative flex-1">
               <textarea
                 ref={inputRef}
@@ -305,7 +305,7 @@ export function ChatInterface() {
               )}
             </Button>
           </div>
-          <p className="mx-auto mt-1.5 max-w-2xl text-center text-[11px] text-muted-foreground/60">
+          <p className="mx-auto mt-1.5 max-w-3xl text-center text-[11px] text-muted-foreground/60">
             Sensei bisa melakukan kesalahan. Periksa kembali informasi penting.
           </p>
         </div>

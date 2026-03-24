@@ -39,7 +39,7 @@ export function SuggestedPrompts({ onSelect }: SuggestedPromptsProps) {
         </p>
       </div>
 
-      <div className="grid w-full max-w-lg grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
         {PROMPTS.map((prompt, i) => (
           <motion.button
             key={i}

@@ -23,8 +23,8 @@ export function AppShell({ children, user }: AppShellProps) {
           </div>
         </div>
 
-        <main className="min-w-0 flex-1 pb-24 lg:pb-0">
-          <div className="mx-auto max-w-5xl px-4 py-4 sm:py-6 lg:px-8 lg:py-8">
+        <main className="min-w-0 flex-1 pb-24 lg:pb-0 has-[[data-chat-layout]]:pb-0 has-[[data-chat-layout]]:h-[calc(100vh-3.5rem)] has-[[data-chat-layout]]:overflow-hidden">
+          <div className="mx-auto max-w-5xl px-4 py-4 sm:py-6 lg:px-8 lg:py-8 has-[[data-chat-layout]]:max-w-none has-[[data-chat-layout]]:p-0 has-[[data-chat-layout]]:h-full">
             {children}
           </div>
         </main>

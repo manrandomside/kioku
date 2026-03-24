@@ -28,13 +28,13 @@ export function MessageBubble({ role, content, isStreaming }: MessageBubbleProps
 
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed sm:max-w-[70%]",
+          "rounded-2xl px-4 py-3 text-sm leading-relaxed",
           isUser
-            ? "bg-[#C2E959] text-[#0A3A3A] rounded-br-md"
-            : "bg-card border border-border/50 text-card-foreground rounded-bl-md"
+            ? "max-w-[80%] sm:max-w-[70%] lg:max-w-md bg-[#C2E959] text-[#0A3A3A] rounded-br-md"
+            : "max-w-[85%] sm:max-w-[75%] lg:max-w-2xl bg-card border border-border/50 text-card-foreground rounded-bl-md"
         )}
       >
-        <div className="chat-content whitespace-pre-wrap break-words font-[var(--font-body)]">
+        <div className="chat-content break-words font-[var(--font-body)]">
           <MessageContent content={content} />
         </div>
         {isStreaming && (
@@ -45,9 +45,66 @@ export function MessageBubble({ role, content, isStreaming }: MessageBubbleProps
   );
 }
 
-// Render simple markdown: bold, italic, inline code
+// Render markdown: paragraphs, numbered/bulleted lists, bold, italic, inline code
 function MessageContent({ content }: { content: string }) {
-  const parts = content.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  // Split into blocks by double newlines
+  const blocks = content.split(/\n{2,}/);
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      {blocks.map((block, bi) => {
+        const trimmed = block.trim();
+        if (!trimmed) return null;
+
+        // Check if block is a numbered list (lines starting with digit+dot)
+        const lines = trimmed.split("\n");
+        const isNumberedList = lines.length > 1 && lines.every(
+          (l) => /^\d+[.)]\s/.test(l.trim()) || !l.trim()
+        );
+        const isBulletList = lines.length > 1 && lines.every(
+          (l) => /^[-*]\s/.test(l.trim()) || !l.trim()
+        );
+
+        if (isNumberedList) {
+          return (
+            <ol key={bi} className="list-decimal pl-5 flex flex-col gap-1">
+              {lines.map((line, li) => {
+                const text = line.trim().replace(/^\d+[.)]\s*/, "");
+                return text ? (
+                  <li key={li}><InlineFormat text={text} /></li>
+                ) : null;
+              })}
+            </ol>
+          );
+        }
+
+        if (isBulletList) {
+          return (
+            <ul key={bi} className="list-disc pl-5 flex flex-col gap-1">
+              {lines.map((line, li) => {
+                const text = line.trim().replace(/^[-*]\s*/, "");
+                return text ? (
+                  <li key={li}><InlineFormat text={text} /></li>
+                ) : null;
+              })}
+            </ul>
+          );
+        }
+
+        // Regular paragraph — preserve single line breaks
+        return (
+          <p key={bi} className="whitespace-pre-line">
+            <InlineFormat text={trimmed} />
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+// Render inline markdown: bold, italic, inline code, Japanese text
+function InlineFormat({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
 
   return (
     <>
@@ -76,7 +133,6 @@ function MessageContent({ content }: { content: string }) {
             </code>
           );
         }
-        // Detect Japanese text segments and apply JP font
         return <JapaneseText key={i} text={part} />;
       })}
     </>
