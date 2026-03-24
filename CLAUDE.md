@@ -163,11 +163,11 @@ src/
 - [x] Sound effects: correct/incorrect ding
 - [x] PWA: service worker + manifest + offline cache
 - [x] Responsive polish (mobile + tablet)
-- [ ] Dark mode complete pass
+- [x] Dark mode complete pass
 
 ### [P3] AI Features
 
-- [ ] AI provider waterfall (Gemini → Groq → OpenRouter → WebLLM)
+- [x] AI provider waterfall (Gemini → Groq → OpenRouter → WebLLM)
 - [ ] AI chatbot UI (streaming + message history)
 - [ ] AI chatbot system prompt (MNN-aware, level-adaptive)
 - [ ] Pronunciation: Web Speech API integration
