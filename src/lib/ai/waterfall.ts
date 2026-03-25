@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 
 import { PROVIDER_TIMEOUT_MS } from "./config";
+import { hashPrompt, getCachedResponse, setCacheResponse } from "./cache";
 import { createLanguageModel, getAvailableProviders } from "./providers";
 import type { ProviderName } from "./providers";
 
@@ -8,11 +9,15 @@ export interface AICallOptions {
   system?: string;
   maxTokens?: number;
   temperature?: number;
+  skipCache?: boolean;
+  permanentCache?: boolean;
 }
+
+export type AICallProviderUsed = ProviderName | "cache";
 
 export interface AICallResult {
   response: string;
-  providerUsed: ProviderName;
+  providerUsed: AICallProviderUsed;
   tokensUsed: {
     prompt: number;
     completion: number;
@@ -20,11 +25,30 @@ export interface AICallResult {
   };
 }
 
-// Call AI providers in waterfall order until one succeeds
+// Call AI providers in waterfall order until one succeeds.
+// Checks cache first (unless skipCache is set).
 export async function callAI(
   prompt: string,
   options?: AICallOptions
 ): Promise<AICallResult> {
+  // Check cache first
+  if (!options?.skipCache) {
+    try {
+      const promptHash = await hashPrompt(prompt);
+      const cached = await getCachedResponse(promptHash);
+      if (cached) {
+        console.log("[AI Waterfall] Cache hit");
+        return {
+          response: cached,
+          providerUsed: "cache",
+          tokensUsed: { prompt: 0, completion: 0, total: 0 },
+        };
+      }
+    } catch {
+      // Cache read failed — proceed to providers
+    }
+  }
+
   const providers = getAvailableProviders();
 
   if (providers.length === 0) {
@@ -51,6 +75,13 @@ export async function callAI(
       console.log(
         `[AI Waterfall] Berhasil menggunakan provider: ${provider.name} (${provider.model})`
       );
+
+      // Save to cache in background (fire-and-forget)
+      if (!options?.skipCache) {
+        setCacheResponse(prompt, result.text, provider.name, {
+          permanent: options?.permanentCache,
+        }).catch(() => {});
+      }
 
       return {
         response: result.text,

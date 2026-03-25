@@ -173,8 +173,8 @@ src/
 - [x] Pronunciation: Web Speech API integration
 - [x] Pronunciation: scoring (Levenshtein distance)
 - [x] Pronunciation: Whisper.cpp WASM fallback (SKIPPED — Web Speech API sudah cover ~85% browser. Whisper WASM ~75MB terlalu berat untuk fallback. Ditambahkan browser detection message sebagai gantinya. Bisa ditambahkan post-launch jika ada demand.)
-- [ ] AI quiz generation: build-time pre-generation script
-- [ ] AI response caching (prompt hash → Supabase)
+- [x] AI quiz generation: build-time pre-generation script
+- [x] AI response caching (prompt hash → Supabase)
 
 ---
 

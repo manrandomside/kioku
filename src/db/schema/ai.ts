@@ -44,6 +44,7 @@ export const aiResponseCache = pgTable("ai_response_cache", {
   responseText: text("response_text").notNull(),
   provider: varchar("provider", { length: 50 }).notNull(),
   hitCount: integer("hit_count").notNull().default(1),
+  expiresAt: text("expires_at"),
   createdAt: text("created_at").notNull().default("now()"),
 });
 

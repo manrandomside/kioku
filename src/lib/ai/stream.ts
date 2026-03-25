@@ -1,6 +1,7 @@
 import { streamText } from "ai";
 
 import { PROVIDER_TIMEOUT_MS } from "./config";
+import { setCacheResponse } from "./cache";
 import { createLanguageModel, getAvailableProviders } from "./providers";
 import type { ProviderName } from "./providers";
 
@@ -104,6 +105,10 @@ export async function streamAI(
           text += decoder.decode(value, { stream: true });
         }
         text += decoder.decode();
+
+        // Save streamed response to cache in background
+        setCacheResponse(prompt, text, provider.name).catch(() => {});
+
         return text;
       })();
 
