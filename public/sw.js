@@ -1,7 +1,7 @@
 // Kioku Service Worker
 // Cache First for static assets, Network First for API/HTML, offline fallback
 
-const CACHE_NAME = "kioku-v1";
+const CACHE_NAME = "kioku-v2";
 const OFFLINE_URL = "/offline";
 
 // Pre-cache these on install
@@ -49,7 +49,13 @@ self.addEventListener("fetch", (event) => {
   // Skip chrome-extension, etc.
   if (!url.protocol.startsWith("http")) return;
 
-  // Static assets (fonts, images, CSS, JS bundles): Cache First
+  // Next.js JS/CSS bundles: Network First (content-hashed but runtime chunks can collide)
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Other static assets (fonts, images, icons): Cache First
   if (isStaticAsset(url)) {
     event.respondWith(cacheFirst(request));
     return;
@@ -66,8 +72,6 @@ self.addEventListener("fetch", (event) => {
 
 function isStaticAsset(url) {
   const staticExtensions = [
-    ".js",
-    ".css",
     ".woff",
     ".woff2",
     ".ttf",
@@ -78,11 +82,7 @@ function isStaticAsset(url) {
     ".svg",
     ".webp",
     ".ico",
-    ".json",
   ];
-  // Next.js static files
-  if (url.pathname.startsWith("/_next/static/")) return true;
-  // Files with static extensions in public/
   return staticExtensions.some((ext) => url.pathname.endsWith(ext));
 }
 
@@ -98,6 +98,21 @@ async function cacheFirst(request) {
     }
     return response;
   } catch {
+    return new Response("", { status: 503 });
+  }
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
     return new Response("", { status: 503 });
   }
 }
