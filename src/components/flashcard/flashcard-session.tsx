@@ -72,6 +72,9 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
 
       // Fire server action in background (handle level-up from server response)
       submitKanaReview(cardId, rating, durationMs).then((response) => {
+        if (!response.success) {
+          console.error("[flashcard] submitKanaReview failed:", JSON.stringify(response.error));
+        }
         if (response.success && response.data?.xp?.leveledUp) {
           setLevelUpLevel(response.data.xp.currentLevel);
         }

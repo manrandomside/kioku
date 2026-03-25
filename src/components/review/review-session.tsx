@@ -81,6 +81,9 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
 
       // Fire server action in background (handle level-up from server response)
       submitReviewByCardId(cardId, rating, durationMs).then((response) => {
+        if (!response.success) {
+          console.error("[review] submitReviewByCardId failed:", response.error);
+        }
         if (response.success && response.data?.xp?.leveledUp) {
           setLevelUpLevel(response.data.xp.currentLevel);
         }

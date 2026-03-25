@@ -44,6 +44,23 @@ function getTodayDate(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+// Ensure userGamification row exists, create with defaults if missing
+export async function ensureGamificationRow(userId: string): Promise<void> {
+  const [existing] = await db
+    .select({ id: userGamification.id })
+    .from(userGamification)
+    .where(eq(userGamification.userId, userId))
+    .limit(1);
+
+  if (!existing) {
+    console.log("[XP] Creating missing userGamification row for userId:", userId);
+    await db
+      .insert(userGamification)
+      .values({ userId })
+      .onConflictDoNothing();
+  }
+}
+
 export type XpSource = "review" | "quiz" | "perfect_quiz" | "streak_bonus" | "achievement" | "daily_bonus";
 
 export interface AwardXpResult {
@@ -64,6 +81,9 @@ async function awardXpInternal(
   description: string,
   referenceId?: string
 ): Promise<AwardXpResult> {
+  // Ensure gamification row exists (auto-create if onboarding missed it)
+  await ensureGamificationRow(userId);
+
   // Get user's daily goal setting
   const [userData] = await db
     .select({ dailyGoalXp: user.dailyGoalXp })
@@ -89,8 +109,8 @@ async function awardXpInternal(
     .update(userGamification)
     .set({
       totalXp: sql`${userGamification.totalXp} + ${amount}`,
-      dailyXpEarned: sql`CASE WHEN ${userGamification.lastActivityDate} = ${today} THEN ${userGamification.dailyXpEarned} + ${amount} ELSE ${amount} END`,
-      dailyGoalMet: sql`CASE WHEN ${userGamification.lastActivityDate} = ${today} THEN (${userGamification.dailyGoalMet} OR (${userGamification.dailyXpEarned} + ${amount} >= ${dailyGoalXp})) ELSE (${amount} >= ${dailyGoalXp}) END`,
+      dailyXpEarned: sql`CASE WHEN ${userGamification.lastActivityDate}::text = ${today} THEN ${userGamification.dailyXpEarned} + ${amount} ELSE ${amount} END`,
+      dailyGoalMet: sql`CASE WHEN ${userGamification.lastActivityDate}::text = ${today} THEN (${userGamification.dailyGoalMet} OR (${userGamification.dailyXpEarned} + ${amount} >= ${dailyGoalXp})) ELSE (${amount} >= ${dailyGoalXp}) END`,
       lastActivityDate: today,
       updatedAt: new Date().toISOString(),
     })
@@ -219,7 +239,7 @@ export async function awardQuizXp(
   sessionId: string,
   isPerfect: boolean
 ): Promise<AwardXpResult> {
-  let result = await awardXpInternal(
+  const baseResult = await awardXpInternal(
     userId,
     XP_QUIZ_COMPLETE,
     "quiz",
@@ -230,15 +250,22 @@ export async function awardQuizXp(
   // Update daily activity quiz count
   await upsertDailyActivity(userId, getTodayDate(), { quizCount: 1 });
 
+  let result = baseResult;
+
   // Award perfect quiz bonus
   if (isPerfect) {
-    result = await awardXpInternal(
+    const bonusResult = await awardXpInternal(
       userId,
       XP_QUIZ_PERFECT_BONUS,
       "perfect_quiz",
       "Quiz sempurna! Bonus XP",
       sessionId
     );
+    // Preserve level-up if it happened in the base XP award
+    result = {
+      ...bonusResult,
+      leveledUp: baseResult.leveledUp || bonusResult.leveledUp,
+    };
   }
 
   // Award daily goal bonus if just completed

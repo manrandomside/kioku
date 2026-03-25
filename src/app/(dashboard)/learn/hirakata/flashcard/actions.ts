@@ -127,10 +127,11 @@ export async function submitKanaReview(
       },
     };
   } catch (error) {
-    console.error("[submitKanaReview]", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("[submitKanaReview] FULL ERROR:", errMsg, error);
     return {
       success: false,
-      error: { code: "INTERNAL_ERROR", message: "Gagal menyimpan review" },
+      error: { code: "INTERNAL_ERROR", message: errMsg },
     };
   }
 }

@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { userGamification } from "@/db/schema/gamification";
 import { user } from "@/db/schema/user";
 
-import { checkAndAwardStreakMilestone } from "./xp-service";
+import { checkAndAwardStreakMilestone, ensureGamificationRow } from "./xp-service";
 
 export interface StreakCheckResult {
   currentStreak: number;
@@ -42,6 +42,9 @@ function daysDifference(dateA: string, dateB: string): number {
 // Called when user first becomes active for the day (review/quiz)
 // Uses atomic SQL update to prevent race conditions from concurrent requests
 export async function checkAndUpdateStreak(userId: string): Promise<StreakCheckResult> {
+  // Ensure gamification row exists (auto-create if onboarding missed it)
+  await ensureGamificationRow(userId);
+
   // Get user daily goal setting
   const [userData] = await db
     .select({ dailyGoalXp: user.dailyGoalXp })
@@ -59,34 +62,34 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakCheckR
     .update(userGamification)
     .set({
       currentStreak: sql`CASE
-        WHEN ${userGamification.lastActivityDate} = ${today} THEN ${userGamification.currentStreak}
+        WHEN ${userGamification.lastActivityDate}::text = ${today} THEN ${userGamification.currentStreak}
         WHEN ${userGamification.lastActivityDate} IS NULL THEN 1
-        WHEN ${userGamification.lastActivityDate} = ${yesterday} THEN ${userGamification.currentStreak} + 1
-        WHEN ${userGamification.lastActivityDate} = ${sql`(${today}::date - interval '2 days')::date::text`}
+        WHEN ${userGamification.lastActivityDate}::text = ${yesterday} THEN ${userGamification.currentStreak} + 1
+        WHEN ${userGamification.lastActivityDate}::text = (${today}::date - interval '2 days')::date::text
           AND ${userGamification.streakFreezes} > 0 THEN ${userGamification.currentStreak} + 1
         ELSE 1
       END`,
       longestStreak: sql`GREATEST(${userGamification.longestStreak}, CASE
-        WHEN ${userGamification.lastActivityDate} = ${today} THEN ${userGamification.currentStreak}
+        WHEN ${userGamification.lastActivityDate}::text = ${today} THEN ${userGamification.currentStreak}
         WHEN ${userGamification.lastActivityDate} IS NULL THEN 1
-        WHEN ${userGamification.lastActivityDate} = ${yesterday} THEN ${userGamification.currentStreak} + 1
-        WHEN ${userGamification.lastActivityDate} = ${sql`(${today}::date - interval '2 days')::date::text`}
+        WHEN ${userGamification.lastActivityDate}::text = ${yesterday} THEN ${userGamification.currentStreak} + 1
+        WHEN ${userGamification.lastActivityDate}::text = (${today}::date - interval '2 days')::date::text
           AND ${userGamification.streakFreezes} > 0 THEN ${userGamification.currentStreak} + 1
         ELSE 1
       END)`,
       streakFreezes: sql`CASE
-        WHEN ${userGamification.lastActivityDate} = ${today} THEN ${userGamification.streakFreezes}
-        WHEN ${userGamification.lastActivityDate} = ${sql`(${today}::date - interval '2 days')::date::text`}
+        WHEN ${userGamification.lastActivityDate}::text = ${today} THEN ${userGamification.streakFreezes}
+        WHEN ${userGamification.lastActivityDate}::text = (${today}::date - interval '2 days')::date::text
           AND ${userGamification.streakFreezes} > 0 THEN ${userGamification.streakFreezes} - 1
         ELSE ${userGamification.streakFreezes}
       END`,
       lastActivityDate: today,
       dailyXpEarned: sql`CASE
-        WHEN ${userGamification.lastActivityDate} = ${today} THEN ${userGamification.dailyXpEarned}
+        WHEN ${userGamification.lastActivityDate}::text = ${today} THEN ${userGamification.dailyXpEarned}
         ELSE 0
       END`,
       dailyGoalMet: sql`CASE
-        WHEN ${userGamification.lastActivityDate} = ${today} THEN ${userGamification.dailyGoalMet}
+        WHEN ${userGamification.lastActivityDate}::text = ${today} THEN ${userGamification.dailyGoalMet}
         ELSE false
       END`,
       updatedAt: new Date().toISOString(),

@@ -76,6 +76,9 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
 
       // Fire server action in background (handle level-up from server response)
       submitVocabReview(cardId, rating, durationMs).then((response) => {
+        if (!response.success) {
+          console.error("[vocab-flashcard] submitVocabReview failed:", response.error);
+        }
         if (response.success && response.data?.xp?.leveledUp) {
           setLevelUpLevel(response.data.xp.currentLevel);
         }

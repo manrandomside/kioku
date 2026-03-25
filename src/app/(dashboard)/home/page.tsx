@@ -22,6 +22,9 @@ import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
 import { StreakFlame } from "@/components/gamification/streak-flame";
 
+// Always fetch fresh data — XP/streak may have changed from flashcard/quiz sessions
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const supabase = await createClient();
   const {
