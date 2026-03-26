@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { or, ilike, eq, asc } from "drizzle-orm";
+import { or, ilike, eq, asc, and } from "drizzle-orm";
 
 import { db } from "@/db";
 import { vocabulary, chapter } from "@/db/schema/content";
@@ -35,12 +35,15 @@ export async function GET(request: NextRequest) {
       .from(vocabulary)
       .innerJoin(chapter, eq(vocabulary.chapterId, chapter.id))
       .where(
-        or(
-          ilike(vocabulary.hiragana, pattern),
-          ilike(vocabulary.romaji, pattern),
-          ilike(vocabulary.meaningId, pattern),
-          ilike(vocabulary.meaningEn, pattern),
-          ilike(vocabulary.kanji, pattern)
+        and(
+          eq(vocabulary.isPublished, true),
+          or(
+            ilike(vocabulary.hiragana, pattern),
+            ilike(vocabulary.romaji, pattern),
+            ilike(vocabulary.meaningId, pattern),
+            ilike(vocabulary.meaningEn, pattern),
+            ilike(vocabulary.kanji, pattern)
+          )
         )
       )
       .orderBy(asc(chapter.chapterNumber), asc(vocabulary.sortOrder))

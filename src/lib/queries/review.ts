@@ -1,4 +1,4 @@
-import { eq, and, lte, sql, count } from "drizzle-orm";
+import { eq, and, lte, sql, count, or, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { srsCard } from "@/db/schema/srs";
@@ -82,7 +82,8 @@ export async function getDueCards(userId: string): Promise<DueCard[]> {
     .where(
       and(
         eq(srsCard.userId, userId),
-        lte(srsCard.dueDate, now)
+        lte(srsCard.dueDate, now),
+        or(eq(vocabulary.isPublished, true), isNull(srsCard.vocabularyId))
       )
     )
     .orderBy(srsCard.dueDate);

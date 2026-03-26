@@ -22,7 +22,8 @@ export async function updateChapterProgress(
     .where(
       and(
         eq(srsCard.userId, userId),
-        eq(vocabulary.chapterId, chapterId)
+        eq(vocabulary.chapterId, chapterId),
+        eq(vocabulary.isPublished, true)
       )
     )
     .groupBy(srsCard.status);
@@ -46,7 +47,7 @@ export async function updateChapterProgress(
   const [vocabTotal] = await db
     .select({ count: count() })
     .from(vocabulary)
-    .where(eq(vocabulary.chapterId, chapterId));
+    .where(and(eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)));
 
   const totalCount = Number(vocabTotal.count);
   const completionPercent =

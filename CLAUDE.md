@@ -180,7 +180,8 @@ src/
 
 ## Catatan Teknis (Diupdate Seiring Development)
 
-- `meaningId` pada tabel vocabulary MNN masih English placeholder, perlu batch translation ke Indonesian nanti.
+- `meaningId` pada tabel vocabulary MNN sudah ditranslasi ke Bahasa Indonesia dari PDF kosakata MNN Bab 1-50 (1942/2692 rows updated via update-vocabulary-meanings.ts, + 74 tambahan via sync-vocabulary.ts). Data source: `scripts/data/mnn-vocabulary-indonesian.json`.
+- Vocabulary yang tidak ada di PDF MNN Bab 1-50 di-hide (`is_published = false`). Total 666 hidden, 2026 published. Semua query frontend/API sudah filter `is_published = true`. Script: `scripts/sync-vocabulary.ts`. Migration: `0006_add_vocabulary_is_published.sql`.
 - TODO: Tambahkan toggle switch Kanji/Kana di quiz dan flashcard. Saat ini tampilan terlalu kanji-heavy untuk pemula N5. User harus bisa pilih apakah ingin fokus kanji atau kana. Ini juga berlaku untuk tampilan kosakata di chapter detail — tulisan besar seharusnya bisa di-switch antara kanji dan kana.
-- TODO: Pronunciation scoring saat ini menggunakan kanji matching terbatas (~80 kata di kanjiToHiragana dictionary). Speech API Jepang hampir selalu mengembalikan kanji, bukan hiragana. Untuk improvement: gunakan PDF kosakata MNN Bab 1-50 (yang sudah tersedia di lokal) untuk membangun dictionary kanji→hiragana yang lengkap (~1500 kata). Ini akan meningkatkan akurasi scoring dan memungkinkan tampilan "Kamu bilang:" menampilkan hiragana alih-alih kanji. PDF berisi data lengkap: hiragana, katakana, kanji, dan arti Bahasa Indonesia.
+- Pronunciation scoring menggunakan ~1766 kanji→hiragana mappings (auto-generated dari PDF MNN Bab 1-50). Dictionary: `src/lib/audio/kanji-hiragana-dict.ts`. Data source: `scripts/data/kanji-hiragana-dict.ts`.
 - Whisper.cpp WASM fallback di-skip karena model ~75MB terlalu berat dan Web Speech API sudah cover mayoritas browser (Chrome/Edge). Jika nanti ada demand dari user Firefox/Safari, bisa diimplementasi sebagai lazy-loaded optional feature.

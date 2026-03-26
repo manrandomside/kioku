@@ -61,7 +61,7 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
       const prevStatus = currentCard.srsStatus ?? "new";
 
       // Optimistic: show XP popup, record result, and advance card immediately
-      showXp(5);
+      showXp(2);
       setResults((prev) => [...prev, { kanaId: cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
       setTimeout(() => {

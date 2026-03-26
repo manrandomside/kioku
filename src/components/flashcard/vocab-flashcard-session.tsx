@@ -65,7 +65,7 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
       const prevStatus = currentCard.srsStatus ?? "new";
 
       // Optimistic: show XP popup, record result, and advance card immediately
-      showXp(5);
+      showXp(2);
       setResults((prev) => [...prev, { vocabId: cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
       setTimeout(() => {

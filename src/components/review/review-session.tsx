@@ -70,7 +70,7 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
       const prevStatus = currentCard.status;
 
       // Optimistic: show XP popup, record result, and advance card immediately
-      showXp(5);
+      showXp(2);
       setResults((prev) => [...prev, { cardId, rating, prevStatus, newStatus: prevStatus }]);
       setIsFlipped(false);
       setTimeout(() => {

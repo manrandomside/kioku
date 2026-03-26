@@ -207,7 +207,7 @@ async function main() {
           wordType: vocabulary.wordType,
         })
         .from(vocabulary)
-        .where(eq(vocabulary.chapterId, chap.id))
+        .where(and(eq(vocabulary.chapterId, chap.id), eq(vocabulary.isPublished, true)))
         .orderBy(asc(vocabulary.sortOrder));
 
       if (vocabRows.length === 0) {

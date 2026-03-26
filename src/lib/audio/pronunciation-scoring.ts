@@ -1,5 +1,7 @@
 // Pronunciation scoring using multi-strategy comparison
 
+import { kanjiToHiragana as KANJI_READINGS } from "./kanji-hiragana-dict";
+
 export interface PronunciationResult {
   score: number;
   isCorrect: boolean;
@@ -115,36 +117,7 @@ export function kanaToRomaji(text: string): string {
   return result;
 }
 
-// Common kanji → reading mappings for frequently used words
-// This handles the most common case where Speech API returns kanji
-const KANJI_READINGS: Record<string, string> = {
-  "私": "わたし", "僕": "ぼく", "俺": "おれ",
-  "誰": "だれ", "何": "なに", "今": "いま",
-  "人": "ひと", "日": "ひ", "本": "ほん",
-  "大": "おお", "小": "ちい", "上": "うえ",
-  "下": "した", "中": "なか", "外": "そと",
-  "先生": "せんせい", "学生": "がくせい", "会社": "かいしゃ",
-  "学校": "がっこう", "病院": "びょういん", "銀行": "ぎんこう",
-  "食べる": "たべる", "飲む": "のむ", "見る": "みる",
-  "聞く": "きく", "読む": "よむ", "書く": "かく",
-  "話す": "はなす", "行く": "いく", "来る": "くる",
-  "帰る": "かえる", "買う": "かう", "教える": "おしえる",
-  "名前": "なまえ", "電話": "でんわ", "友達": "ともだち",
-  "時間": "じかん", "仕事": "しごと", "勉強": "べんきょう",
-  "新聞": "しんぶん", "映画": "えいが", "音楽": "おんがく",
-  "天気": "てんき", "元気": "げんき", "大丈夫": "だいじょうぶ",
-  "お願い": "おねがい", "ありがとう": "ありがとう",
-  "医者": "いしゃ", "男": "おとこ", "女": "おんな",
-  "子供": "こども", "家族": "かぞく", "兄弟": "きょうだい",
-  "父": "ちち", "母": "はは", "兄": "あに", "姉": "あね",
-  "弟": "おとうと", "妹": "いもうと",
-  "お父さん": "おとうさん", "お母さん": "おかあさん",
-  "水": "みず", "花": "はな", "山": "やま", "川": "かわ",
-  "朝": "あさ", "昼": "ひる", "夜": "よる",
-  "右": "みぎ", "左": "ひだり", "前": "まえ", "後ろ": "うしろ",
-};
-
-// Try to convert kanji to hiragana using known readings
+// Try to convert kanji to hiragana using known readings (~1766 entries)
 function kanjiToHiragana(text: string): string {
   let result = text;
   // Sort by length descending so longer compounds match first

@@ -5,6 +5,7 @@ import {
   integer,
   text,
   smallint,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 import { jlptLevelEnum, wordTypeEnum, kanaCategoryEnum } from "./enums";
@@ -48,6 +49,7 @@ export const vocabulary = pgTable("vocabulary", {
   audioUrl: text("audio_url"),
   exampleJp: text("example_jp"),
   exampleId: text("example_id"),
+  isPublished: boolean("is_published").notNull().default(true),
   sortOrder: smallint("sort_order").notNull().default(0),
   createdAt: text("created_at").notNull().default("now()"),
 });

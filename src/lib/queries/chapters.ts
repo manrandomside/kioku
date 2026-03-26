@@ -122,7 +122,7 @@ export async function getVocabularyForChapter(
     const rows = await db
       .select(selectFields)
       .from(vocabulary)
-      .where(eq(vocabulary.chapterId, chapterId))
+      .where(and(eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)))
       .orderBy(asc(vocabulary.sortOrder));
 
     return rows.map((r) => ({ ...r, srsStatus: null }));
@@ -138,7 +138,7 @@ export async function getVocabularyForChapter(
       srsCard,
       and(eq(srsCard.vocabularyId, vocabulary.id), eq(srsCard.userId, userId))
     )
-    .where(eq(vocabulary.chapterId, chapterId))
+    .where(and(eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)))
     .orderBy(asc(vocabulary.sortOrder));
 
   return rows;

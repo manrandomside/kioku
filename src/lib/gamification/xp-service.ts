@@ -5,7 +5,7 @@ import { userGamification, xpTransaction, dailyActivity } from "@/db/schema/gami
 import { user } from "@/db/schema/user";
 
 // XP amounts per action
-const XP_REVIEW_CARD = 5;
+const XP_REVIEW_CARD = 2;
 const XP_QUIZ_COMPLETE = 15;
 const XP_QUIZ_PERFECT_BONUS = 10;
 const XP_DAILY_GOAL_BONUS = 10;

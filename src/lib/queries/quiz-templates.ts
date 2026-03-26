@@ -33,7 +33,7 @@ export async function getTemplatesForChapter(
     })
     .from(aiQuestionTemplate)
     .innerJoin(vocabulary, eq(aiQuestionTemplate.vocabularyId, vocabulary.id))
-    .where(eq(vocabulary.chapterId, chapterId));
+    .where(and(eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)));
 
   return rows.map((r) => ({
     ...r,
@@ -47,7 +47,7 @@ export async function getRandomTemplates(
   count: number,
   types?: QuestionTypeFilter[]
 ): Promise<QuizTemplate[]> {
-  const conditions = [eq(vocabulary.chapterId, chapterId)];
+  const conditions = [eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)];
 
   if (types && types.length > 0) {
     conditions.push(
@@ -84,7 +84,7 @@ export async function hasTemplatesForChapter(
     .select({ id: aiQuestionTemplate.id })
     .from(aiQuestionTemplate)
     .innerJoin(vocabulary, eq(aiQuestionTemplate.vocabularyId, vocabulary.id))
-    .where(eq(vocabulary.chapterId, chapterId))
+    .where(and(eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)))
     .limit(1);
 
   return rows.length > 0;

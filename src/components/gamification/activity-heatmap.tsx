@@ -19,26 +19,37 @@ interface HeatmapResponse {
   };
 }
 
-// Intensity levels based on XP earned
+// Intensity levels based on XP earned (6 levels)
 function getIntensityLevel(xp: number): number {
   if (xp === 0) return 0;
-  if (xp <= 30) return 1;
-  if (xp <= 60) return 2;
-  if (xp <= 100) return 3;
-  return 4;
+  if (xp < 250) return 1;
+  if (xp < 500) return 2;
+  if (xp < 750) return 3;
+  if (xp < 1000) return 4;
+  return 5;
 }
 
-// Fill colors for SVG rects (light / dark variants)
-const FILLS_LIGHT = ["#E5E7EB", "#A8D8DA", "#5BB8BC", "#248288", "#C2E959"];
-const FILLS_DARK = ["#30363D", "#1A4F53", "#1F6B70", "#248288", "#8FB833"];
+// Fill colors for SVG rects (light / dark variants) — 6 levels
+const FILLS_LIGHT = ["#E5E7EB", "#B5D5D7", "#7BBEC2", "#3D9CA2", "#248288", "#C2E959"];
+const FILLS_DARK = ["#161B22", "#0F3538", "#145054", "#1A6B70", "#248288", "#C2E959"];
 
-// Legend swatch Tailwind classes (HTML divs support dark: prefix)
+// Legend swatch Tailwind classes (HTML divs support dark: prefix) — 6 levels
 const LEGEND_COLORS = [
-  "bg-[#E5E7EB] dark:bg-[#30363D]",
-  "bg-[#A8D8DA] dark:bg-[#1A4F53]",
-  "bg-[#5BB8BC] dark:bg-[#1F6B70]",
+  "bg-[#E5E7EB] dark:bg-[#161B22]",
+  "bg-[#B5D5D7] dark:bg-[#0F3538]",
+  "bg-[#7BBEC2] dark:bg-[#145054]",
+  "bg-[#3D9CA2] dark:bg-[#1A6B70]",
   "bg-[#248288] dark:bg-[#248288]",
-  "bg-[#C2E959] dark:bg-[#8FB833]",
+  "bg-[#C2E959] dark:bg-[#C2E959]",
+];
+
+const LEGEND_LABELS = [
+  "0 XP",
+  "1 - 249 XP",
+  "250 - 499 XP",
+  "500 - 749 XP",
+  "750 - 999 XP",
+  "1000+ XP",
 ];
 
 // SVG text fill for labels
@@ -151,6 +162,7 @@ function useIsDark() {
 export function ActivityHeatmap() {
   const [activities, setActivities] = useState<DayActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [legendTooltip, setLegendTooltip] = useState<number | null>(null);
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -287,6 +299,8 @@ export function ActivityHeatmap() {
                   height={cellSize}
                   rx={2}
                   fill={fills[level]}
+                  stroke={level === 0 ? (isDark ? "#30363D" : "#D1D5DB") : "none"}
+                  strokeWidth={level === 0 ? 0.5 : 0}
                   className="cursor-pointer"
                   onMouseEnter={(e) => handleMouseEnter(e, day, cellSize)}
                   onMouseLeave={clearTooltip}
@@ -332,7 +346,21 @@ export function ActivityHeatmap() {
         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
           <span>Sedikit</span>
           {LEGEND_COLORS.map((color, i) => (
-            <div key={i} className={`size-2.5 rounded-sm ${color}`} />
+            <button
+              key={i}
+              type="button"
+              className="relative"
+              onClick={() => setLegendTooltip(legendTooltip === i ? null : i)}
+              onMouseEnter={() => setLegendTooltip(i)}
+              onMouseLeave={() => setLegendTooltip(null)}
+            >
+              <div className={`size-2.5 rounded-sm ${color} cursor-pointer`} />
+              {legendTooltip === i && (
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max -translate-x-1/2 rounded-md border border-border bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground shadow-md">
+                  {LEGEND_LABELS[i]}
+                </div>
+              )}
+            </button>
           ))}
           <span>Banyak</span>
         </div>
