@@ -24,13 +24,22 @@ function getQuestionLabel(type: VocabQuestionType): string {
   }
 }
 
+const KANJI_TYPES: VocabQuestionType[] = ["kanji_to_hiragana", "hiragana_to_kanji"];
+
 // Convert AI-generated templates into VocabQuizQuestion format
 export function generateVocabQuizFromTemplates(
   templates: QuizTemplate[],
-  vocabPool: VocabularyWithSrs[]
+  vocabPool: VocabularyWithSrs[],
+  displayMode: "kanji" | "kana" = "kanji"
 ): VocabQuizQuestion[] {
   const vocabMap = new Map(vocabPool.map((v) => [v.id, v]));
-  const shuffled = shuffle(templates);
+
+  // Filter out kanji-specific types in kana mode
+  const filtered = displayMode === "kana"
+    ? templates.filter((t) => !KANJI_TYPES.includes(t.questionType as VocabQuestionType))
+    : templates;
+
+  const shuffled = shuffle(filtered);
 
   return shuffled.map((template, index) => {
     const vocab = vocabMap.get(template.vocabularyId);

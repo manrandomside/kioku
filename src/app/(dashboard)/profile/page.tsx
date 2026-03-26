@@ -8,6 +8,9 @@ import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { db } from "@/db";
 import { user } from "@/db/schema/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
+
+import type { DisplayMode } from "@/stores/display-mode-store";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -27,6 +30,7 @@ export default async function ProfilePage() {
       avatarUrl: user.avatarUrl,
       jlptTarget: user.jlptTarget,
       email: user.email,
+      displayMode: user.displayMode,
     })
     .from(user)
     .where(eq(user.id, userId))
@@ -58,6 +62,12 @@ export default async function ProfilePage() {
             </p>
           )}
         </div>
+      </div>
+
+      {/* Settings */}
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-muted-foreground">Pengaturan</h2>
+        <DisplayModeSetting initialMode={(profile.displayMode as DisplayMode) ?? "kanji"} />
       </div>
 
       <div className="grid gap-3">

@@ -2,11 +2,15 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Volume2, X } from "lucide-react";
+import { ArrowRight, Volume2, X } from "lucide-react";
 import Link from "next/link";
+
+import { toHiragana } from "wanakana";
 
 import { cn } from "@/lib/utils";
 import { playCorrectSound, playIncorrectSound } from "@/lib/audio/sound-effects";
+import { DisplayModeToggle } from "@/components/ui/display-mode-toggle";
+import { useDisplayMode } from "@/hooks/use-display-mode";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { VocabQuizSummary } from "@/components/quiz/vocab-quiz-summary";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
@@ -16,23 +20,38 @@ import {
   submitVocabQuizResult,
 } from "@/app/(dashboard)/learn/mnn/[chapter]/quiz/actions";
 
-import type { VocabQuizQuestion, VocabQuizAnswer, VocabQuizResult } from "@/types/vocab-quiz";
+import { buildQuestion, shuffle } from "@/lib/quiz/vocab-quiz-generator";
+
+import type { VocabQuizQuestion, VocabQuizAnswer, VocabQuizResult, VocabQuestionType } from "@/types/vocab-quiz";
+import type { VocabularyWithSrs } from "@/types/vocabulary";
+
+const KANJI_QUESTION_TYPES: VocabQuestionType[] = ["kanji_to_hiragana", "hiragana_to_kanji"];
+const NON_KANJI_TYPES: VocabQuestionType[] = [
+  "meaning_to_word",
+  "word_to_meaning",
+  "fill_in_blank",
+];
 
 interface VocabQuizSessionProps {
   questions: VocabQuizQuestion[];
   chapterId: string;
   chapterSlug: string;
   chapterNumber: number;
+  kanjiToHiragana?: Record<string, string>;
+  vocabList?: VocabularyWithSrs[];
 }
 
-const FEEDBACK_DELAY_MS = 1400;
-
 export function VocabQuizSession({
-  questions,
+  questions: initialQuestions,
   chapterId,
   chapterSlug,
   chapterNumber,
+  kanjiToHiragana = {},
+  vocabList = [],
 }: VocabQuizSessionProps) {
+  const { effectiveMode, toggleLocal } = useDisplayMode();
+  const isKanaMode = effectiveMode === "kana";
+  const [activeQuestions, setActiveQuestions] = useState<VocabQuizQuestion[]>(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
@@ -44,21 +63,32 @@ export function VocabQuizSession({
   const [hearts, setHearts] = useState(3);
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const { events: xpEvents, showXp } = useXpPopup();
-  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isCompleted = currentIndex >= questions.length || hearts <= 0;
-  const currentQuestion = isCompleted ? null : questions[currentIndex];
-  const progress = (currentIndex / questions.length) * 100;
+  const isCompleted = currentIndex >= activeQuestions.length || hearts <= 0;
+  const currentQuestion = isCompleted ? null : activeQuestions[currentIndex];
+  const progress = (currentIndex / activeQuestions.length) * 100;
+
+  // Kanji/hiragana-specific types should not be affected by kana mode toggle
+  const isKanjiHiraganaType =
+    currentQuestion?.type === "kanji_to_hiragana" ||
+    currentQuestion?.type === "hiragana_to_kanji";
+
+  // Swap kanji→hiragana display in kana mode (skip for kanji↔hiragana question types)
+  function toKana(text: string): string {
+    if (!isKanaMode || isKanjiHiraganaType) return text;
+    return kanjiToHiragana[text] ?? text;
+  }
 
   // Create session on mount
   useEffect(() => {
-    createVocabQuizSession(chapterId, questions.length).then((res) => {
+    createVocabQuizSession(chapterId, activeQuestions.length).then((res) => {
       if (res.success && res.data) {
         setSessionId(res.data.sessionId);
       }
     });
-  }, [chapterId, questions.length]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterId]);
 
   // Auto-play audio for audio question types
   useEffect(() => {
@@ -80,12 +110,53 @@ export function VocabQuizSession({
     }
   }, [currentQuestion]);
 
-  // Cleanup
+  // Replace kanji questions when switching to kana mode mid-quiz
   useEffect(() => {
-    return () => {
-      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
-    };
-  }, []);
+    if (!isKanaMode || vocabList.length === 0) return;
+
+    const startIdx = isRevealed ? currentIndex + 1 : currentIndex;
+
+    // Check if there are any kanji questions to replace
+    const hasKanjiQuestions = activeQuestions
+      .slice(startIdx)
+      .some((q) => KANJI_QUESTION_TYPES.includes(q.type));
+    if (!hasKanjiQuestions) return;
+
+    // Track vocabulary IDs already used in remaining questions to avoid duplicates
+    const usedVocabIds = new Set(
+      activeQuestions.slice(startIdx).map((q) => q.vocabularyId)
+    );
+
+    setActiveQuestions((prev) => {
+      const updated = [...prev];
+      for (let i = startIdx; i < updated.length; i++) {
+        if (!KANJI_QUESTION_TYPES.includes(updated[i].type)) continue;
+
+        // Generate a replacement non-kanji question
+        const replacementType = NON_KANJI_TYPES[Math.floor(Math.random() * NON_KANJI_TYPES.length)];
+
+        // Pick a vocab that ideally is not yet used, otherwise reuse
+        const shuffledPool = shuffle(vocabList);
+        const targetVocab =
+          shuffledPool.find((v) => !usedVocabIds.has(v.id)) ?? shuffledPool[0];
+
+        const replacement = buildQuestion(targetVocab, vocabList, replacementType, updated[i].number);
+        if (replacement) {
+          updated[i] = replacement;
+          usedVocabIds.add(targetVocab.id);
+        } else {
+          // Fallback: try meaning_to_word
+          const fallback = buildQuestion(targetVocab, vocabList, "meaning_to_word", updated[i].number);
+          if (fallback) {
+            updated[i] = fallback;
+            usedVocabIds.add(targetVocab.id);
+          }
+        }
+      }
+      return updated;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isKanaMode]);
 
   const recordAnswer = useCallback(
     (userAnswer: string, correct: boolean) => {
@@ -107,16 +178,16 @@ export function VocabQuizSession({
         isCorrect: correct,
       };
       setAnswers((prev) => [...prev, answer]);
-
-      feedbackTimerRef.current = setTimeout(() => {
-        setSelectedAnswer(null);
-        setTypedAnswer("");
-        setIsRevealed(false);
-        setCurrentIndex((prev) => prev + 1);
-      }, FEEDBACK_DELAY_MS);
     },
     [currentQuestion]
   );
+
+  const handleNextQuestion = useCallback(() => {
+    setSelectedAnswer(null);
+    setTypedAnswer("");
+    setIsRevealed(false);
+    setCurrentIndex((prev) => prev + 1);
+  }, []);
 
   const handleSelectAnswer = useCallback(
     (option: string) => {
@@ -154,13 +225,14 @@ export function VocabQuizSession({
     setAnswers([]);
     setSessionResult(null);
     setHearts(3);
+    setActiveQuestions(initialQuestions);
 
-    createVocabQuizSession(chapterId, questions.length).then((res) => {
+    createVocabQuizSession(chapterId, initialQuestions.length).then((res) => {
       if (res.success && res.data) {
         setSessionId(res.data.sessionId);
       }
     });
-  }, [chapterId, questions.length]);
+  }, [chapterId, initialQuestions]);
 
   // Submit results on completion
   useEffect(() => {
@@ -222,7 +294,7 @@ export function VocabQuizSession({
   }
 
   // Empty state
-  if (questions.length === 0) {
+  if (activeQuestions.length === 0) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4">
         <p className="text-center text-muted-foreground">
@@ -261,7 +333,7 @@ export function VocabQuizSession({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header: Close + Progress + Hearts */}
+      {/* Header: Close + Progress + Toggle + Hearts */}
       <div className="flex items-center gap-3">
         <Link
           href={`/learn/mnn/${chapterSlug}`}
@@ -279,6 +351,8 @@ export function VocabQuizSession({
             transition={{ duration: 0.4, ease: "easeOut" }}
           />
         </div>
+
+        <DisplayModeToggle mode={effectiveMode} onToggle={toggleLocal} />
 
         <div className="flex items-center gap-1">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -338,7 +412,7 @@ export function VocabQuizSession({
                       : "text-xl font-semibold text-primary sm:text-2xl md:text-3xl"
                   )}
                 >
-                  {currentQuestion.questionText}
+                  {isJapaneseDisplay ? toKana(currentQuestion.questionText) : currentQuestion.questionText}
                 </span>
               )}
 
@@ -361,7 +435,7 @@ export function VocabQuizSession({
                 {currentQuestion.options.map((option) => (
                   <QuizOption
                     key={option}
-                    label={option}
+                    label={isOptionJapanese() ? toKana(option) : option}
                     state={getOptionState(option)}
                     isJapanese={isOptionJapanese()}
                     onClick={() => handleSelectAnswer(option)}
@@ -379,11 +453,11 @@ export function VocabQuizSession({
                     ref={inputRef}
                     type="text"
                     value={typedAnswer}
-                    onChange={(e) => setTypedAnswer(e.target.value)}
+                    onChange={(e) => setTypedAnswer(toHiragana(e.target.value, { IMEMode: true }))}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSubmitTyping();
                     }}
-                    placeholder="Ketik jawaban dalam hiragana..."
+                    placeholder="Ketik romaji (contoh: isha → いしゃ)..."
                     disabled={isRevealed}
                     className={cn(
                       "h-12 w-full rounded-xl border-2 px-4 font-jp text-lg outline-none transition-colors placeholder:font-sans placeholder:text-sm placeholder:text-muted-foreground sm:h-14 sm:text-xl",
@@ -395,6 +469,9 @@ export function VocabQuizSession({
                     )}
                   />
                 </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  Ketik dalam romaji, otomatis berubah ke hiragana
+                </p>
                 {!isRevealed && (
                   <button
                     type="button"
@@ -408,37 +485,77 @@ export function VocabQuizSession({
               </div>
             )}
 
-            {/* Feedback bar */}
+            {/* Feedback + Next button */}
             <AnimatePresence>
               {isRevealed && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className={cn(
-                    "rounded-xl px-4 py-3 text-center text-sm font-medium",
-                    (currentQuestion.mode === "multiple_choice"
-                      ? selectedAnswer === currentQuestion.correctAnswer
-                      : typedAnswer.trim().toLowerCase() ===
-                        currentQuestion.correctAnswer.toLowerCase())
-                      ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                      : "bg-red-500/10 text-red-700 dark:text-red-400"
-                  )}
+                  className="flex flex-col gap-3"
                 >
-                  {(currentQuestion.mode === "multiple_choice"
-                    ? selectedAnswer === currentQuestion.correctAnswer
-                    : typedAnswer.trim().toLowerCase() ===
-                      currentQuestion.correctAnswer.toLowerCase()) ? (
-                    "Benar!"
-                  ) : (
-                    <>
-                      Salah! Jawaban yang benar:{" "}
-                      <span className="font-bold">{currentQuestion.correctAnswer}</span>
-                      {currentQuestion.hint && (
-                        <span className="opacity-70"> ({currentQuestion.hint})</span>
-                      )}
-                    </>
-                  )}
+                  {(() => {
+                    const isCorrect =
+                      currentQuestion.mode === "multiple_choice"
+                        ? selectedAnswer === currentQuestion.correctAnswer
+                        : typedAnswer.trim().toLowerCase() ===
+                          currentQuestion.correctAnswer.toLowerCase();
+                    const vocabInfo = vocabList.find(
+                      (v) => v.id === currentQuestion.vocabularyId
+                    );
+                    return (
+                      <>
+                        <div
+                          className={cn(
+                            "rounded-xl px-4 py-4",
+                            isCorrect
+                              ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                              : "bg-red-500/10 text-red-700 dark:text-red-400"
+                          )}
+                        >
+                          <p className="text-center text-base font-bold">
+                            {isCorrect ? "Benar!" : "Salah!"}
+                          </p>
+                          {!isCorrect && (
+                            <p className="mt-1 text-center text-sm">
+                              Jawaban yang benar:{" "}
+                              <span className="font-bold">
+                                {currentQuestion.correctAnswer}
+                              </span>
+                              {currentQuestion.hint && (
+                                <span className="opacity-70">
+                                  {" "}
+                                  ({currentQuestion.hint})
+                                </span>
+                              )}
+                            </p>
+                          )}
+                          {vocabInfo && (
+                            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm opacity-80">
+                              {vocabInfo.kanji && (
+                                <span className="font-jp font-medium">
+                                  {vocabInfo.kanji}
+                                </span>
+                              )}
+                              <span className="font-jp">
+                                {vocabInfo.hiragana}
+                              </span>
+                              <span>({vocabInfo.romaji})</span>
+                              <span>— {vocabInfo.meaningId}</span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleNextQuestion}
+                          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C2E959] text-base font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/80"
+                        >
+                          Lanjut
+                          <ArrowRight className="size-5" />
+                        </button>
+                      </>
+                    );
+                  })()}
                 </motion.div>
               )}
             </AnimatePresence>

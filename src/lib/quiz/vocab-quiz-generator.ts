@@ -2,9 +2,9 @@ import type { VocabularyWithSrs } from "@/types/vocabulary";
 import type { VocabQuizQuestion, VocabQuestionType } from "@/types/vocab-quiz";
 
 const QUESTIONS_PER_SESSION = 20;
-const OPTIONS_COUNT = 4;
+export const OPTIONS_COUNT = 4;
 
-function shuffle<T>(array: T[]): T[] {
+export function shuffle<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -13,7 +13,7 @@ function shuffle<T>(array: T[]): T[] {
   return shuffled;
 }
 
-function pickDistractors(
+export function pickDistractors(
   pool: VocabularyWithSrs[],
   exclude: VocabularyWithSrs,
   count: number,
@@ -26,12 +26,15 @@ function pickDistractors(
   return shuffle(candidates).slice(0, count).map(getField);
 }
 
-function getDisplayWord(v: VocabularyWithSrs): string {
+export function getDisplayWord(v: VocabularyWithSrs): string {
   return v.kanji || v.hiragana;
 }
 
 // Determine which question types are available for a given vocab pool
-function getAvailableTypes(pool: VocabularyWithSrs[]): VocabQuestionType[] {
+function getAvailableTypes(
+  pool: VocabularyWithSrs[],
+  displayMode: "kanji" | "kana" = "kanji"
+): VocabQuestionType[] {
   const types: VocabQuestionType[] = [
     "meaning_to_word",
     "word_to_meaning",
@@ -42,10 +45,12 @@ function getAvailableTypes(pool: VocabularyWithSrs[]): VocabQuestionType[] {
     types.push("audio_to_word", "audio_to_meaning");
   }
 
-  // kanji types only if enough vocab have kanji
-  const withKanji = pool.filter((v) => v.kanji);
-  if (withKanji.length >= OPTIONS_COUNT) {
-    types.push("kanji_to_hiragana", "hiragana_to_kanji");
+  // kanji types only if enough vocab have kanji AND not in kana mode
+  if (displayMode !== "kana") {
+    const withKanji = pool.filter((v) => v.kanji);
+    if (withKanji.length >= OPTIONS_COUNT) {
+      types.push("kanji_to_hiragana", "hiragana_to_kanji");
+    }
   }
 
   // fill_in_blank always available
@@ -54,7 +59,7 @@ function getAvailableTypes(pool: VocabularyWithSrs[]): VocabQuestionType[] {
   return types;
 }
 
-function buildQuestion(
+export function buildQuestion(
   vocab: VocabularyWithSrs,
   pool: VocabularyWithSrs[],
   type: VocabQuestionType,
@@ -196,12 +201,15 @@ function buildQuestion(
   }
 }
 
-export function generateVocabQuiz(vocabPool: VocabularyWithSrs[]): VocabQuizQuestion[] {
+export function generateVocabQuiz(
+  vocabPool: VocabularyWithSrs[],
+  displayMode: "kanji" | "kana" = "kanji"
+): VocabQuizQuestion[] {
   if (vocabPool.length < OPTIONS_COUNT) {
     return [];
   }
 
-  const availableTypes = getAvailableTypes(vocabPool);
+  const availableTypes = getAvailableTypes(vocabPool, displayMode);
   const shuffledPool = shuffle(vocabPool);
   const questions: VocabQuizQuestion[] = [];
 

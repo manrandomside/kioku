@@ -7,6 +7,8 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DisplayModeToggle } from "@/components/ui/display-mode-toggle";
+import { useDisplayMode } from "@/hooks/use-display-mode";
 import { ReviewCard } from "@/components/review/review-card";
 import { RatingButtons } from "@/components/flashcard/rating-buttons";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
@@ -30,6 +32,7 @@ interface ReviewResult {
 }
 
 export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
+  const { effectiveMode, toggleLocal } = useDisplayMode();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -261,6 +264,9 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
           <span className="text-xs text-muted-foreground">
             {currentCard?.type === "kana" ? "Kana" : "Kosakata"}
           </span>
+          {currentCard?.type === "vocabulary" && (
+            <DisplayModeToggle mode={effectiveMode} onToggle={toggleLocal} />
+          )}
           <span className="font-mono text-sm text-muted-foreground">
             {currentIndex + 1} / {dueCards.length}
           </span>
@@ -291,6 +297,7 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
               card={currentCard}
               isFlipped={isFlipped}
               onFlip={handleFlip}
+              displayMode={effectiveMode}
             />
           </motion.div>
         </AnimatePresence>

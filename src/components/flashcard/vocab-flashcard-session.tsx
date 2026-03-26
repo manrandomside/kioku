@@ -6,6 +6,8 @@ import { ArrowLeft, RotateCcw } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { DisplayModeToggle } from "@/components/ui/display-mode-toggle";
+import { useDisplayMode } from "@/hooks/use-display-mode";
 import { VocabFlashcardCard } from "@/components/flashcard/vocab-flashcard-card";
 import { RatingButtons } from "@/components/flashcard/rating-buttons";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
@@ -30,6 +32,7 @@ interface VocabFlashcardResult {
 }
 
 export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: VocabFlashcardSessionProps) {
+  const { effectiveMode, toggleLocal } = useDisplayMode();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -164,9 +167,12 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
           <ArrowLeft className="size-4" />
           Bab {chapterNumber}
         </Link>
-        <span className="font-mono text-sm text-muted-foreground">
-          {currentIndex + 1} / {cards.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <DisplayModeToggle mode={effectiveMode} onToggle={toggleLocal} />
+          <span className="font-mono text-sm text-muted-foreground">
+            {currentIndex + 1} / {cards.length}
+          </span>
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -194,6 +200,7 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
               isFlipped={isFlipped}
               onFlip={handleFlip}
               onPronunciationChange={setPronunciationOpen}
+              displayMode={effectiveMode}
             />
           </motion.div>
         </AnimatePresence>

@@ -9,14 +9,17 @@ import { Button } from "@/components/ui/button";
 import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
 
 import type { DueCard } from "@/lib/queries/review";
+import type { DisplayMode } from "@/stores/display-mode-store";
 
 interface ReviewCardProps {
   card: DueCard;
   isFlipped: boolean;
   onFlip: () => void;
+  displayMode?: DisplayMode;
 }
 
-export function ReviewCard({ card, isFlipped, onFlip }: ReviewCardProps) {
+export function ReviewCard({ card, isFlipped, onFlip, displayMode = "kanji" }: ReviewCardProps) {
+  const isKanaMode = displayMode === "kana";
   const srsConfig = SRS_STATUS_CONFIG[card.status] ?? SRS_STATUS_CONFIG.new;
 
   function playAudio() {
@@ -74,7 +77,7 @@ export function ReviewCard({ card, isFlipped, onFlip }: ReviewCardProps) {
           ) : (
             // Vocab front: kanji small + hiragana large (furigana terbalik)
             <>
-              {card.kanji && (
+              {card.kanji && !isKanaMode && (
                 <span className="mb-1 font-jp text-lg text-muted-foreground">
                   {card.kanji}
                 </span>

@@ -11,15 +11,18 @@ import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
 import { PronunciationRecorder } from "@/components/audio/pronunciation-recorder";
 
 import type { VocabularyWithSrs } from "@/types/vocabulary";
+import type { DisplayMode } from "@/stores/display-mode-store";
 
 interface VocabFlashcardCardProps {
   vocab: VocabularyWithSrs;
   isFlipped: boolean;
   onFlip: () => void;
   onPronunciationChange?: (open: boolean) => void;
+  displayMode?: DisplayMode;
 }
 
-export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationChange }: VocabFlashcardCardProps) {
+export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationChange, displayMode = "kanji" }: VocabFlashcardCardProps) {
+  const isKanaMode = displayMode === "kana";
   const [showPronunciation, setShowPronunciation] = useState(false);
 
   function setPronunciationOpen(open: boolean) {
@@ -69,8 +72,8 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationCh
             {srsBadge.label}
           </span>
 
-          {/* Kanji (small, above hiragana - like inverted furigana) */}
-          {vocab.kanji && (
+          {/* Kanji (small, above hiragana - hidden in kana mode) */}
+          {vocab.kanji && !isKanaMode && (
             <span className="mb-1 font-jp text-lg text-muted-foreground">
               {vocab.kanji}
             </span>

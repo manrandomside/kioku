@@ -6,6 +6,8 @@ import { ArrowLeft, BookOpen, HelpCircle, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { VocabularyItem } from "@/components/mnn/vocabulary-item";
+import { DisplayModeToggle } from "@/components/ui/display-mode-toggle";
+import { useDisplayMode } from "@/hooks/use-display-mode";
 
 import type { VocabularyWithSrs, WordType } from "@/types/vocabulary";
 
@@ -43,6 +45,7 @@ export function ChapterDetailView({
   jlptLevel,
   vocabList,
 }: ChapterDetailViewProps) {
+  const { effectiveMode, toggleLocal } = useDisplayMode();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [srsFilter, setSrsFilter] = useState<SrsFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,16 +178,27 @@ export function ChapterDetailView({
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Cari kosakata..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-10 w-full rounded-lg border bg-background pl-10 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
-        />
+      {/* Quiz mode info */}
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="font-jp text-sm">{effectiveMode === "kana" ? "あ" : "漢"}</span>
+        {effectiveMode === "kana"
+          ? "Mode Kana — soal kanji tidak akan muncul di quiz"
+          : "Mode Kanji — termasuk soal baca kanji di quiz"}
+      </p>
+
+      {/* Search + Display Mode Toggle */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Cari kosakata..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-10 w-full rounded-lg border bg-background pl-10 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
+        <DisplayModeToggle mode={effectiveMode} onToggle={toggleLocal} />
       </div>
 
       {/* Word Type Tabs */}
@@ -251,7 +265,7 @@ export function ChapterDetailView({
         ) : (
           <div className="flex flex-col gap-2">
             {filteredVocab.map((vocab) => (
-              <VocabularyItem key={vocab.id} vocab={vocab} />
+              <VocabularyItem key={vocab.id} vocab={vocab} displayMode={effectiveMode} />
             ))}
           </div>
         )}

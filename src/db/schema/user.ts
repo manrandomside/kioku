@@ -20,6 +20,7 @@ export const user = pgTable("user", {
   dailyGoalXp: dailyGoalXpEnum("daily_goal_xp").default("30"),
   autoPlayAudio: boolean("auto_play_audio").notNull().default(true),
   showRomaji: boolean("show_romaji").notNull().default(true),
+  displayMode: varchar("display_mode", { length: 10 }).notNull().default("kanji"),
   theme: themeEnum("theme").notNull().default("system"),
   onboardingDone: boolean("onboarding_done").notNull().default(false),
   hirakataKnown: boolean("hirakata_known").notNull().default(false),
