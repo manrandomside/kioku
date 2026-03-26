@@ -75,20 +75,26 @@ export function ReviewCard({ card, isFlipped, onFlip, displayMode = "kanji" }: R
               {card.character}
             </span>
           ) : (
-            // Vocab front: kanji small + hiragana large (furigana terbalik)
-            <>
-              {card.kanji && !isKanaMode && (
-                <span className="mb-1 font-jp text-lg text-muted-foreground">
-                  {card.kanji}
+            // Vocab front
+            isKanaMode ? (
+              <>
+                {card.kanji && (
+                  <span className="mb-1 font-jp text-lg text-muted-foreground">
+                    {card.kanji}
+                  </span>
+                )}
+                <span className="font-jp text-6xl font-medium leading-tight text-foreground sm:text-7xl">
+                  {card.hiragana}
                 </span>
-              )}
+                <span className="mt-3 font-mono text-sm text-muted-foreground">
+                  {card.romaji}
+                </span>
+              </>
+            ) : (
               <span className="font-jp text-6xl font-medium leading-tight text-foreground sm:text-7xl">
-                {card.hiragana}
+                {card.kanji || card.hiragana}
               </span>
-              <span className="mt-3 font-mono text-sm text-muted-foreground">
-                {card.romaji}
-              </span>
-            </>
+            )
           )}
 
           <p className="mt-6 text-sm text-muted-foreground">
@@ -146,9 +152,6 @@ export function ReviewCard({ card, isFlipped, onFlip, displayMode = "kanji" }: R
 
               <span className="text-center text-2xl font-semibold text-primary">
                 {card.meaningId}
-              </span>
-              <span className="text-center text-sm text-muted-foreground">
-                {card.meaningEn}
               </span>
 
               {card.exampleJp && (

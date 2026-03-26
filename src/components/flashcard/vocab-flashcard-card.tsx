@@ -72,22 +72,29 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationCh
             {srsBadge.label}
           </span>
 
-          {/* Kanji (small, above hiragana - hidden in kana mode) */}
-          {vocab.kanji && !isKanaMode && (
-            <span className="mb-1 font-jp text-lg text-muted-foreground">
-              {vocab.kanji}
-            </span>
+          {isKanaMode ? (
+            <>
+              {/* Kana mode: kanji small above, hiragana large, romaji below */}
+              {vocab.kanji && (
+                <span className="mb-1 font-jp text-lg text-muted-foreground">
+                  {vocab.kanji}
+                </span>
+              )}
+              <span className="font-jp text-6xl font-medium leading-tight text-foreground sm:text-7xl">
+                {vocab.hiragana}
+              </span>
+              <span className="mt-3 font-mono text-sm text-muted-foreground">
+                {vocab.romaji}
+              </span>
+            </>
+          ) : (
+            <>
+              {/* Kanji mode: only kanji large (fallback to hiragana if no kanji) */}
+              <span className="font-jp text-6xl font-medium leading-tight text-foreground sm:text-7xl">
+                {vocab.kanji || vocab.hiragana}
+              </span>
+            </>
           )}
-
-          {/* Hiragana (main, large) */}
-          <span className="font-jp text-6xl font-medium leading-tight text-foreground sm:text-7xl">
-            {vocab.hiragana}
-          </span>
-
-          {/* Romaji */}
-          <span className="mt-3 font-mono text-sm text-muted-foreground">
-            {vocab.romaji}
-          </span>
 
           <p className="mt-6 text-sm text-muted-foreground">
             Ketuk untuk membalik
@@ -129,11 +136,6 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationCh
           {/* Meaning (large) */}
           <span className="text-center text-2xl font-semibold text-primary">
             {vocab.meaningId}
-          </span>
-
-          {/* English meaning (secondary) */}
-          <span className="text-center text-sm text-muted-foreground">
-            {vocab.meaningEn}
           </span>
 
           {/* Example sentence */}

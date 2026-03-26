@@ -118,7 +118,7 @@ export function kanaToRomaji(text: string): string {
 }
 
 // Try to convert kanji to hiragana using known readings (~1766 entries)
-function kanjiToHiragana(text: string): string {
+export function kanjiToHiragana(text: string): string {
   let result = text;
   // Sort by length descending so longer compounds match first
   const entries = Object.entries(KANJI_READINGS).sort(

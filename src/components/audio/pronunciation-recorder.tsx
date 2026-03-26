@@ -7,7 +7,7 @@ import { Mic, Volume2, X, RotateCcw, ChevronRight, AlertTriangle } from "lucide-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { calculatePronunciationScore, type PronunciationResult } from "@/lib/audio/pronunciation-scoring";
+import { calculatePronunciationScore, kanjiToHiragana, type PronunciationResult } from "@/lib/audio/pronunciation-scoring";
 
 interface PronunciationTarget {
   id?: string;
@@ -266,9 +266,23 @@ export function PronunciationRecorder({
                           <span className="text-[11px] text-muted-foreground">
                             Kamu bilang:
                           </span>
-                          <p className="font-jp text-lg font-medium text-foreground truncate">
-                            {transcript || "-"}
-                          </p>
+                          {(() => {
+                            const raw = transcript || "-";
+                            const converted = kanjiToHiragana(raw);
+                            const hasKanji = converted !== raw;
+                            return (
+                              <>
+                                {hasKanji && (
+                                  <p className="font-jp text-sm text-muted-foreground truncate">
+                                    {raw}
+                                  </p>
+                                )}
+                                <p className="font-jp text-lg font-bold text-foreground truncate">
+                                  {converted}
+                                </p>
+                              </>
+                            );
+                          })()}
                           <p className="text-[11px] text-muted-foreground">
                             Seharusnya: <span className="font-jp">{target.hiragana}</span>
                           </p>
