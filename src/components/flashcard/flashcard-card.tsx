@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Volume2, Mic } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { playFlipSound } from "@/lib/audio/sound-effects";
+import { playAudio } from "@/lib/audio/play-audio";
+import { useAutoPlayAudio } from "@/hooks/use-auto-play-audio";
 import { Button } from "@/components/ui/button";
 import { PronunciationRecorder } from "@/components/audio/pronunciation-recorder";
 
@@ -36,6 +38,16 @@ const SRS_BADGE: Record<string, { label: string; className: string }> = {
 
 export function FlashcardCard({ kana, isFlipped, onFlip, onPronunciationChange }: FlashcardCardProps) {
   const [showPronunciation, setShowPronunciation] = useState(false);
+  const { playIfEnabled } = useAutoPlayAudio();
+  const prevFlipped = useRef(false);
+
+  // Auto-play audio when card is flipped to back
+  useEffect(() => {
+    if (isFlipped && !prevFlipped.current) {
+      playIfEnabled(kana.audioUrl);
+    }
+    prevFlipped.current = isFlipped;
+  }, [isFlipped, kana.audioUrl, playIfEnabled]);
 
   function setPronunciationOpen(open: boolean) {
     setShowPronunciation(open);
@@ -44,11 +56,8 @@ export function FlashcardCard({ kana, isFlipped, onFlip, onPronunciationChange }
   const status = kana.srsStatus ?? "new";
   const badge = SRS_BADGE[status] ?? SRS_BADGE.new;
 
-  function playAudio() {
-    if (kana.audioUrl) {
-      const audio = new Audio(kana.audioUrl);
-      audio.play();
-    }
+  function handlePlayAudio() {
+    playAudio(kana.audioUrl);
   }
 
   return (
@@ -115,7 +124,7 @@ export function FlashcardCard({ kana, isFlipped, onFlip, onPronunciationChange }
               className="gap-2"
               onClick={(e) => {
                 e.stopPropagation();
-                playAudio();
+                handlePlayAudio();
               }}
               disabled={!kana.audioUrl}
             >

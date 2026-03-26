@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { user as userTable } from "@/db/schema/user";
 import { AppShell } from "@/components/layout/app-shell";
 import { DisplayModeProvider } from "@/components/providers/display-mode-provider";
+import { AutoPlayProvider } from "@/components/providers/auto-play-provider";
 
 import type { DisplayMode } from "@/stores/display-mode-store";
 
@@ -28,23 +29,29 @@ export default async function DashboardLayout({
     avatarUrl: user.user_metadata?.avatar_url,
   };
 
-  // Fetch user display mode preference
+  // Fetch user preferences
   let displayMode: DisplayMode = "kanji";
+  let autoPlayAudio = true;
   const internalUserId = await getInternalUserId(user.id);
   if (internalUserId) {
     const [row] = await db
-      .select({ displayMode: userTable.displayMode })
+      .select({ displayMode: userTable.displayMode, autoPlayAudio: userTable.autoPlayAudio })
       .from(userTable)
       .where(eq(userTable.id, internalUserId))
       .limit(1);
     if (row?.displayMode === "kana") {
       displayMode = "kana";
     }
+    if (row?.autoPlayAudio === false) {
+      autoPlayAudio = false;
+    }
   }
 
   return (
-    <DisplayModeProvider initialMode={displayMode}>
-      <AppShell user={userInfo}>{children}</AppShell>
-    </DisplayModeProvider>
+    <AutoPlayProvider initialEnabled={autoPlayAudio}>
+      <DisplayModeProvider initialMode={displayMode}>
+        <AppShell user={userInfo}>{children}</AppShell>
+      </DisplayModeProvider>
+    </AutoPlayProvider>
   );
 }

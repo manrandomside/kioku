@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Volume2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { playFlipSound } from "@/lib/audio/sound-effects";
+import { playAudio } from "@/lib/audio/play-audio";
+import { useAutoPlayAudio } from "@/hooks/use-auto-play-audio";
 import { Button } from "@/components/ui/button";
 import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
 
@@ -21,16 +24,22 @@ interface ReviewCardProps {
 export function ReviewCard({ card, isFlipped, onFlip, displayMode = "kanji" }: ReviewCardProps) {
   const isKanaMode = displayMode === "kana";
   const srsConfig = SRS_STATUS_CONFIG[card.status] ?? SRS_STATUS_CONFIG.new;
-
-  function playAudio() {
-    const url = card.type === "kana" ? card.kanaAudioUrl : card.vocabAudioUrl;
-    if (url) {
-      const audio = new Audio(url);
-      audio.play().catch(() => {});
-    }
-  }
+  const { playIfEnabled } = useAutoPlayAudio();
+  const prevFlipped = useRef(false);
 
   const audioUrl = card.type === "kana" ? card.kanaAudioUrl : card.vocabAudioUrl;
+
+  // Auto-play audio when card is flipped to back
+  useEffect(() => {
+    if (isFlipped && !prevFlipped.current) {
+      playIfEnabled(audioUrl);
+    }
+    prevFlipped.current = isFlipped;
+  }, [isFlipped, audioUrl, playIfEnabled]);
+
+  function handlePlayAudio() {
+    playAudio(audioUrl);
+  }
 
   return (
     <div
@@ -175,7 +184,7 @@ export function ReviewCard({ card, isFlipped, onFlip, displayMode = "kanji" }: R
             className="mt-2 gap-2"
             onClick={(e) => {
               e.stopPropagation();
-              playAudio();
+              handlePlayAudio();
             }}
             disabled={!audioUrl}
           >

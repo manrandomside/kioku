@@ -71,7 +71,11 @@
       "Bash(powershell -Command \"Stop-Process -Id 16568 -Force -ErrorAction SilentlyContinue\")",
       "Bash(npx tsx:*)",
       "Bash(echo \"exit: $?\")",
-      "Bash(node -e \"require\\(''dotenv''\\)\")"
+      "Bash(node -e \"require\\(''dotenv''\\)\")",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\(''scripts/data/mnn-vocabulary-indonesian.json''\\)\\); print\\(len\\(d\\)\\)\")",
+      "Bash(git status:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)"
     ]
   }
 }

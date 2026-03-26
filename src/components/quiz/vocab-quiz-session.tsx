@@ -9,6 +9,8 @@ import { toHiragana } from "wanakana";
 
 import { cn } from "@/lib/utils";
 import { playCorrectSound, playIncorrectSound } from "@/lib/audio/sound-effects";
+import { playAudio } from "@/lib/audio/play-audio";
+import { useAutoPlayAudio } from "@/hooks/use-auto-play-audio";
 import { DisplayModeToggle } from "@/components/ui/display-mode-toggle";
 import { useDisplayMode } from "@/hooks/use-display-mode";
 import { QuizOption } from "@/components/quiz/quiz-option";
@@ -50,6 +52,7 @@ export function VocabQuizSession({
   vocabList = [],
 }: VocabQuizSessionProps) {
   const { effectiveMode, toggleLocal } = useDisplayMode();
+  const { playIfEnabled } = useAutoPlayAudio();
   const isKanaMode = effectiveMode === "kana";
   const [activeQuestions, setActiveQuestions] = useState<VocabQuizQuestion[]>(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -90,17 +93,13 @@ export function VocabQuizSession({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapterId]);
 
-  // Auto-play audio for audio question types
+  // Auto-play audio when question appears (Japanese-display types)
+  const AUTO_PLAY_TYPES = ["word_to_meaning", "kanji_to_hiragana", "hiragana_to_kanji", "audio_to_word", "audio_to_meaning"];
   useEffect(() => {
-    if (
-      currentQuestion?.audioUrl &&
-      (currentQuestion.type === "audio_to_word" ||
-        currentQuestion.type === "audio_to_meaning" ||
-        currentQuestion.type === "word_to_meaning")
-    ) {
-      const audio = new Audio(currentQuestion.audioUrl);
-      audio.play().catch(() => {});
+    if (currentQuestion?.audioUrl && AUTO_PLAY_TYPES.includes(currentQuestion.type)) {
+      playIfEnabled(currentQuestion.audioUrl);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion]);
 
   // Focus input for typing questions
@@ -169,6 +168,13 @@ export function VocabQuizSession({
         setHearts((prev) => prev - 1);
       }
 
+      // Auto-play correct answer audio after sound effect
+      if (currentQuestion.audioUrl) {
+        setTimeout(() => {
+          playIfEnabled(currentQuestion.audioUrl);
+        }, 300);
+      }
+
       const answer: VocabQuizAnswer = {
         questionNumber: currentQuestion.number,
         questionType: currentQuestion.type,
@@ -179,7 +185,7 @@ export function VocabQuizSession({
       };
       setAnswers((prev) => [...prev, answer]);
     },
-    [currentQuestion]
+    [currentQuestion, playIfEnabled]
   );
 
   const handleNextQuestion = useCallback(() => {
@@ -212,8 +218,7 @@ export function VocabQuizSession({
 
   const handlePlayAudio = useCallback(() => {
     if (currentQuestion?.audioUrl) {
-      const audio = new Audio(currentQuestion.audioUrl);
-      audio.play().catch(() => {});
+      playAudio(currentQuestion.audioUrl);
     }
   }, [currentQuestion]);
 

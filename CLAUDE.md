@@ -133,7 +133,8 @@ src/
 - [x] Seed data: MNN vocabulary Bab 1-50 (from PDF + MinnaNoDS)
 - [x] Basic layout: AppShell + Navbar + BottomNav + ThemeToggle
 - [x] Vercel deployment + GitHub Actions keep-alive cron
-- [ ] Pre-generate audio files (Edge TTS) + upload to Supabase Storage
+- [x] Pre-generate audio files (Edge TTS) + upload to Supabase Storage
+- [x] Auto-play audio across all pages (flashcard, quiz, review, kana grid) + toggle setting
 
 ### [P1] Core Features
 

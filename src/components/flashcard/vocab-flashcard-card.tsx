@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Volume2, Mic } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { playFlipSound } from "@/lib/audio/sound-effects";
+import { playAudio } from "@/lib/audio/play-audio";
+import { useAutoPlayAudio } from "@/hooks/use-auto-play-audio";
 import { Button } from "@/components/ui/button";
 import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
 import { PronunciationRecorder } from "@/components/audio/pronunciation-recorder";
@@ -24,6 +26,16 @@ interface VocabFlashcardCardProps {
 export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationChange, displayMode = "kanji" }: VocabFlashcardCardProps) {
   const isKanaMode = displayMode === "kana";
   const [showPronunciation, setShowPronunciation] = useState(false);
+  const { playIfEnabled } = useAutoPlayAudio();
+  const prevFlipped = useRef(false);
+
+  // Auto-play audio when card is flipped to back
+  useEffect(() => {
+    if (isFlipped && !prevFlipped.current) {
+      playIfEnabled(vocab.audioUrl);
+    }
+    prevFlipped.current = isFlipped;
+  }, [isFlipped, vocab.audioUrl, playIfEnabled]);
 
   function setPronunciationOpen(open: boolean) {
     setShowPronunciation(open);
@@ -33,11 +45,8 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationCh
   const srsBadge = SRS_STATUS_CONFIG[status] ?? SRS_STATUS_CONFIG.new;
   const wordConfig = WORD_TYPE_CONFIG[vocab.wordType] ?? WORD_TYPE_CONFIG.noun;
 
-  function playAudio() {
-    if (vocab.audioUrl) {
-      const audio = new Audio(vocab.audioUrl);
-      audio.play().catch(() => {});
-    }
+  function handlePlayAudio() {
+    playAudio(vocab.audioUrl);
   }
 
   return (
@@ -160,7 +169,7 @@ export function VocabFlashcardCard({ vocab, isFlipped, onFlip, onPronunciationCh
               className="gap-2"
               onClick={(e) => {
                 e.stopPropagation();
-                playAudio();
+                handlePlayAudio();
               }}
               disabled={!vocab.audioUrl}
             >

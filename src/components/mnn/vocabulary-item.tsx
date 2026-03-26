@@ -3,6 +3,7 @@
 import { Volume2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { playAudio } from "@/lib/audio/play-audio";
 import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
 
 import type { VocabularyWithSrs } from "@/types/vocabulary";
@@ -21,11 +22,8 @@ export function VocabularyItem({ vocab, showRomaji = true, displayMode = "kanji"
   const srsStatus = vocab.srsStatus ?? "new";
   const srsConfig = SRS_STATUS_CONFIG[srsStatus];
 
-  function playAudio() {
-    if (vocab.audioUrl) {
-      const audio = new Audio(vocab.audioUrl);
-      audio.play().catch(() => {});
-    }
+  function handlePlayAudio() {
+    playAudio(vocab.audioUrl);
   }
 
   return (
@@ -100,7 +98,7 @@ export function VocabularyItem({ vocab, showRomaji = true, displayMode = "kanji"
         {vocab.audioUrl && (
           <button
             type="button"
-            onClick={playAudio}
+            onClick={handlePlayAudio}
             className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Putar audio"
           >

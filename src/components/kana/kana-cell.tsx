@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { playAudio } from "@/lib/audio/play-audio";
 
 import type { KanaWithSrs } from "@/types/kana";
 
@@ -22,7 +23,10 @@ export function KanaCell({ kana, onClick }: KanaCellProps) {
 
   return (
     <button
-      onClick={() => onClick(kana)}
+      onClick={() => {
+        playAudio(kana.audioUrl);
+        onClick(kana);
+      }}
       className={cn(
         "group relative flex flex-col items-center justify-center rounded-xl border p-1.5 transition-all",
         "hover:scale-105 hover:shadow-md active:scale-95",

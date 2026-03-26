@@ -3,6 +3,7 @@
 import { Volume2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { playAudio } from "@/lib/audio/play-audio";
 import {
   Dialog,
   DialogContent,
@@ -41,11 +42,8 @@ export function KanaModal({ kana, open, onOpenChange }: KanaModalProps) {
   const status = kana.srsStatus ?? "new";
   const srsInfo = SRS_LABEL[status] ?? SRS_LABEL.new;
 
-  function playAudio() {
-    if (kana?.audioUrl) {
-      const audio = new Audio(kana.audioUrl);
-      audio.play();
-    }
+  function handlePlayAudio() {
+    playAudio(kana?.audioUrl);
   }
 
   return (
@@ -82,7 +80,7 @@ export function KanaModal({ kana, open, onOpenChange }: KanaModalProps) {
             variant="outline"
             size="lg"
             className="h-11 w-full gap-2"
-            onClick={playAudio}
+            onClick={handlePlayAudio}
             disabled={!kana.audioUrl}
           >
             <Volume2 className="size-4" />

@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { user } from "@/db/schema/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
+import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
 
 import type { DisplayMode } from "@/stores/display-mode-store";
 
@@ -31,6 +32,7 @@ export default async function ProfilePage() {
       jlptTarget: user.jlptTarget,
       email: user.email,
       displayMode: user.displayMode,
+      autoPlayAudio: user.autoPlayAudio,
     })
     .from(user)
     .where(eq(user.id, userId))
@@ -68,6 +70,7 @@ export default async function ProfilePage() {
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-muted-foreground">Pengaturan</h2>
         <DisplayModeSetting initialMode={(profile.displayMode as DisplayMode) ?? "kanji"} />
+        <AutoPlaySetting initialEnabled={profile.autoPlayAudio ?? true} />
       </div>
 
       <div className="grid gap-3">
