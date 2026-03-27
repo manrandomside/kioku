@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Volume2, X } from "lucide-react";
+import { ArrowRight, Volume2, X } from "lucide-react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { playCorrectSound, playIncorrectSound } from "@/lib/audio/sound-effects";
+import { playAudio } from "@/lib/audio/play-audio";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { QuizSummary } from "@/components/quiz/quiz-summary";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
@@ -22,8 +23,6 @@ interface KanaQuizSessionProps {
   category: string;
 }
 
-const FEEDBACK_DELAY_MS = 1200;
-
 export function KanaQuizSession({ questions, script, filter, category }: KanaQuizSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -35,7 +34,6 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
   const [hearts, setHearts] = useState(3);
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const { events: xpEvents, showXp } = useXpPopup();
-  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCompleted = currentIndex >= questions.length || hearts <= 0;
   const currentQuestion = isCompleted ? null : questions[currentIndex];
@@ -49,21 +47,6 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
       }
     });
   }, [category, questions.length]);
-
-  // Auto-play audio for word_to_meaning questions (showing kana character)
-  useEffect(() => {
-    if (currentQuestion?.audioUrl && currentQuestion.type === "word_to_meaning") {
-      const audio = new Audio(currentQuestion.audioUrl);
-      audio.play().catch(() => {});
-    }
-  }, [currentQuestion]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
-    };
-  }, []);
 
   const handleSelectAnswer = useCallback(
     (option: string) => {
@@ -80,6 +63,13 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
         setHearts((prev) => prev - 1);
       }
 
+      // Play correct answer audio after sound effect
+      if (currentQuestion.audioUrl) {
+        setTimeout(() => {
+          playAudio(currentQuestion.audioUrl);
+        }, 300);
+      }
+
       const answer: QuizAnswer = {
         questionNumber: currentQuestion.number,
         questionType: currentQuestion.type,
@@ -89,21 +79,19 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
         isCorrect,
       };
       setAnswers((prev) => [...prev, answer]);
-
-      // Auto-advance after feedback
-      feedbackTimerRef.current = setTimeout(() => {
-        setSelectedAnswer(null);
-        setIsRevealed(false);
-        setCurrentIndex((prev) => prev + 1);
-      }, FEEDBACK_DELAY_MS);
     },
     [selectedAnswer, currentQuestion]
   );
 
+  const handleNextQuestion = useCallback(() => {
+    setSelectedAnswer(null);
+    setIsRevealed(false);
+    setCurrentIndex((prev) => prev + 1);
+  }, []);
+
   const handlePlayAudio = useCallback(() => {
     if (currentQuestion?.audioUrl) {
-      const audio = new Audio(currentQuestion.audioUrl);
-      audio.play().catch(() => {});
+      playAudio(currentQuestion.audioUrl);
     }
   }, [currentQuestion]);
 
@@ -313,31 +301,46 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
               ))}
             </div>
 
-            {/* Feedback bar */}
+            {/* Feedback + Next button */}
             <AnimatePresence>
               {isRevealed && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className={cn(
-                    "rounded-xl px-4 py-3 text-center text-sm font-medium",
-                    selectedAnswer === currentQuestion.correctAnswer
-                      ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                      : "bg-red-500/10 text-red-700 dark:text-red-400"
-                  )}
+                  className="flex flex-col gap-3"
                 >
-                  {selectedAnswer === currentQuestion.correctAnswer ? (
-                    "Benar!"
-                  ) : (
-                    <>
-                      Salah! Jawaban yang benar:{" "}
-                      <span className="font-bold">{currentQuestion.correctAnswer}</span>
-                      {" "}({currentQuestion.type === "meaning_to_word"
-                        ? currentQuestion.romaji
-                        : currentQuestion.character})
-                    </>
-                  )}
+                  <div
+                    className={cn(
+                      "rounded-xl px-4 py-4",
+                      selectedAnswer === currentQuestion.correctAnswer
+                        ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                        : "bg-red-500/10 text-red-700 dark:text-red-400"
+                    )}
+                  >
+                    <p className="text-center text-base font-bold">
+                      {selectedAnswer === currentQuestion.correctAnswer
+                        ? "Benar!"
+                        : "Salah!"}
+                    </p>
+                    {selectedAnswer !== currentQuestion.correctAnswer && (
+                      <p className="mt-1 text-center text-sm">
+                        Jawaban yang benar:{" "}
+                        <span className="font-bold">{currentQuestion.correctAnswer}</span>
+                        {" "}({currentQuestion.type === "meaning_to_word"
+                          ? currentQuestion.romaji
+                          : currentQuestion.character})
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleNextQuestion}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C2E959] text-base font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/80"
+                  >
+                    Lanjut
+                    <ArrowRight className="size-5" />
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
