@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 import { SoundToggle } from "@/components/ui/sound-toggle";
+import { Logo } from "@/components/ui/logo";
 import { UserMenu } from "@/components/layout/user-menu";
 import { SearchBar } from "@/components/search/search-bar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -51,11 +52,8 @@ export function Navbar({ user }: NavbarProps) {
           </SheetContent>
         </Sheet>
 
-        <Link
-          href="/home"
-          className="font-display text-xl font-bold tracking-tight text-foreground"
-        >
-          kioku
+        <Link href="/home" className="flex items-center">
+          <Logo size="sm" />
         </Link>
 
         <nav className="ml-6 hidden items-center gap-1 lg:flex">

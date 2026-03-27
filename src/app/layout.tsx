@@ -31,6 +31,10 @@ export const metadata: Metadata = {
   title: "Kioku - Belajar Kosakata Jepang",
   description: "Platform belajar kosakata bahasa Jepang dengan SRS, quiz, dan AI tutor",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/icons/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -58,7 +62,6 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <meta name="theme-color" content="#0A3A3A" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <ThemeProvider>

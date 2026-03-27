@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/ui/logo";
 
 const SIDEBAR_ITEMS = [
   {
@@ -45,11 +46,8 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden bg-sidebar p-4 pt-6">
-      <Link
-        href="/home"
-        className="mb-4 px-2 font-display text-xl font-bold tracking-tight text-sidebar-foreground lg:hidden"
-      >
-        kioku
+      <Link href="/home" className="mb-4 flex items-center px-2 lg:hidden">
+        <Logo size="md" />
       </Link>
 
       {SIDEBAR_ITEMS.map((section) => (
