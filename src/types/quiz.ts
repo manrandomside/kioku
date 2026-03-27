@@ -26,6 +26,9 @@ export interface QuizSessionResult {
   correctCount: number;
   scorePercent: number;
   xpEarned: number;
+  xpBaseXp?: number;
+  xpBonusXp?: number;
+  xpBonusLabel?: string;
   isPerfect: boolean;
   timeSpentMs: number;
   answers: QuizAnswer[];

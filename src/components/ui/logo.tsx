@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
-const SIZE_MAP = {
-  sm: 32,
-  md: 40,
-  lg: 56,
+const SIZE_CLASSES = {
+  sm: "h-6",
+  md: "h-7",
+  lg: "h-9",
 } as const;
 
 interface LogoProps {
@@ -12,9 +12,7 @@ interface LogoProps {
 }
 
 export function Logo({ size = "md", className }: LogoProps) {
-  const px = SIZE_MAP[size];
-
-  const style = { height: px, maxHeight: px, width: "auto" } as const;
+  const sizeClass = SIZE_CLASSES[size];
 
   return (
     <>
@@ -22,15 +20,13 @@ export function Logo({ size = "md", className }: LogoProps) {
       <img
         src="/logo-dark.svg"
         alt="Kioku"
-        style={style}
-        className={cn("block dark:hidden", className)}
+        className={cn("block w-auto dark:hidden", sizeClass, className)}
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo-white.svg"
         alt="Kioku"
-        style={style}
-        className={cn("hidden dark:block", className)}
+        className={cn("hidden w-auto dark:block", sizeClass, className)}
       />
     </>
   );

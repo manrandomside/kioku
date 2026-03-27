@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Volume2, X } from "lucide-react";
 import Link from "next/link";
 
-import { toHiragana } from "wanakana";
+import { toHiragana, toKatakana, isKatakana } from "wanakana";
 
 import { cn } from "@/lib/utils";
 import { playCorrectSound, playIncorrectSound } from "@/lib/audio/sound-effects";
@@ -58,6 +58,7 @@ export function VocabQuizSession({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
+  const [kanaInputMode, setKanaInputMode] = useState<"hiragana" | "katakana">("hiragana");
   const [isRevealed, setIsRevealed] = useState(false);
   const [answers, setAnswers] = useState<VocabQuizAnswer[]>([]);
   const [sessionResult, setSessionResult] = useState<VocabQuizResult | null>(null);
@@ -208,12 +209,15 @@ export function VocabQuizSession({
 
   const handleSubmitTyping = useCallback(() => {
     if (!currentQuestion || isRevealed || !typedAnswer.trim()) return;
-    const normalized = typedAnswer.trim().toLowerCase();
-    const correctNormalized = currentQuestion.correctAnswer.toLowerCase();
-    const isCorrect = normalized === correctNormalized;
-    setSelectedAnswer(typedAnswer.trim());
+    const userInput = typedAnswer.trim();
+    const correct = currentQuestion.correctAnswer;
+    // Normalize both to hiragana for tolerant comparison (katakana == hiragana phonetically)
+    const userHiragana = toHiragana(userInput, { passRomaji: true }).toLowerCase();
+    const correctHiragana = toHiragana(correct, { passRomaji: true }).toLowerCase();
+    const isCorrect = userHiragana === correctHiragana;
+    setSelectedAnswer(userInput);
     setIsRevealed(true);
-    recordAnswer(typedAnswer.trim(), isCorrect);
+    recordAnswer(userInput, isCorrect);
   }, [currentQuestion, isRevealed, typedAnswer, recordAnswer]);
 
   const handlePlayAudio = useCallback(() => {
@@ -226,6 +230,7 @@ export function VocabQuizSession({
     setCurrentIndex(0);
     setSelectedAnswer(null);
     setTypedAnswer("");
+    setKanaInputMode("hiragana");
     setIsRevealed(false);
     setAnswers([]);
     setSessionResult(null);
@@ -249,13 +254,12 @@ export function VocabQuizSession({
     const totalQuestions = answers.length;
     const scorePercent = Math.round((correctCount / totalQuestions) * 100);
     const isPerfect = correctCount === totalQuestions && hearts > 0;
-    const xpEarned = correctCount * 5 + (isPerfect ? 20 : 0);
 
     const result: VocabQuizResult = {
       totalQuestions,
       correctCount,
       scorePercent,
-      xpEarned,
+      xpEarned: 0,
       isPerfect,
       timeSpentMs,
       answers,
@@ -265,6 +269,15 @@ export function VocabQuizSession({
     if (sessionId) {
       submitVocabQuizResult(sessionId, answers, timeSpentMs).then((res) => {
         if (res.success && res.data?.xp) {
+          setSessionResult((prev) =>
+            prev ? {
+              ...prev,
+              xpEarned: res.data!.xp!.awarded,
+              xpBaseXp: res.data!.xp!.baseXp,
+              xpBonusXp: res.data!.xp!.bonusXp,
+              xpBonusLabel: res.data!.xp!.bonusLabel,
+            } : prev
+          );
           if (res.data.xp.awarded > 0) {
             showXp(res.data.xp.awarded);
           }
@@ -318,12 +331,19 @@ export function VocabQuizSession({
   // Summary
   if (sessionResult) {
     return (
-      <VocabQuizSummary
-        result={sessionResult}
-        chapterSlug={chapterSlug}
-        chapterNumber={chapterNumber}
-        onRestart={handleRestart}
-      />
+      <>
+        <VocabQuizSummary
+          result={sessionResult}
+          chapterSlug={chapterSlug}
+          chapterNumber={chapterNumber}
+          onRestart={handleRestart}
+        />
+        <XpPopup events={xpEvents} />
+        <LevelUpModal
+          level={levelUpLevel}
+          onDismiss={() => setLevelUpLevel(null)}
+        />
+      </>
     );
   }
 
@@ -453,20 +473,57 @@ export function VocabQuizSession({
             {/* Typing input */}
             {currentQuestion.mode === "typing" && (
               <div className="flex flex-col gap-3">
-                <div className="relative">
+                {/* Katakana hint */}
+                {!isRevealed && isKatakana(currentQuestion.correctAnswer) && kanaInputMode === "hiragana" && (
+                  <p className="text-center text-xs font-medium text-amber-600 dark:text-amber-400">
+                    Kata ini ditulis dalam katakana. Gunakan mode ア.
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newMode = kanaInputMode === "hiragana" ? "katakana" : "hiragana";
+                      setKanaInputMode(newMode);
+                      if (typedAnswer) {
+                        setTypedAnswer(
+                          newMode === "katakana"
+                            ? toKatakana(typedAnswer, { passRomaji: true })
+                            : toHiragana(typedAnswer, { passRomaji: true })
+                        );
+                      }
+                    }}
+                    disabled={isRevealed}
+                    className={cn(
+                      "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 font-jp text-lg font-bold transition-colors sm:h-14",
+                      kanaInputMode === "katakana"
+                        ? "border-[#C2E959] bg-[#C2E959] text-[#0A3A3A]"
+                        : "border-gray-300 bg-transparent text-gray-400 hover:border-gray-400 dark:border-gray-600 dark:text-gray-500 dark:hover:border-gray-500"
+                    )}
+                    title={kanaInputMode === "hiragana" ? "Ganti ke katakana" : "Ganti ke hiragana"}
+                  >
+                    {kanaInputMode === "hiragana" ? "\u3042" : "\u30A2"}
+                  </button>
                   <input
                     ref={inputRef}
                     type="text"
                     value={typedAnswer}
-                    onChange={(e) => setTypedAnswer(toHiragana(e.target.value, { IMEMode: true }))}
+                    onChange={(e) => {
+                      const convert = kanaInputMode === "katakana" ? toKatakana : toHiragana;
+                      setTypedAnswer(convert(e.target.value, { IMEMode: true }));
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSubmitTyping();
                     }}
-                    placeholder="Ketik romaji (contoh: isha → いしゃ)..."
+                    placeholder={
+                      kanaInputMode === "katakana"
+                        ? "Ketik romaji \u2192 katakana..."
+                        : "Ketik romaji \u2192 hiragana..."
+                    }
                     disabled={isRevealed}
                     className={cn(
                       "h-12 w-full rounded-xl border-2 px-4 font-jp text-lg outline-none transition-colors placeholder:font-sans placeholder:text-sm placeholder:text-muted-foreground sm:h-14 sm:text-xl",
-                      isRevealed && selectedAnswer === currentQuestion.correctAnswer
+                      isRevealed && answers.length > 0 && answers[answers.length - 1].isCorrect
                         ? "border-green-500 bg-green-500/5"
                         : isRevealed
                           ? "border-red-500 bg-red-500/5"
@@ -475,7 +532,9 @@ export function VocabQuizSession({
                   />
                 </div>
                 <p className="text-center text-xs text-muted-foreground">
-                  Ketik dalam romaji, otomatis berubah ke hiragana
+                  {kanaInputMode === "katakana"
+                    ? "Ketik dalam romaji, otomatis berubah ke katakana"
+                    : "Ketik dalam romaji, otomatis berubah ke hiragana"}
                 </p>
                 {!isRevealed && (
                   <button
@@ -503,8 +562,8 @@ export function VocabQuizSession({
                     const isCorrect =
                       currentQuestion.mode === "multiple_choice"
                         ? selectedAnswer === currentQuestion.correctAnswer
-                        : typedAnswer.trim().toLowerCase() ===
-                          currentQuestion.correctAnswer.toLowerCase();
+                        : toHiragana(typedAnswer.trim(), { passRomaji: true }).toLowerCase() ===
+                          toHiragana(currentQuestion.correctAnswer, { passRomaji: true }).toLowerCase();
                     const vocabInfo = vocabList.find(
                       (v) => v.id === currentQuestion.vocabularyId
                     );

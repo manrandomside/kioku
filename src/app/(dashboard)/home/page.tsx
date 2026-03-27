@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/queries/dashboard";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-import { DailyGoalRing } from "@/components/gamification/daily-goal-ring";
+import { DailyProgressBars } from "@/components/gamification/daily-progress-bars";
 import { SrsDistribution } from "@/components/gamification/srs-distribution";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
@@ -76,33 +76,10 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-5">
-          {/* XP Progress */}
-          <div className="flex min-w-0 flex-1 flex-col gap-1 md:flex-initial">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Zap className="size-3.5 shrink-0 text-accent" />
-              <span className="truncate">
-                {data.level.xpInLevel} / {data.level.xpNeeded} XP
-              </span>
-            </div>
-            <div className="h-2 w-full max-w-32 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#248288] to-[#C2E959] transition-all"
-                style={{ width: `${data.level.progressPercent}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              Level {data.level.current} -- {data.level.totalXp} XP total
-            </p>
-          </div>
-
-          {/* Daily Goal Ring */}
-          <DailyGoalRing
-            earned={data.daily.xpEarned}
-            goal={data.daily.xpGoal}
-            met={data.daily.goalMet}
-          />
-        </div>
+        <DailyProgressBars
+          level={data.level}
+          daily={data.daily}
+        />
       </div>
 
       {/* Streak + Due Cards Row */}
@@ -125,13 +102,19 @@ export default async function HomePage() {
             <StreakFlame streak={data.streak.current} />
           </div>
           <div className="flex-1">
-            <p className="text-3xl font-bold leading-none">
+            <p className="text-xs font-semibold text-muted-foreground">
+              Streak Belajar
+            </p>
+            <p className="mt-0.5 text-3xl font-bold leading-none">
               {data.streak.current}
               <span className="ml-1 text-base font-normal text-muted-foreground">
                 hari
               </span>
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Hari berturut-turut belajar
+            </p>
+            <p className="text-[11px] text-muted-foreground">
               Terpanjang: {data.streak.longest} hari
             </p>
             {data.streak.atRisk && (

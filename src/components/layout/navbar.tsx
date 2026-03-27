@@ -53,7 +53,7 @@ export function Navbar({ user }: NavbarProps) {
         </Sheet>
 
         <Link href="/home" className="flex items-center">
-          <Logo size="sm" />
+          <Logo className="h-6 lg:h-7" />
         </Link>
 
         <nav className="ml-6 hidden items-center gap-1 lg:flex">

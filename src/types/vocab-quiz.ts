@@ -36,6 +36,9 @@ export interface VocabQuizResult {
   correctCount: number;
   scorePercent: number;
   xpEarned: number;
+  xpBaseXp?: number;
+  xpBonusXp?: number;
+  xpBonusLabel?: string;
   isPerfect: boolean;
   timeSpentMs: number;
   answers: VocabQuizAnswer[];

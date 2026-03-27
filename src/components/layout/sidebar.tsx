@@ -47,7 +47,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden bg-sidebar p-4 pt-6">
       <Link href="/home" className="mb-4 flex items-center px-2 lg:hidden">
-        <Logo size="md" />
+        <Logo size="lg" />
       </Link>
 
       {SIDEBAR_ITEMS.map((section) => (

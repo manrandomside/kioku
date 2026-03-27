@@ -60,10 +60,11 @@ export const questionTypeEnum = pgEnum("question_type", [
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
 
 export const dailyGoalXpEnum = pgEnum("daily_goal_xp", [
-  "30",
-  "50",
   "100",
-  "200",
+  "300",
+  "500",
+  "750",
+  "1000",
 ]);
 
 export const xpSourceEnum = pgEnum("xp_source", [

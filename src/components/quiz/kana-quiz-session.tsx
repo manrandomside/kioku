@@ -133,14 +133,12 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
     const totalQuestions = answers.length;
     const scorePercent = Math.round((correctCount / totalQuestions) * 100);
     const isPerfect = correctCount === totalQuestions && hearts > 0;
-    const xpBase = correctCount * 5;
-    const xpEarned = xpBase + (isPerfect ? 20 : 0);
 
     const result: QuizSessionResult = {
       totalQuestions,
       correctCount,
       scorePercent,
-      xpEarned,
+      xpEarned: 0,
       isPerfect,
       timeSpentMs,
       answers,
@@ -150,6 +148,15 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
     if (sessionId) {
       submitQuizResult(sessionId, answers, timeSpentMs).then((res) => {
         if (res.success && res.data?.xp) {
+          setSessionResult((prev) =>
+            prev ? {
+              ...prev,
+              xpEarned: res.data!.xp!.awarded,
+              xpBaseXp: res.data!.xp!.baseXp,
+              xpBonusXp: res.data!.xp!.bonusXp,
+              xpBonusLabel: res.data!.xp!.bonusLabel,
+            } : prev
+          );
           if (res.data.xp.awarded > 0) {
             showXp(res.data.xp.awarded);
           }
@@ -190,12 +197,19 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
 
   if (sessionResult) {
     return (
-      <QuizSummary
-        result={sessionResult}
-        script={script}
-        filter={filter}
-        onRestart={handleRestart}
-      />
+      <>
+        <QuizSummary
+          result={sessionResult}
+          script={script}
+          filter={filter}
+          onRestart={handleRestart}
+        />
+        <XpPopup events={xpEvents} />
+        <LevelUpModal
+          level={levelUpLevel}
+          onDismiss={() => setLevelUpLevel(null)}
+        />
+      </>
     );
   }
 

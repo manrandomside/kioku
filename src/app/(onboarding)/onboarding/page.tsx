@@ -25,10 +25,11 @@ const JLPT_OPTIONS = [
 ];
 
 const DAILY_GOAL_OPTIONS = [
-  { value: "30" as const, label: "Santai", description: "30 XP / hari", minutes: "~5 menit" },
-  { value: "50" as const, label: "Reguler", description: "50 XP / hari", minutes: "~10 menit" },
-  { value: "100" as const, label: "Serius", description: "100 XP / hari", minutes: "~20 menit" },
-  { value: "200" as const, label: "Intens", description: "200 XP / hari", minutes: "~40 menit" },
+  { value: "100" as const, label: "Santai", description: "100 XP / hari", minutes: "~10 menit" },
+  { value: "300" as const, label: "Reguler", description: "300 XP / hari", minutes: "~20 menit" },
+  { value: "500" as const, label: "Serius", description: "500 XP / hari", minutes: "~30 menit" },
+  { value: "750" as const, label: "Intens", description: "750 XP / hari", minutes: "~45 menit" },
+  { value: "1000" as const, label: "Intensif", description: "1000 XP / hari", minutes: "~60 menit" },
 ];
 
 const slideVariants = {
@@ -58,7 +59,7 @@ export default function OnboardingPage() {
   const [displayName, setDisplayName] = useState("");
   const [preferredName, setPreferredName] = useState("");
   const [jlptTarget, setJlptTarget] = useState<"N5" | "N4">("N5");
-  const [dailyGoalXp, setDailyGoalXp] = useState<"30" | "50" | "100" | "200">("50");
+  const [dailyGoalXp, setDailyGoalXp] = useState<"100" | "300" | "500" | "750" | "1000">("100");
 
   function goNext() {
     if (step === 1 && !displayName.trim()) {
@@ -275,8 +276,8 @@ function StepTarget({
 }: {
   jlptTarget: "N5" | "N4";
   setJlptTarget: (v: "N5" | "N4") => void;
-  dailyGoalXp: "30" | "50" | "100" | "200";
-  setDailyGoalXp: (v: "30" | "50" | "100" | "200") => void;
+  dailyGoalXp: "100" | "300" | "500" | "750" | "1000";
+  setDailyGoalXp: (v: "100" | "300" | "500" | "750" | "1000") => void;
 }) {
   return (
     <div className="flex flex-col gap-6">
@@ -314,7 +315,7 @@ function StepTarget({
       {/* Daily Goal */}
       <div className="flex flex-col gap-3">
         <Label>Target Harian</Label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {DAILY_GOAL_OPTIONS.map((option) => (
             <button
               key={option.value}

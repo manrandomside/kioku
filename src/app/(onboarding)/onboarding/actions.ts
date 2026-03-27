@@ -13,7 +13,7 @@ const onboardingSchema = z.object({
   displayName: z.string().min(1, "Nama tidak boleh kosong").max(100),
   preferredName: z.string().max(50).optional(),
   jlptTarget: z.enum(["N5", "N4"]),
-  dailyGoalXp: z.enum(["30", "50", "100", "200"]),
+  dailyGoalXp: z.enum(["100", "300", "500", "750", "1000"]),
   hirakataKnown: z.boolean(),
 });
 

@@ -6,8 +6,10 @@ import { user } from "@/db/schema/user";
 
 // XP amounts per action
 const XP_REVIEW_CARD = 2;
-const XP_QUIZ_COMPLETE = 15;
-const XP_QUIZ_PERFECT_BONUS = 10;
+const XP_QUIZ_PER_CORRECT = 3;
+const XP_QUIZ_BONUS_PERFECT = 25;  // 100%
+const XP_QUIZ_BONUS_GREAT = 15;    // 90%+
+const XP_QUIZ_BONUS_GOOD = 10;     // 80%+
 const XP_DAILY_GOAL_BONUS = 10;
 
 // Streak milestone rewards: [days, xpReward, freezesAwarded]
@@ -91,7 +93,7 @@ async function awardXpInternal(
     .where(eq(user.id, userId))
     .limit(1);
 
-  const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "30", 10);
+  const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "100", 10);
   const today = getTodayDate();
 
   // Insert XP transaction
@@ -233,17 +235,29 @@ export async function awardReviewXp(
   return result;
 }
 
-// Award XP for quiz completion (15 XP + 10 bonus if perfect)
+// Calculate quiz tier bonus based on score percentage
+function getQuizTierBonus(scorePercent: number): { amount: number; label: string } {
+  if (scorePercent === 100) return { amount: XP_QUIZ_BONUS_PERFECT, label: "Sempurna (100%)" };
+  if (scorePercent >= 90) return { amount: XP_QUIZ_BONUS_GREAT, label: "Hebat (90%+)" };
+  if (scorePercent >= 80) return { amount: XP_QUIZ_BONUS_GOOD, label: "Bagus (80%+)" };
+  return { amount: 0, label: "" };
+}
+
+// Award XP for quiz completion (3 XP per correct + tier bonus)
 export async function awardQuizXp(
   userId: string,
   sessionId: string,
-  isPerfect: boolean
-): Promise<AwardXpResult> {
+  correctCount: number,
+  scorePercent: number
+): Promise<AwardXpResult & { baseXp: number; bonusXp: number; bonusLabel: string }> {
+  const baseXp = correctCount * XP_QUIZ_PER_CORRECT;
+  const tier = getQuizTierBonus(scorePercent);
+
   const baseResult = await awardXpInternal(
     userId,
-    XP_QUIZ_COMPLETE,
+    baseXp,
     "quiz",
-    "Menyelesaikan quiz",
+    `Quiz: ${correctCount} benar x ${XP_QUIZ_PER_CORRECT} XP`,
     sessionId
   );
 
@@ -252,16 +266,15 @@ export async function awardQuizXp(
 
   let result = baseResult;
 
-  // Award perfect quiz bonus
-  if (isPerfect) {
+  // Award tier bonus
+  if (tier.amount > 0) {
     const bonusResult = await awardXpInternal(
       userId,
-      XP_QUIZ_PERFECT_BONUS,
+      tier.amount,
       "perfect_quiz",
-      "Quiz sempurna! Bonus XP",
+      `Bonus ${tier.label}`,
       sessionId
     );
-    // Preserve level-up if it happened in the base XP award
     result = {
       ...bonusResult,
       leveledUp: baseResult.leveledUp || bonusResult.leveledUp,
@@ -273,7 +286,13 @@ export async function awardQuizXp(
     await awardDailyGoalXp(userId);
   }
 
-  return result;
+  return {
+    ...result,
+    xpAwarded: baseXp + tier.amount,
+    baseXp,
+    bonusXp: tier.amount,
+    bonusLabel: tier.label,
+  };
 }
 
 // Award daily goal bonus XP
@@ -350,7 +369,7 @@ export async function getXpOverview(userId: string) {
     .where(eq(user.id, userId))
     .limit(1);
 
-  const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "30", 10);
+  const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "100", 10);
 
   return {
     totalXp: gamification.totalXp,

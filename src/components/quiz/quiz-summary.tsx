@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useCountUp } from "@/hooks/use-count-up";
 
 import type { QuizSessionResult } from "@/types/quiz";
 
@@ -15,8 +16,7 @@ interface QuizSummaryProps {
   onRestart: () => void;
 }
 
-function formatTime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
+function formatCountedTime(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
@@ -32,20 +32,32 @@ function getGrade(percent: number): { label: string; color: string; message: str
 
 export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryProps) {
   const grade = getGrade(result.scorePercent);
+  const hasXpData = result.xpEarned > 0;
+  const totalSeconds = Math.floor(result.timeSpentMs / 1000);
+
+  const scoreCount = useCountUp(result.scorePercent, 800, 300);
+  const correctCount = useCountUp(result.correctCount, 800, 500);
+  const xpCount = useCountUp(hasXpData ? result.xpEarned : 0, 1000, 700);
+  const timeCount = useCountUp(totalSeconds, 800, 900);
 
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-8 px-4">
       {/* Grade Circle */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
         className="flex flex-col items-center gap-2"
       >
         <div className="flex size-28 items-center justify-center rounded-full border-4 border-primary/20 bg-card shadow-lg">
-          <span className={`font-display text-5xl font-bold ${grade.color}`}>
+          <motion.span
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.3 }}
+            className={`font-display text-5xl font-bold ${grade.color}`}
+          >
             {grade.label}
-          </span>
+          </motion.span>
         </div>
         <h2 className="font-display text-2xl font-bold tracking-tight">
           Quiz Selesai!
@@ -57,48 +69,78 @@ export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryPr
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.2 }}
         className="grid w-full max-w-sm grid-cols-2 gap-3"
       >
         <StatCard
           icon={<Target className="size-5 text-blue-500" />}
           label="Skor"
-          value={`${result.scorePercent}%`}
+          value={`${scoreCount}%`}
         />
         <StatCard
           icon={<Trophy className="size-5 text-yellow-500" />}
           label="Benar"
-          value={`${result.correctCount}/${result.totalQuestions}`}
+          value={`${correctCount}/${result.totalQuestions}`}
         />
-        <StatCard
-          icon={<Zap className="size-5 text-green-500" />}
-          label="XP Diperoleh"
-          value={`+${result.xpEarned}`}
-        />
+        {hasXpData ? (
+          <StatCard
+            icon={<Zap className="size-5 text-green-500" />}
+            label="XP Diperoleh"
+            value={`+${xpCount}`}
+          />
+        ) : (
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
+            <Zap className="size-5 text-green-500" />
+            <div className="flex flex-col gap-1.5">
+              <div className="h-5 w-12 animate-pulse rounded bg-muted" />
+              <span className="text-xs text-muted-foreground">XP Diperoleh</span>
+            </div>
+          </div>
+        )}
         <StatCard
           icon={<Clock className="size-5 text-purple-500" />}
           label="Waktu"
-          value={formatTime(result.timeSpentMs)}
+          value={formatCountedTime(timeCount)}
         />
       </motion.div>
 
-      {/* Perfect bonus note */}
-      {result.isPerfect && (
+      {/* XP Breakdown */}
+      {result.xpBaseXp !== undefined ? (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm font-medium text-yellow-700 dark:text-yellow-400"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.4 }}
+          className="flex w-full max-w-sm flex-col gap-1.5 rounded-lg border bg-card px-4 py-3 text-sm"
         >
-          Bonus skor sempurna: +20 XP
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">
+              Jawaban benar: {result.correctCount} x 3
+            </span>
+            <span className="font-medium">{result.xpBaseXp} XP</span>
+          </div>
+          {result.xpBonusXp !== undefined && result.xpBonusXp > 0 && (
+            <div className="flex justify-between text-yellow-600 dark:text-yellow-400">
+              <span>Bonus {result.xpBonusLabel}</span>
+              <span className="font-medium">+{result.xpBonusXp} XP</span>
+            </div>
+          )}
+          <div className="mt-1 flex justify-between border-t pt-1.5 font-bold">
+            <span>Total</span>
+            <span className="text-green-600 dark:text-green-400">{result.xpEarned} XP</span>
+          </div>
         </motion.div>
+      ) : hasXpData ? null : (
+        <div className="flex w-full max-w-sm flex-col gap-2 rounded-lg border bg-card px-4 py-3">
+          <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+        </div>
       )}
 
       {/* Answer Review */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 1.5, duration: 0.4 }}
         className="w-full max-w-sm"
       >
         <p className="mb-3 text-sm font-medium text-muted-foreground">Ringkasan Jawaban</p>
@@ -123,7 +165,7 @@ export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryPr
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 1.7, duration: 0.4 }}
         className="flex w-full max-w-sm flex-col gap-3"
       >
         <Button onClick={onRestart} className="h-11 w-full gap-2">

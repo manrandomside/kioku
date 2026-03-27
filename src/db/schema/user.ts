@@ -17,7 +17,7 @@ export const user = pgTable("user", {
   preferredName: varchar("preferred_name", { length: 50 }),
   avatarUrl: text("avatar_url"),
   jlptTarget: jlptLevelEnum("jlpt_target").default("N5"),
-  dailyGoalXp: dailyGoalXpEnum("daily_goal_xp").default("30"),
+  dailyGoalXp: dailyGoalXpEnum("daily_goal_xp").default("100"),
   autoPlayAudio: boolean("auto_play_audio").notNull().default(true),
   showRomaji: boolean("show_romaji").notNull().default(true),
   displayMode: varchar("display_mode", { length: 10 }).notNull().default("kanji"),

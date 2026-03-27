@@ -96,7 +96,7 @@ export async function getDashboardData(
   if (!userData) return null;
 
   const internalUserId = userData.id;
-  const dailyGoalXp = parseInt(userData.dailyGoalXp ?? "30", 10);
+  const dailyGoalXp = parseInt(userData.dailyGoalXp ?? "100", 10);
 
   // Get gamification stats using internal user ID (not auth ID)
   const [gamification] = await db

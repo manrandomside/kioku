@@ -46,7 +46,7 @@ export function DailyGoalRing({ earned, goal, met }: DailyGoalRingProps) {
         ) : (
           <>
             <span className="text-xs font-bold leading-none">{percent}%</span>
-            <span className="text-[8px] text-muted-foreground">XP</span>
+            <span className="text-[8px] text-muted-foreground">Harian</span>
           </>
         )}
       </div>

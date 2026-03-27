@@ -10,6 +10,7 @@ import { user } from "@/db/schema/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
 import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
+import { DailyGoalSetting } from "@/components/profile/daily-goal-setting";
 
 import type { DisplayMode } from "@/stores/display-mode-store";
 
@@ -33,6 +34,7 @@ export default async function ProfilePage() {
       email: user.email,
       displayMode: user.displayMode,
       autoPlayAudio: user.autoPlayAudio,
+      dailyGoalXp: user.dailyGoalXp,
     })
     .from(user)
     .where(eq(user.id, userId))
@@ -71,6 +73,7 @@ export default async function ProfilePage() {
         <h2 className="text-sm font-semibold text-muted-foreground">Pengaturan</h2>
         <DisplayModeSetting initialMode={(profile.displayMode as DisplayMode) ?? "kanji"} />
         <AutoPlaySetting initialEnabled={profile.autoPlayAudio ?? true} />
+        <DailyGoalSetting initialGoal={profile.dailyGoalXp ?? "100"} />
       </div>
 
       <div className="grid gap-3">

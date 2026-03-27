@@ -13,8 +13,7 @@ import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-servi
 import type { QuizAnswer } from "@/types/quiz";
 import type { KanaQuestionType } from "@/types/quiz";
 
-const XP_PER_CORRECT = 5;
-const XP_PERFECT_BONUS = 20;
+const XP_PER_CORRECT = 3;
 
 const KANA_CATEGORIES = [
   "hiragana_basic", "hiragana_dakuten", "hiragana_combo",
@@ -115,7 +114,7 @@ export async function submitQuizResult(
     const totalQuestions = answers.length;
     const scorePercent = Math.round((correctCount / totalQuestions) * 100);
     const isPerfect = correctCount === totalQuestions;
-    const xpEarned = correctCount * XP_PER_CORRECT + (isPerfect ? XP_PERFECT_BONUS : 0);
+    const xpEarned = correctCount * XP_PER_CORRECT;
 
     // Insert all answers
     await db.insert(quizAnswer).values(
@@ -149,7 +148,7 @@ export async function submitQuizResult(
 
     // Award XP and check streak
     await checkAndUpdateStreak(userId);
-    const xpResult = await awardQuizXp(userId, sessionId, isPerfect);
+    const xpResult = await awardQuizXp(userId, sessionId, correctCount, scorePercent);
     const newAchievements = await checkAndUnlockAchievements(userId);
 
     return {
@@ -161,6 +160,9 @@ export async function submitQuizResult(
         isPerfect,
         xp: {
           awarded: xpResult.xpAwarded,
+          baseXp: xpResult.baseXp,
+          bonusXp: xpResult.bonusXp,
+          bonusLabel: xpResult.bonusLabel,
           total: xpResult.totalXp,
           leveledUp: xpResult.leveledUp,
           currentLevel: xpResult.currentLevel,
