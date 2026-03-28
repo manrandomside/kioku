@@ -29,6 +29,7 @@ export interface VocabQuizAnswer {
   userAnswer: string;
   correctAnswer: string;
   isCorrect: boolean;
+  correctAnswerHiragana?: string;
 }
 
 export interface VocabQuizResult {

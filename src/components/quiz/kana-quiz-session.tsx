@@ -310,6 +310,7 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
                   exit={{ opacity: 0, y: 10 }}
                   className="flex flex-col gap-3"
                 >
+                  {/* Feedback panel */}
                   <div
                     className={cn(
                       "rounded-xl px-4 py-4",
@@ -327,12 +328,49 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
                       <p className="mt-1 text-center text-sm">
                         Jawaban yang benar:{" "}
                         <span className="font-bold">{currentQuestion.correctAnswer}</span>
-                        {" "}({currentQuestion.type === "meaning_to_word"
-                          ? currentQuestion.romaji
-                          : currentQuestion.character})
                       </p>
                     )}
                   </div>
+
+                  {/* Explanation card — wrong answer */}
+                  {selectedAnswer !== currentQuestion.correctAnswer && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="rounded-xl border border-border/50 bg-card p-4"
+                    >
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Penjelasan
+                      </p>
+                      <div className="flex items-center justify-center gap-6">
+                        <div className="flex flex-col items-center rounded-lg bg-muted/50 px-6 py-3">
+                          <span className="font-jp text-4xl font-medium">
+                            {currentQuestion.character}
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="font-mono text-lg font-bold">
+                            {currentQuestion.romaji}
+                          </span>
+                          <span className="text-xs text-muted-foreground">Romaji</span>
+                        </div>
+                      </div>
+                      {currentQuestion.audioUrl && (
+                        <div className="mt-3 flex justify-center">
+                          <button
+                            type="button"
+                            onClick={() => playAudio(currentQuestion.audioUrl)}
+                            className="flex items-center gap-1.5 rounded-lg bg-[#248288]/10 px-3 py-2 text-sm font-medium text-[#248288] hover:bg-[#248288]/20"
+                          >
+                            <Volume2 className="size-4" />
+                            Dengarkan
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleNextQuestion}

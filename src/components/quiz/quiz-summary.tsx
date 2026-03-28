@@ -34,6 +34,7 @@ export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryPr
   const grade = getGrade(result.scorePercent);
   const hasXpData = result.xpEarned > 0;
   const totalSeconds = Math.floor(result.timeSpentMs / 1000);
+  const wrongAnswers = result.answers.filter((a) => !a.isCorrect);
 
   const scoreCount = useCountUp(result.scorePercent, 800, 300);
   const correctCount = useCountUp(result.correctCount, 800, 500);
@@ -161,11 +162,38 @@ export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryPr
         </div>
       </motion.div>
 
+      {/* Karakter yang Perlu Diulang */}
+      {wrongAnswers.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.8, duration: 0.4 }}
+          className="w-full max-w-sm"
+        >
+          <p className="mb-3 text-sm font-medium text-red-500">
+            Karakter yang Perlu Diulang ({wrongAnswers.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {wrongAnswers.map((answer) => (
+              <div
+                key={answer.questionNumber}
+                className="flex flex-col items-center gap-1 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3"
+              >
+                <span className="font-jp text-xl font-bold">{answer.correctAnswer}</span>
+                <span className="text-xs text-muted-foreground">
+                  Kamu: <span className="text-red-400">{answer.userAnswer}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {/* Action Buttons */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.7, duration: 0.4 }}
+        transition={{ delay: wrongAnswers.length > 0 ? 2.0 : 1.7, duration: 0.4 }}
         className="flex w-full max-w-sm flex-col gap-3"
       >
         <Button onClick={onRestart} className="h-11 w-full gap-2">

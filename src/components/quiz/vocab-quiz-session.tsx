@@ -25,7 +25,8 @@ import {
 import { buildQuestion, shuffle } from "@/lib/quiz/vocab-quiz-generator";
 
 import type { VocabQuizQuestion, VocabQuizAnswer, VocabQuizResult, VocabQuestionType } from "@/types/vocab-quiz";
-import type { VocabularyWithSrs } from "@/types/vocabulary";
+import type { VocabularyWithSrs, WordType } from "@/types/vocabulary";
+import { WORD_TYPE_CONFIG } from "@/types/vocabulary";
 
 const KANJI_QUESTION_TYPES: VocabQuestionType[] = ["kanji_to_hiragana", "hiragana_to_kanji"];
 const NON_KANJI_TYPES: VocabQuestionType[] = [
@@ -176,6 +177,9 @@ export function VocabQuizSession({
         }, 300);
       }
 
+      const matchedVocab = vocabList.find(
+        (v) => v.id === currentQuestion.vocabularyId
+      );
       const answer: VocabQuizAnswer = {
         questionNumber: currentQuestion.number,
         questionType: currentQuestion.type,
@@ -183,6 +187,7 @@ export function VocabQuizSession({
         userAnswer,
         correctAnswer: currentQuestion.correctAnswer,
         isCorrect: correct,
+        correctAnswerHiragana: matchedVocab?.hiragana,
       };
       setAnswers((prev) => [...prev, answer]);
     },
@@ -564,11 +569,12 @@ export function VocabQuizSession({
                         ? selectedAnswer === currentQuestion.correctAnswer
                         : toHiragana(typedAnswer.trim(), { passRomaji: true }).toLowerCase() ===
                           toHiragana(currentQuestion.correctAnswer, { passRomaji: true }).toLowerCase();
-                    const vocabInfo = vocabList.find(
+                    const matchedVocab = vocabList.find(
                       (v) => v.id === currentQuestion.vocabularyId
                     );
                     return (
                       <>
+                        {/* Feedback panel */}
                         <div
                           className={cn(
                             "rounded-xl px-4 py-4",
@@ -583,32 +589,80 @@ export function VocabQuizSession({
                           {!isCorrect && (
                             <p className="mt-1 text-center text-sm">
                               Jawaban yang benar:{" "}
-                              <span className="font-bold">
-                                {currentQuestion.correctAnswer}
+                              <span className="font-jp font-bold">
+                                {matchedVocab?.hiragana ?? currentQuestion.correctAnswer}
                               </span>
-                              {currentQuestion.hint && (
+                              {matchedVocab?.romaji ? (
                                 <span className="opacity-70">
-                                  {" "}
-                                  ({currentQuestion.hint})
+                                  {" "}({matchedVocab.romaji})
                                 </span>
-                              )}
+                              ) : currentQuestion.hint ? (
+                                <span className="opacity-70">
+                                  {" "}({currentQuestion.hint})
+                                </span>
+                              ) : null}
                             </p>
                           )}
-                          {vocabInfo && (
-                            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm opacity-80">
-                              {vocabInfo.kanji && (
-                                <span className="font-jp font-medium">
-                                  {vocabInfo.kanji}
-                                </span>
-                              )}
-                              <span className="font-jp">
-                                {vocabInfo.hiragana}
-                              </span>
-                              <span>({vocabInfo.romaji})</span>
-                              <span>— {vocabInfo.meaningId}</span>
-                            </div>
-                          )}
                         </div>
+
+                        {/* Explanation card — wrong answer */}
+                        {!isCorrect && matchedVocab && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="rounded-xl border border-border/50 bg-card p-4"
+                          >
+                            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Penjelasan
+                            </p>
+                            <div className="mb-3 flex items-center gap-4">
+                              <div className="flex flex-col items-center rounded-lg bg-muted/50 px-4 py-3">
+                                {matchedVocab.kanji && (
+                                  <span className="mb-0.5 text-xs text-muted-foreground">{matchedVocab.kanji}</span>
+                                )}
+                                <span className="font-jp text-2xl font-bold">{matchedVocab.hiragana}</span>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <span className="text-base font-bold">{matchedVocab.meaningId}</span>
+                                <span className="w-fit rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                  {WORD_TYPE_CONFIG[matchedVocab.wordType as WordType]?.label ?? matchedVocab.wordType}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  Romaji: <span className="font-mono font-medium">{matchedVocab.romaji}</span>
+                                </span>
+                              </div>
+                            </div>
+                            {matchedVocab.audioUrl && (
+                              <button
+                                type="button"
+                                onClick={() => playIfEnabled(matchedVocab.audioUrl)}
+                                className="flex items-center gap-1.5 rounded-lg bg-[#248288]/10 px-3 py-2 text-sm font-medium text-[#248288] transition-colors hover:bg-[#248288]/20"
+                              >
+                                <Volume2 className="size-4" />
+                                Dengarkan pengucapan
+                              </button>
+                            )}
+                          </motion.div>
+                        )}
+
+                        {/* Info — correct answer */}
+                        {isCorrect && matchedVocab && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex flex-col items-center gap-0.5 text-center"
+                          >
+                            {matchedVocab.kanji && (
+                              <span className="text-sm text-muted-foreground">{matchedVocab.kanji}</span>
+                            )}
+                            <span className="font-jp text-lg font-bold">{matchedVocab.hiragana}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {matchedVocab.romaji} &middot; {WORD_TYPE_CONFIG[matchedVocab.wordType as WordType]?.label ?? matchedVocab.wordType}
+                            </span>
+                          </motion.div>
+                        )}
+
                         <button
                           type="button"
                           onClick={handleNextQuestion}
