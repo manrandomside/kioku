@@ -1,16 +1,24 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import {
+  Trophy,
+  Settings,
+  Zap,
+  Star,
+  Flame,
+} from "lucide-react";
 import { eq } from "drizzle-orm";
 
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { db } from "@/db";
 import { user } from "@/db/schema/user";
+import { userGamification } from "@/db/schema/gamification";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
 import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
 import { DailyGoalSetting } from "@/components/profile/daily-goal-setting";
+import { SignOutButton } from "@/components/profile/sign-out-button";
 
 import type { DisplayMode } from "@/stores/display-mode-store";
 
@@ -42,40 +50,104 @@ export default async function ProfilePage() {
 
   if (!profile) redirect("/onboarding");
 
+  // Fetch gamification stats
+  const [gamification] = await db
+    .select({
+      totalXp: userGamification.totalXp,
+      currentLevel: userGamification.currentLevel,
+      currentStreak: userGamification.currentStreak,
+    })
+    .from(userGamification)
+    .where(eq(userGamification.userId, userId))
+    .limit(1);
+
+  const stats = gamification ?? { totalXp: 0, currentLevel: 1, currentStreak: 0 };
   const name = profile.preferredName ?? profile.displayName ?? "User";
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 rounded-2xl border border-border/50 bg-card p-6">
-        <Avatar size="lg">
-          {profile.avatarUrl ? (
-            <AvatarImage src={profile.avatarUrl} alt={name ?? undefined} />
-          ) : null}
-          <AvatarFallback>
-            {name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="text-center">
-          <h1 className="font-display text-xl font-bold tracking-tight">
-            {name}
-          </h1>
-          <p className="text-sm text-muted-foreground">{profile.email}</p>
-          {profile.jlptTarget && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Target JLPT {profile.jlptTarget}
-            </p>
-          )}
+      {/* Profile Header Card */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6"
+        style={{ background: "linear-gradient(135deg, #0A3A3A 0%, #0F4F4F 100%)" }}
+      >
+        {/* Gradient mesh overlay */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: [
+              "radial-gradient(ellipse at 80% 20%, rgba(194,233,89,0.1), transparent 50%)",
+              "radial-gradient(ellipse at 20% 80%, rgba(166,226,172,0.08), transparent 50%)",
+            ].join(", "),
+          }}
+        />
+
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="rounded-full ring-2 ring-[#C2E959]/40 ring-offset-2 ring-offset-[#0A3A3A]">
+            <Avatar className="size-20">
+              {profile.avatarUrl ? (
+                <AvatarImage src={profile.avatarUrl} alt={name ?? undefined} />
+              ) : null}
+              <AvatarFallback className="text-xl">
+                {name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+
+          <div className="text-center">
+            <h1 className="font-display text-xl font-bold tracking-tight text-white">
+              {name}
+            </h1>
+            <p className="mt-0.5 text-sm text-white/50">{profile.email}</p>
+            {profile.jlptTarget && (
+              <span className="mt-2 inline-block rounded-full bg-[#C2E959] px-3 py-1 text-xs font-bold text-[#0A3A3A]">
+                Target JLPT {profile.jlptTarget}
+              </span>
+            )}
+          </div>
+
+          {/* Mini stats */}
+          <div className="mt-1 flex items-center gap-6">
+            <div className="flex items-center gap-1.5">
+              <Zap className="size-4 text-[#C2E959]" />
+              <span className="text-sm font-bold text-white">{stats.totalXp.toLocaleString("id-ID")}</span>
+              <span className="text-xs text-white/40">XP</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Star className="size-4 text-[#C2E959]" />
+              <span className="text-sm font-bold text-white">Lv.{stats.currentLevel}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Flame className="size-4 text-[#C2E959]" />
+              <span className="text-sm font-bold text-white">{stats.currentStreak}</span>
+              <span className="text-xs text-white/40">hari</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Settings */}
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">Pengaturan</h2>
-        <DisplayModeSetting initialMode={(profile.displayMode as DisplayMode) ?? "kanji"} />
-        <AutoPlaySetting initialEnabled={profile.autoPlayAudio ?? true} />
-        <DailyGoalSetting initialGoal={profile.dailyGoalXp ?? "100"} />
+        <div className="flex items-center gap-2">
+          <Settings className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-muted-foreground">Pengaturan</h2>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
+          <div className="p-5">
+            <DisplayModeSetting initialMode={(profile.displayMode as DisplayMode) ?? "kanji"} />
+          </div>
+          <div className="h-px bg-border/50" />
+          <div className="p-5">
+            <AutoPlaySetting initialEnabled={profile.autoPlayAudio ?? true} />
+          </div>
+          <div className="h-px bg-border/50" />
+          <div className="p-5">
+            <DailyGoalSetting initialGoal={profile.dailyGoalXp ?? "100"} />
+          </div>
+        </div>
       </div>
 
+      {/* Quick Links */}
       <div className="grid gap-3">
         <Link
           href="/profile/achievements"
@@ -89,6 +161,19 @@ export default async function ProfilePage() {
             <p className="text-xs text-muted-foreground">Lihat semua badge</p>
           </div>
         </Link>
+      </div>
+
+      {/* Sign Out */}
+      <SignOutButton />
+
+      {/* Footer */}
+      <div className="pb-2 text-center">
+        <p className="text-xs text-muted-foreground">
+          Kioku v1.0 &mdash; Platform belajar kosakata bahasa Jepang
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground/60">
+          Dibuat sebagai project portfolio fullstack + AI
+        </p>
       </div>
     </div>
   );

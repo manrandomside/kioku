@@ -48,13 +48,30 @@ export function DailyGoalSetting({ initialGoal }: DailyGoalSettingProps) {
     if (!pendingValue) return;
     const newValue = pendingValue;
     const oldValue = selected;
-    const tier = getTier(newValue);
+    const oldTierSnap = getTier(oldValue);
+    const newTierSnap = getTier(newValue);
     setSelected(newValue);
     setPendingValue(null);
     startTransition(async () => {
       const result = await updateDailyGoal(newValue);
-      if (result.success && tier) {
-        toast.success(`Target harian diubah ke ${tier.label}`);
+      if (result.success && newTierSnap) {
+        toast.custom(
+          () => (
+            <div className="flex w-full items-center gap-3 rounded-xl border border-[#C2E959]/30 bg-card p-4 shadow-lg">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#248288]/15">
+                <Target className="size-5 text-[#248288]" />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-sm font-bold">Target Harian Diubah</p>
+                <p className="text-xs text-muted-foreground">
+                  {oldTierSnap?.label} {oldTierSnap?.xp} &rarr;{" "}
+                  <span className="font-semibold text-[#C2E959]">{newTierSnap.label} {newTierSnap.xp}</span>
+                </p>
+              </div>
+            </div>
+          ),
+          { duration: 3000, position: "bottom-center" }
+        );
       } else {
         setSelected(oldValue);
         toast.error("Gagal menyimpan target harian");
