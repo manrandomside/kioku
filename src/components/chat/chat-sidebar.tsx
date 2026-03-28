@@ -6,6 +6,17 @@ import { Plus, Trash2, MessageCircle, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export interface ChatSession {
   id: string;
@@ -33,16 +44,7 @@ export function ChatSidebar({
   isOpen,
   onClose,
 }: ChatSidebarProps) {
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  function handleDelete(sessionId: string) {
-    if (deletingId === sessionId) {
-      onDeleteSession(sessionId);
-      setDeletingId(null);
-    } else {
-      setDeletingId(sessionId);
-    }
-  }
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
@@ -92,15 +94,10 @@ export function ChatSidebar({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete(session.id);
+                    setPendingDeleteId(session.id);
                   }}
-                  className={cn(
-                    "shrink-0 rounded-md p-1 transition-colors",
-                    deletingId === session.id
-                      ? "bg-destructive/10 text-destructive"
-                      : "text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
-                  )}
-                  title={deletingId === session.id ? "Klik lagi untuk menghapus" : "Hapus sesi"}
+                  className="shrink-0 rounded-md p-1 text-muted-foreground opacity-0 transition-colors hover:text-destructive group-hover:opacity-100"
+                  title="Hapus sesi"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -109,6 +106,36 @@ export function ChatSidebar({
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Percakapan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Percakapan ini akan dihapus secara permanen dan tidak bisa dikembalikan. Semua riwayat pesan di dalamnya akan hilang.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (pendingDeleteId) {
+                  onDeleteSession(pendingDeleteId);
+                  setPendingDeleteId(null);
+                }
+              }}
+            >
+              Ya, Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 

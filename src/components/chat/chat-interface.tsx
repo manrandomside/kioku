@@ -178,7 +178,7 @@ export function ChatInterface() {
   const isStreamingResponse = status === "streaming" && lastMessage?.role === "assistant";
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full pb-16 lg:pb-0">
       <ChatSidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
