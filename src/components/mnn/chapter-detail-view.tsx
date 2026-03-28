@@ -20,7 +20,7 @@ interface ChapterDetailViewProps {
 }
 
 type FilterTab = "all" | "noun" | "verb" | "adjective" | "other";
-type SrsFilter = "all" | "new" | "learning" | "review" | "relearning";
+type MasteryFilter = "all" | "not_mastered" | "mastered";
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: "all", label: "Semua" },
@@ -47,23 +47,17 @@ export function ChapterDetailView({
 }: ChapterDetailViewProps) {
   const { effectiveMode, toggleLocal } = useDisplayMode();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
-  const [srsFilter, setSrsFilter] = useState<SrsFilter>("all");
+  const [masteryFilter, setMasteryFilter] = useState<MasteryFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const srsStats = useMemo(() => {
-    let newCount = 0;
-    let learning = 0;
-    let review = 0;
-    let relearning = 0;
-    for (const v of vocabList) {
-      const s = v.srsStatus ?? "new";
-      if (s === "new") newCount++;
-      else if (s === "learning") learning++;
-      else if (s === "review") review++;
-      else if (s === "relearning") relearning++;
-    }
-    return { total: vocabList.length, new: newCount, learning, review, relearning };
+  const masteryStats = useMemo(() => {
+    const mastered = vocabList.filter((v) => v.isMastered).length;
+    return { total: vocabList.length, mastered, notMastered: vocabList.length - mastered };
   }, [vocabList]);
+
+  const masteryPercent = masteryStats.total > 0
+    ? Math.round((masteryStats.mastered / masteryStats.total) * 100)
+    : 0;
 
   const filteredVocab = useMemo(() => {
     let result = vocabList;
@@ -74,9 +68,11 @@ export function ChapterDetailView({
       result = result.filter((v) => types.includes(v.wordType));
     }
 
-    // SRS filter
-    if (srsFilter !== "all") {
-      result = result.filter((v) => (v.srsStatus ?? "new") === srsFilter);
+    // Mastery filter
+    if (masteryFilter === "mastered") {
+      result = result.filter((v) => v.isMastered);
+    } else if (masteryFilter === "not_mastered") {
+      result = result.filter((v) => !v.isMastered);
     }
 
     // Search filter
@@ -93,10 +89,7 @@ export function ChapterDetailView({
     }
 
     return result;
-  }, [vocabList, activeTab, srsFilter, searchQuery]);
-
-  const learnedCount = srsStats.review + srsStats.learning + srsStats.relearning;
-  const masteredPct = srsStats.total > 0 ? Math.round((srsStats.review / srsStats.total) * 100) : 0;
+  }, [vocabList, activeTab, masteryFilter, searchQuery]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,40 +116,31 @@ export function ChapterDetailView({
         </div>
       </div>
 
-      {/* Progress Overview */}
+      {/* Progress Overview — quiz-based */}
       <div className="flex flex-col gap-3 rounded-xl border bg-card p-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Progres Kosakata</span>
           <span className="font-medium">
-            {learnedCount}/{srsStats.total} dipelajari ({masteredPct}% hafal)
+            {masteryStats.mastered}/{masteryStats.total} kata dikuasai ({masteryPercent}%)
           </span>
         </div>
         <div className="flex h-2 overflow-hidden rounded-full bg-muted">
-          {srsStats.review > 0 && (
+          {masteryStats.mastered > 0 && (
             <div
-              className="bg-srs-review transition-all"
-              style={{ width: `${(srsStats.review / srsStats.total) * 100}%` }}
-            />
-          )}
-          {srsStats.learning > 0 && (
-            <div
-              className="bg-srs-learning transition-all"
-              style={{ width: `${(srsStats.learning / srsStats.total) * 100}%` }}
-            />
-          )}
-          {srsStats.relearning > 0 && (
-            <div
-              className="bg-srs-relearning transition-all"
-              style={{ width: `${(srsStats.relearning / srsStats.total) * 100}%` }}
+              className="bg-green-500 transition-all"
+              style={{ width: `${masteryPercent}%` }}
             />
           )}
         </div>
-        {/* SRS legend */}
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          <SrsLegendItem label="Baru" count={srsStats.new} className="bg-srs-new" />
-          <SrsLegendItem label="Belajar" count={srsStats.learning} className="bg-srs-learning" />
-          <SrsLegendItem label="Hafal" count={srsStats.review} className="bg-srs-review" />
-          <SrsLegendItem label="Ulang" count={srsStats.relearning} className="bg-srs-relearning" />
+        <div className="flex gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full bg-green-500" />
+            Dikuasai ({masteryStats.mastered})
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+            Belum dikuasai ({masteryStats.notMastered})
+          </div>
         </div>
       </div>
 
@@ -180,10 +164,10 @@ export function ChapterDetailView({
 
       {/* Quiz mode info */}
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <span className="font-jp text-sm">{effectiveMode === "kana" ? "あ" : "漢"}</span>
+        <span className="font-jp text-sm">{effectiveMode === "kana" ? "\u3042" : "\u6F22"}</span>
         {effectiveMode === "kana"
-          ? "Mode Kana — soal kanji tidak akan muncul di quiz"
-          : "Mode Kanji — termasuk soal baca kanji di quiz"}
+          ? "Mode Kana \u2014 soal kanji tidak akan muncul di quiz"
+          : "Mode Kanji \u2014 termasuk soal baca kanji di quiz"}
       </p>
 
       {/* Search + Display Mode Toggle */}
@@ -219,36 +203,29 @@ export function ChapterDetailView({
         ))}
       </div>
 
-      {/* SRS Status Filter */}
+      {/* Mastery Filter */}
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {(["all", "new", "learning", "review", "relearning"] as const).map((f) => {
-          const labels: Record<SrsFilter, string> = {
-            all: "Semua",
-            new: "Baru",
-            learning: "Belajar",
-            review: "Hafal",
-            relearning: "Ulang",
-          };
-          return (
-            <button
-              key={f}
-              onClick={() => setSrsFilter(f)}
-              className={cn(
-                "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                srsFilter === f
-                  ? "bg-foreground/10 text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {labels[f]}
-              {f !== "all" && (
-                <span className="ml-1 opacity-60">
-                  {f === "new" ? srsStats.new : f === "learning" ? srsStats.learning : f === "review" ? srsStats.review : srsStats.relearning}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {([
+          { key: "all" as const, label: "Semua" },
+          { key: "not_mastered" as const, label: "Belum Dikuasai", count: masteryStats.notMastered },
+          { key: "mastered" as const, label: "Dikuasai", count: masteryStats.mastered },
+        ]).map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setMasteryFilter(f.key)}
+            className={cn(
+              "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+              masteryFilter === f.key
+                ? "bg-foreground/10 text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {f.label}
+            {f.count !== undefined && (
+              <span className="ml-1 opacity-60">{f.count}</span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Vocabulary List */}
@@ -270,15 +247,6 @@ export function ChapterDetailView({
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function SrsLegendItem({ label, count, className }: { label: string; count: number; className: string }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className={cn("size-2.5 rounded-full", className)} />
-      {label} ({count})
     </div>
   );
 }

@@ -45,46 +45,23 @@ function SrsLegend() {
 
 function StatsBar({ kanaList }: { kanaList: KanaWithSrs[] }) {
   const stats = useMemo(() => {
-    let newCount = 0;
-    let learning = 0;
-    let review = 0;
-    let relearning = 0;
-    for (const k of kanaList) {
-      const s = k.srsStatus ?? "new";
-      if (s === "new") newCount++;
-      else if (s === "learning") learning++;
-      else if (s === "review") review++;
-      else if (s === "relearning") relearning++;
-    }
-    return { total: kanaList.length, new: newCount, learning, review, relearning };
+    const mastered = kanaList.filter((k) => k.isMastered).length;
+    return { total: kanaList.length, mastered };
   }, [kanaList]);
 
-  const learned = stats.review + stats.learning + stats.relearning;
-  const pct = stats.total > 0 ? Math.round((stats.review / stats.total) * 100) : 0;
+  const pct = stats.total > 0 ? Math.round((stats.mastered / stats.total) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Progres</span>
-        <span className="font-medium">{learned}/{stats.total} dipelajari ({pct}% hafal)</span>
+        <span className="font-medium">{stats.mastered}/{stats.total} dikuasai ({pct}%)</span>
       </div>
       <div className="flex h-2 overflow-hidden rounded-full bg-muted">
-        {stats.review > 0 && (
+        {stats.mastered > 0 && (
           <div
-            className="bg-srs-review transition-all"
-            style={{ width: `${(stats.review / stats.total) * 100}%` }}
-          />
-        )}
-        {stats.learning > 0 && (
-          <div
-            className="bg-srs-learning transition-all"
-            style={{ width: `${(stats.learning / stats.total) * 100}%` }}
-          />
-        )}
-        {stats.relearning > 0 && (
-          <div
-            className="bg-srs-relearning transition-all"
-            style={{ width: `${(stats.relearning / stats.total) * 100}%` }}
+            className="bg-green-500 transition-all"
+            style={{ width: `${(stats.mastered / stats.total) * 100}%` }}
           />
         )}
       </div>

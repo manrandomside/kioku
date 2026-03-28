@@ -2,46 +2,31 @@ import { eq, and, sql, count } from "drizzle-orm";
 
 import { db } from "@/db";
 import { vocabulary } from "@/db/schema/content";
-import { srsCard } from "@/db/schema/srs";
 import { userChapterProgress } from "@/db/schema/gamification";
-import { quizSession } from "@/db/schema/quiz";
+import { quizSession, quizAnswer } from "@/db/schema/quiz";
 
-// Recalculate and upsert chapter progress for a user
+// Recalculate and upsert chapter progress for a user (quiz-based mastery)
 export async function updateChapterProgress(
   userId: string,
   chapterId: string
 ) {
-  // Count SRS card statuses for vocab in this chapter
-  const statusCounts = await db
+  // Count unique vocabulary IDs answered correctly in quizzes for this chapter
+  const [masteredResult] = await db
     .select({
-      status: srsCard.status,
-      count: count(),
+      count: sql<number>`count(distinct ${quizAnswer.vocabularyId})`.as("count"),
     })
-    .from(srsCard)
-    .innerJoin(vocabulary, eq(srsCard.vocabularyId, vocabulary.id))
+    .from(quizAnswer)
+    .innerJoin(quizSession, eq(quizAnswer.sessionId, quizSession.id))
     .where(
       and(
-        eq(srsCard.userId, userId),
-        eq(vocabulary.chapterId, chapterId),
-        eq(vocabulary.isPublished, true)
+        eq(quizSession.userId, userId),
+        eq(quizSession.chapterId, chapterId),
+        eq(quizAnswer.isCorrect, true),
+        sql`${quizAnswer.vocabularyId} is not null`
       )
-    )
-    .groupBy(srsCard.status);
+    );
 
-  let vocabLearning = 0;
-  let vocabReview = 0;
-  let vocabSeen = 0;
-
-  for (const row of statusCounts) {
-    const c = Number(row.count);
-    vocabSeen += c;
-
-    if (row.status === "learning" || row.status === "relearning") {
-      vocabLearning += c;
-    } else if (row.status === "review") {
-      vocabReview += c;
-    }
-  }
+  const vocabMastered = Number(masteredResult?.count ?? 0);
 
   // Get total vocab count for chapter
   const [vocabTotal] = await db
@@ -51,7 +36,7 @@ export async function updateChapterProgress(
 
   const totalCount = Number(vocabTotal.count);
   const completionPercent =
-    totalCount > 0 ? Math.round((vocabReview / totalCount) * 100) : 0;
+    totalCount > 0 ? Math.round((vocabMastered / totalCount) * 100) : 0;
 
   // Get best quiz score for this chapter
   const [bestQuiz] = await db
@@ -71,7 +56,10 @@ export async function updateChapterProgress(
     ? Math.round(bestQuiz.bestScore)
     : null;
 
-  // Upsert progress row
+  // Upsert progress row — reuse vocabSeen/vocabLearning/vocabReview columns:
+  // vocabReview = mastered count (quiz-based)
+  // vocabSeen = mastered count (same, for backwards compat)
+  // vocabLearning = 0 (not used in quiz-based system)
   const existing = await db
     .select({ id: userChapterProgress.id })
     .from(userChapterProgress)
@@ -84,9 +72,9 @@ export async function updateChapterProgress(
     .limit(1);
 
   const progressData = {
-    vocabSeen,
-    vocabLearning,
-    vocabReview,
+    vocabSeen: vocabMastered,
+    vocabLearning: 0,
+    vocabReview: vocabMastered,
     completionPercent,
     bestQuizScore,
     updatedAt: new Date().toISOString(),

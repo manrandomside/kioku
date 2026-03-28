@@ -4,10 +4,7 @@ import {
   Clock,
   BookOpen,
   ArrowRight,
-  Zap,
-  Target,
   Brain,
-  BarChart3,
   Shield,
   Trophy,
 } from "lucide-react";
@@ -17,10 +14,10 @@ import { getDashboardData } from "@/lib/queries/dashboard";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 import { DailyProgressBars } from "@/components/gamification/daily-progress-bars";
-import { SrsDistribution } from "@/components/gamification/srs-distribution";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
 import { StreakFlame } from "@/components/gamification/streak-flame";
+import { LearningProgress } from "@/components/gamification/learning-progress";
 
 // Always fetch fresh data — XP/streak may have changed from flashcard/quiz sessions
 export const dynamic = "force-dynamic";
@@ -50,7 +47,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Welcome + Level + Daily Goal */}
+      {/* Section 1: Welcome + Level + Daily Goal */}
       <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="relative shrink-0">
@@ -82,7 +79,49 @@ export default async function HomePage() {
         />
       </div>
 
-      {/* Streak + Due Cards Row */}
+      {/* Section 2: Quick Actions */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Link
+          href="/review"
+          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
+        >
+          <div className="flex size-9 items-center justify-center rounded-lg bg-green-500/10">
+            <BookOpen className="size-4.5 text-green-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Review</p>
+            <p className="text-xs text-muted-foreground">{data.srs.dueNow} kartu menunggu</p>
+          </div>
+        </Link>
+        <Link
+          href="/learn/mnn"
+          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
+        >
+          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-500/10">
+            <Brain className="size-4.5 text-blue-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Belajar MNN</p>
+            <p className="text-xs text-muted-foreground">Lanjutkan bab</p>
+          </div>
+        </Link>
+        <Link
+          href="/learn/hirakata"
+          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
+        >
+          <div className="flex size-9 items-center justify-center rounded-lg bg-purple-500/10">
+            <span className="text-base font-bold text-purple-500">
+              {"\u3042"}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Hirakata</p>
+            <p className="text-xs text-muted-foreground">Hiragana & Katakana</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Section 3: Streak + Due Cards */}
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Streak Card */}
         <div
@@ -112,9 +151,6 @@ export default async function HomePage() {
               </span>
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Hari berturut-turut belajar
-            </p>
-            <p className="text-[11px] text-muted-foreground">
               Terpanjang: {data.streak.longest} hari
             </p>
             {data.streak.atRisk && (
@@ -154,92 +190,10 @@ export default async function HomePage() {
         </Link>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Link
-          href="/review"
-          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
-        >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-green-500/10">
-            <BookOpen className="size-4.5 text-green-500" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold">Review</p>
-            <p className="text-xs text-muted-foreground">{data.srs.dueNow} kartu menunggu</p>
-          </div>
-        </Link>
-        <Link
-          href="/learn/mnn"
-          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
-        >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-500/10">
-            <Brain className="size-4.5 text-blue-500" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold">Belajar MNN</p>
-            <p className="text-xs text-muted-foreground">Lanjutkan bab</p>
-          </div>
-        </Link>
-        <Link
-          href="/learn/hirakata"
-          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
-        >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-purple-500/10">
-            <span className="text-base font-bold text-purple-500">
-              あ
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-semibold">Hirakata</p>
-            <p className="text-xs text-muted-foreground">Hiragana & Katakana</p>
-          </div>
-        </Link>
-      </div>
+      {/* Section 4: Progres Belajar */}
+      <LearningProgress progress={data.progress} />
 
-      {/* Stats + SRS Distribution */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 lg:col-span-2">
-          <StatCard
-            icon={<BookOpen className="size-4.5 text-green-500" />}
-            label="Kata Dipelajari"
-            value={data.stats.totalWordsLearned.toLocaleString("id-ID")}
-            bg="bg-green-500/10"
-          />
-          <StatCard
-            icon={<Zap className="size-4.5 text-accent" />}
-            label="Total Review"
-            value={data.stats.totalReviews.toLocaleString("id-ID")}
-            bg="bg-accent/10"
-          />
-          <StatCard
-            icon={<Target className="size-4.5 text-blue-500" />}
-            label="Quiz Selesai"
-            value={data.stats.quizCompleted.toLocaleString("id-ID")}
-            bg="bg-blue-500/10"
-          />
-          <StatCard
-            icon={<BarChart3 className="size-4.5 text-purple-500" />}
-            label="Akurasi Quiz"
-            value={data.stats.quizCompleted > 0 ? `${data.stats.quizAvgScore}%` : "--"}
-            bg="bg-purple-500/10"
-          />
-        </div>
-
-        {/* SRS Distribution */}
-        <div className="rounded-2xl border border-border/50 bg-card p-5">
-          <h3 className="mb-3 text-sm font-semibold">Distribusi SRS</h3>
-          <SrsDistribution
-            newCount={data.srs.newCount}
-            learningCount={data.srs.learningCount}
-            reviewCount={data.srs.reviewCount}
-            relearningCount={data.srs.relearningCount}
-            total={data.srs.totalCards}
-          />
-        </div>
-      </div>
-
-      {/* Achievement Preview */}
+      {/* Section 5: Achievement Preview */}
       <div className="rounded-2xl border border-border/50 bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -286,32 +240,8 @@ export default async function HomePage() {
         )}
       </div>
 
-      {/* Activity Heatmap */}
+      {/* Section 6: Activity Heatmap */}
       <ActivityHeatmap />
-    </div>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  bg,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  bg: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-3 sm:p-4">
-      <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9 ${bg}`}>
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-base font-bold leading-tight sm:text-lg">{value}</p>
-        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{label}</p>
-      </div>
     </div>
   );
 }

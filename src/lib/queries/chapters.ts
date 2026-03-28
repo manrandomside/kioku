@@ -4,10 +4,13 @@ import { db } from "@/db";
 import { book, chapter, vocabulary } from "@/db/schema/content";
 import { srsCard } from "@/db/schema/srs";
 import { userChapterProgress } from "@/db/schema/gamification";
+import { getQuizMasteredVocabIds, getQuizMasteredWordsAll } from "@/lib/progress/quiz-mastery";
+import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 
 import type { BookWithChapters, ChapterWithProgress, VocabularyWithSrs } from "@/types/vocabulary";
 
-export async function getBooksWithChapters(userId?: string): Promise<BookWithChapters[]> {
+// Accepts Supabase auth ID, resolves to internal user ID for all queries
+export async function getBooksWithChapters(authUserId?: string): Promise<BookWithChapters[]> {
   const books = await db
     .select()
     .from(book)
@@ -18,28 +21,26 @@ export async function getBooksWithChapters(userId?: string): Promise<BookWithCha
     .from(chapter)
     .orderBy(asc(chapter.chapterNumber));
 
-  let progressMap: Map<string, {
-    vocabSeen: number;
-    vocabLearning: number;
-    vocabReview: number;
-    completionPercent: number;
-    bestQuizScore: number | null;
-  }> = new Map();
+  let masteryMap: Map<string, number> = new Map();
+  let bestQuizMap: Map<string, number | null> = new Map();
+
+  const userId = authUserId ? await getInternalUserId(authUserId) : null;
 
   if (userId) {
+    // Get quiz-based mastery counts for all chapters
+    masteryMap = await getQuizMasteredWordsAll(userId);
+
+    // Get best quiz scores from progress table
     const progress = await db
-      .select()
+      .select({
+        chapterId: userChapterProgress.chapterId,
+        bestQuizScore: userChapterProgress.bestQuizScore,
+      })
       .from(userChapterProgress)
       .where(eq(userChapterProgress.userId, userId));
 
     for (const p of progress) {
-      progressMap.set(p.chapterId, {
-        vocabSeen: p.vocabSeen,
-        vocabLearning: p.vocabLearning,
-        vocabReview: p.vocabReview,
-        completionPercent: p.completionPercent,
-        bestQuizScore: p.bestQuizScore,
-      });
+      bestQuizMap.set(p.chapterId, p.bestQuizScore);
     }
   }
 
@@ -53,18 +54,18 @@ export async function getBooksWithChapters(userId?: string): Promise<BookWithCha
     chapters: chapters
       .filter((c) => c.bookId === b.id)
       .map((c): ChapterWithProgress => {
-        const prog = progressMap.get(c.id);
+        const mastered = masteryMap.get(c.id) ?? 0;
+        const total = c.vocabCount;
+        const completionPercent = total > 0 ? Math.round((mastered / total) * 100) : 0;
         return {
           id: c.id,
           bookId: c.bookId,
           chapterNumber: c.chapterNumber,
           slug: c.slug,
-          vocabCount: c.vocabCount,
-          vocabSeen: prog?.vocabSeen ?? 0,
-          vocabLearning: prog?.vocabLearning ?? 0,
-          vocabReview: prog?.vocabReview ?? 0,
-          completionPercent: prog?.completionPercent ?? 0,
-          bestQuizScore: prog?.bestQuizScore ?? null,
+          vocabCount: total,
+          vocabMastered: mastered,
+          completionPercent,
+          bestQuizScore: bestQuizMap.get(c.id) ?? null,
         };
       }),
   }));
@@ -99,9 +100,10 @@ export async function getChapterBySlug(slug: string): Promise<{
   return rows[0] ?? null;
 }
 
+// Accepts Supabase auth ID, resolves to internal user ID for all queries
 export async function getVocabularyForChapter(
   chapterId: string,
-  userId?: string
+  authUserId?: string
 ): Promise<VocabularyWithSrs[]> {
   const selectFields = {
     id: vocabulary.id,
@@ -118,6 +120,14 @@ export async function getVocabularyForChapter(
     sortOrder: vocabulary.sortOrder,
   };
 
+  const userId = authUserId ? await getInternalUserId(authUserId) : null;
+
+  // Get mastered vocab IDs from quiz history
+  let masteredIds: Set<string> = new Set();
+  if (userId) {
+    masteredIds = await getQuizMasteredVocabIds(userId, chapterId);
+  }
+
   if (!userId) {
     const rows = await db
       .select(selectFields)
@@ -125,7 +135,7 @@ export async function getVocabularyForChapter(
       .where(and(eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)))
       .orderBy(asc(vocabulary.sortOrder));
 
-    return rows.map((r) => ({ ...r, srsStatus: null }));
+    return rows.map((r) => ({ ...r, srsStatus: null, isMastered: false }));
   }
 
   const rows = await db
@@ -141,5 +151,8 @@ export async function getVocabularyForChapter(
     .where(and(eq(vocabulary.chapterId, chapterId), eq(vocabulary.isPublished, true)))
     .orderBy(asc(vocabulary.sortOrder));
 
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    isMastered: masteredIds.has(r.id),
+  }));
 }

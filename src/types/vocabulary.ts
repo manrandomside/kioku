@@ -27,6 +27,7 @@ export type VocabularyWithSrs = {
   exampleId: string | null;
   sortOrder: number;
   srsStatus: "new" | "learning" | "review" | "relearning" | null;
+  isMastered?: boolean;
 };
 
 export type ChapterWithProgress = {
@@ -35,9 +36,7 @@ export type ChapterWithProgress = {
   chapterNumber: number;
   slug: string;
   vocabCount: number;
-  vocabSeen: number;
-  vocabLearning: number;
-  vocabReview: number;
+  vocabMastered: number;
   completionPercent: number;
   bestQuizScore: number | null;
 };

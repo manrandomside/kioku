@@ -16,13 +16,14 @@ export function MnnChapterView({ books }: MnnChapterViewProps) {
   const activeBook = books[activeBookIndex];
 
   const stats = useMemo(() => {
-    if (!activeBook) return { total: 0, started: 0, completed: 0, totalVocab: 0 };
+    if (!activeBook) return { total: 0, started: 0, completed: 0, totalVocab: 0, totalMastered: 0 };
     const chapters = activeBook.chapters;
     return {
       total: chapters.length,
-      started: chapters.filter((c) => c.completionPercent > 0).length,
-      completed: chapters.filter((c) => c.completionPercent >= 100).length,
+      started: chapters.filter((c) => c.vocabMastered > 0).length,
+      completed: chapters.filter((c) => c.vocabMastered >= c.vocabCount && c.vocabCount > 0).length,
       totalVocab: chapters.reduce((sum, c) => sum + c.vocabCount, 0),
+      totalMastered: chapters.reduce((sum, c) => sum + c.vocabMastered, 0),
     };
   }, [activeBook]);
 
@@ -66,32 +67,26 @@ export function MnnChapterView({ books }: MnnChapterViewProps) {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatItem label="Total Bab" value={stats.total} />
+        <StatItem label="Bab Dikuasai" value={stats.completed} suffix={`/${stats.total}`} />
+        <StatItem label="Kata Dikuasai" value={stats.totalMastered} suffix={`/${stats.totalVocab}`} />
         <StatItem label="Dimulai" value={stats.started} />
-        <StatItem label="Selesai" value={stats.completed} />
-        <StatItem label="Total Kata" value={stats.totalVocab} />
+        <StatItem label="Total Bab" value={stats.total} />
       </div>
 
       {/* Overall progress bar */}
-      {stats.total > 0 && (
+      {stats.totalVocab > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progres Keseluruhan</span>
             <span className="font-medium">
-              {stats.completed}/{stats.total} bab selesai
+              {stats.completed}/{stats.total} bab dikuasai · {stats.totalMastered}/{stats.totalVocab} kata dikuasai
             </span>
           </div>
           <div className="flex h-2 overflow-hidden rounded-full bg-muted">
-            {stats.completed > 0 && (
+            {stats.totalMastered > 0 && (
               <div
-                className="bg-srs-review transition-all"
-                style={{ width: `${(stats.completed / stats.total) * 100}%` }}
-              />
-            )}
-            {(stats.started - stats.completed) > 0 && (
-              <div
-                className="bg-primary transition-all"
-                style={{ width: `${((stats.started - stats.completed) / stats.total) * 100}%` }}
+                className="bg-green-500 transition-all"
+                style={{ width: `${(stats.totalMastered / stats.totalVocab) * 100}%` }}
               />
             )}
           </div>
@@ -110,10 +105,13 @@ export function MnnChapterView({ books }: MnnChapterViewProps) {
   );
 }
 
-function StatItem({ label, value }: { label: string; value: number }) {
+function StatItem({ label, value, suffix }: { label: string; value: number; suffix?: string }) {
   return (
     <div className="flex flex-col items-center gap-1 rounded-xl border bg-card p-3">
-      <span className="text-xl font-bold">{value}</span>
+      <span className="text-xl font-bold">
+        {value}
+        {suffix && <span className="text-sm font-normal text-muted-foreground">{suffix}</span>}
+      </span>
       <span className="text-[11px] text-muted-foreground">{label}</span>
     </div>
   );

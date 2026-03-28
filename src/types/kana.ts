@@ -7,6 +7,7 @@ export type KanaWithSrs = {
   columnPosition: number;
   audioUrl: string | null;
   srsStatus: "new" | "learning" | "review" | "relearning" | null;
+  isMastered?: boolean;
 };
 
 // Row ordering for kana grid (traditional gojuon order)

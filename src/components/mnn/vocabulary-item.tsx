@@ -4,7 +4,7 @@ import { Volume2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { playAudio } from "@/lib/audio/play-audio";
-import { WORD_TYPE_CONFIG, SRS_STATUS_CONFIG } from "@/types/vocabulary";
+import { WORD_TYPE_CONFIG } from "@/types/vocabulary";
 
 import type { VocabularyWithSrs } from "@/types/vocabulary";
 
@@ -19,8 +19,7 @@ interface VocabularyItemProps {
 export function VocabularyItem({ vocab, showRomaji = true, displayMode = "kanji" }: VocabularyItemProps) {
   const isKanaMode = displayMode === "kana";
   const wordConfig = WORD_TYPE_CONFIG[vocab.wordType] ?? WORD_TYPE_CONFIG.noun;
-  const srsStatus = vocab.srsStatus ?? "new";
-  const srsConfig = SRS_STATUS_CONFIG[srsStatus];
+  const isMastered = vocab.isMastered ?? false;
 
   function handlePlayAudio() {
     playAudio(vocab.audioUrl);
@@ -28,11 +27,14 @@ export function VocabularyItem({ vocab, showRomaji = true, displayMode = "kanji"
 
   return (
     <div className="flex items-start gap-3 rounded-xl border bg-card p-3 transition-colors hover:bg-muted/30 sm:p-4">
-      {/* SRS status dot */}
+      {/* Mastery indicator */}
       <div className="mt-1.5 flex flex-col items-center gap-1">
         <span
-          className={cn("size-2.5 rounded-full", `bg-srs-${srsStatus}`)}
-          title={srsConfig.label}
+          className={cn(
+            "size-2.5 rounded-full",
+            isMastered ? "bg-green-500" : "bg-muted-foreground/30"
+          )}
+          title={isMastered ? "Dikuasai" : "Belum dikuasai"}
         />
       </div>
 

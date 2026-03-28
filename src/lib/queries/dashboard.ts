@@ -1,12 +1,14 @@
-import { eq, and, count, sql, desc, avg } from "drizzle-orm";
+import { eq, and, count, sql, desc, avg, isNotNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { user } from "@/db/schema/user";
 import { userGamification, achievementUnlock, achievement } from "@/db/schema/gamification";
-import { quizSession } from "@/db/schema/quiz";
+import { quizSession, quizAnswer } from "@/db/schema/quiz";
+import { chapter, vocabulary } from "@/db/schema/content";
 import { srsCard } from "@/db/schema/srs";
 
 import { getSrsStats, type SrsStats } from "./review";
+import { getTotalQuizMasteredWords, getQuizMasteredWordsAll } from "@/lib/progress/quiz-mastery";
 
 // User profile data for dashboard display
 export interface DashboardUserProfile {
@@ -58,11 +60,14 @@ export interface DashboardData {
     goalMet: boolean;
     progressPercent: number;
   };
-  stats: {
-    totalReviews: number;
-    totalWordsLearned: number;
+  progress: {
+    totalMasteredWords: number;
+    totalVocab: number;
+    masteredChapters: number;
+    totalChapters: number;
     quizCompleted: number;
     quizAvgScore: number;
+    lastQuizScore: number | null;
   };
   srs: SrsStats;
   recentAchievements: {
@@ -131,14 +136,27 @@ export async function getDashboardData(
     gam.lastActivityDate === yesterdayStr &&
     gam.currentStreak > 0;
 
-  // Fetch quiz stats, SRS stats, and achievement data in parallel
-  const [quizStats, srsStats, recentAchievementRows, achievementCounts] =
+  // Fetch quiz stats, SRS stats, mastered words, progress, and achievement data in parallel
+  const [quizStats, srsStats, totalMasteredWords, masteryMap, vocabAndChapterCounts, lastQuizScore, recentAchievementRows, achievementCounts] =
     await Promise.all([
       getQuizStatsForDashboard(internalUserId),
       getSrsStats(internalUserId),
+      getTotalQuizMasteredWords(internalUserId),
+      getQuizMasteredWordsAll(internalUserId),
+      getVocabAndChapterCounts(),
+      getLastQuizScore(internalUserId),
       getRecentAchievements(internalUserId, 5),
       getAchievementCounts(internalUserId),
     ]);
+
+  // Count mastered chapters: chapters where mastered >= vocabCount
+  let masteredChapters = 0;
+  for (const [chapterId, masteredCount] of masteryMap) {
+    const chapterVocab = vocabAndChapterCounts.chapterVocabMap.get(chapterId);
+    if (chapterVocab && masteredCount >= chapterVocab) {
+      masteredChapters++;
+    }
+  }
 
   // Reset daily counters display if new day
   const dailyXpEarned = isActiveToday ? gam.dailyXpEarned : 0;
@@ -174,11 +192,14 @@ export async function getDashboardData(
         ? Math.min(100, Math.round((dailyXpEarned / dailyGoalXp) * 100))
         : 0,
     },
-    stats: {
-      totalReviews: gam.totalReviews,
-      totalWordsLearned: gam.totalWordsLearned,
+    progress: {
+      totalMasteredWords,
+      totalVocab: vocabAndChapterCounts.totalVocab,
+      masteredChapters,
+      totalChapters: vocabAndChapterCounts.totalChapters,
       quizCompleted: quizStats.completed,
       quizAvgScore: quizStats.avgScore,
+      lastQuizScore,
     },
     srs: srsStats,
     recentAchievements: recentAchievementRows,
@@ -242,4 +263,46 @@ async function getAchievementCounts(userId: string) {
     unlocked: unlockedResult.count,
     total: totalResult.count,
   };
+}
+
+async function getVocabAndChapterCounts() {
+  const [vocabResult] = await db
+    .select({ count: count() })
+    .from(vocabulary)
+    .where(eq(vocabulary.isPublished, true));
+
+  const chapters = await db
+    .select({
+      id: chapter.id,
+      vocabCount: chapter.vocabCount,
+    })
+    .from(chapter);
+
+  const chapterVocabMap = new Map<string, number>();
+  for (const c of chapters) {
+    chapterVocabMap.set(c.id, c.vocabCount);
+  }
+
+  return {
+    totalVocab: vocabResult.count,
+    totalChapters: chapters.length,
+    chapterVocabMap,
+  };
+}
+
+async function getLastQuizScore(userId: string): Promise<number | null> {
+  const [row] = await db
+    .select({ scorePercent: quizSession.scorePercent })
+    .from(quizSession)
+    .where(
+      and(
+        eq(quizSession.userId, userId),
+        eq(quizSession.isCompleted, true),
+        isNotNull(quizSession.chapterId)
+      )
+    )
+    .orderBy(desc(quizSession.completedAt))
+    .limit(1);
+
+  return row?.scorePercent != null ? Math.round(row.scorePercent) : null;
 }
