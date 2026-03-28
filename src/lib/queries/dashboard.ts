@@ -1,10 +1,10 @@
-import { eq, and, count, sql, desc, avg, isNotNull } from "drizzle-orm";
+import { eq, and, count, sql, desc, asc, avg, isNotNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { user } from "@/db/schema/user";
-import { userGamification, achievementUnlock, achievement } from "@/db/schema/gamification";
+import { userGamification, achievementUnlock, achievement, userChapterProgress } from "@/db/schema/gamification";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
-import { chapter, vocabulary } from "@/db/schema/content";
+import { book, chapter, vocabulary } from "@/db/schema/content";
 import { srsCard } from "@/db/schema/srs";
 
 import { getSrsStats, type SrsStats } from "./review";
@@ -36,6 +36,16 @@ function calculateLevel(totalXp: number) {
     cumulativeXp += nextLevelXp;
     level++;
   }
+}
+
+export interface MnnRecommendation {
+  status: "continue" | "start" | "completed";
+  chapterNumber: number;
+  chapterSlug: string;
+  vocabMastered: number;
+  vocabCount: number;
+  completedChapters: number;
+  totalChapters: number;
 }
 
 export interface DashboardData {
@@ -79,6 +89,17 @@ export interface DashboardData {
     unlockedAt: string;
   }[];
   totalAchievements: { unlocked: number; total: number };
+  mnnRecommendation: MnnRecommendation | null;
+}
+
+export async function getUserJlptTarget(authUserId: string): Promise<string> {
+  const [row] = await db
+    .select({ jlptTarget: user.jlptTarget })
+    .from(user)
+    .where(eq(user.supabaseAuthId, authUserId))
+    .limit(1);
+
+  return row?.jlptTarget ?? "N5";
 }
 
 export async function getDashboardData(
@@ -137,7 +158,7 @@ export async function getDashboardData(
     gam.currentStreak > 0;
 
   // Fetch quiz stats, SRS stats, mastered words, progress, and achievement data in parallel
-  const [quizStats, srsStats, totalMasteredWords, masteryMap, vocabAndChapterCounts, lastQuizScore, recentAchievementRows, achievementCounts] =
+  const [quizStats, srsStats, totalMasteredWords, masteryMap, vocabAndChapterCounts, lastQuizScore, recentAchievementRows, achievementCounts, mnnRecommendation] =
     await Promise.all([
       getQuizStatsForDashboard(internalUserId),
       getSrsStats(internalUserId),
@@ -147,6 +168,7 @@ export async function getDashboardData(
       getLastQuizScore(internalUserId),
       getRecentAchievements(internalUserId, 5),
       getAchievementCounts(internalUserId),
+      getRecommendedChapter(internalUserId, userData.jlptTarget ?? "N5"),
     ]);
 
   // Count mastered chapters: chapters where mastered >= vocabCount
@@ -204,6 +226,7 @@ export async function getDashboardData(
     srs: srsStats,
     recentAchievements: recentAchievementRows,
     totalAchievements: achievementCounts,
+    mnnRecommendation,
   };
 }
 
@@ -305,4 +328,117 @@ async function getLastQuizScore(userId: string): Promise<number | null> {
     .limit(1);
 
   return row?.scorePercent != null ? Math.round(row.scorePercent) : null;
+}
+
+async function getRecommendedChapter(
+  userId: string,
+  jlptTarget: string
+): Promise<MnnRecommendation | null> {
+  const targetLevel = jlptTarget as "N5" | "N4" | "N3" | "N2" | "N1";
+
+  // Find book matching target level
+  const [targetBook] = await db
+    .select()
+    .from(book)
+    .where(eq(book.jlptLevel, targetLevel))
+    .limit(1);
+
+  if (!targetBook) return null;
+
+  // Get chapters for this book
+  const chapters = await db
+    .select({
+      id: chapter.id,
+      chapterNumber: chapter.chapterNumber,
+      slug: chapter.slug,
+      vocabCount: chapter.vocabCount,
+    })
+    .from(chapter)
+    .where(eq(chapter.bookId, targetBook.id))
+    .orderBy(asc(chapter.chapterNumber));
+
+  if (chapters.length === 0) return null;
+
+  // Get quiz mastery for all chapters
+  const masteryMap = await getQuizMasteredWordsAll(userId);
+
+  // Compute completion per chapter
+  const chaptersWithMastery = chapters.map((c) => ({
+    ...c,
+    vocabMastered: masteryMap.get(c.id) ?? 0,
+    isCompleted: c.vocabCount > 0 && (masteryMap.get(c.id) ?? 0) >= c.vocabCount,
+  }));
+
+  const completedCount = chaptersWithMastery.filter((c) => c.isCompleted).length;
+  const totalCount = chaptersWithMastery.length;
+
+  // All completed
+  if (completedCount >= totalCount && totalCount > 0) {
+    const last = chaptersWithMastery[chaptersWithMastery.length - 1];
+    return {
+      status: "completed",
+      chapterNumber: last.chapterNumber,
+      chapterSlug: last.slug,
+      vocabMastered: last.vocabMastered,
+      vocabCount: last.vocabCount,
+      completedChapters: completedCount,
+      totalChapters: totalCount,
+    };
+  }
+
+  // Find the most recently studied chapter via userChapterProgress.updatedAt
+  const [lastStudied] = await db
+    .select({
+      chapterId: userChapterProgress.chapterId,
+    })
+    .from(userChapterProgress)
+    .where(
+      and(
+        eq(userChapterProgress.userId, userId),
+        sql`${userChapterProgress.chapterId} in (${sql.join(chapters.map((c) => sql`${c.id}`), sql`, `)})`
+      )
+    )
+    .orderBy(desc(userChapterProgress.updatedAt))
+    .limit(1);
+
+  // If user has studied a chapter, recommend it (if incomplete) or the next one
+  if (lastStudied) {
+    const lastChapter = chaptersWithMastery.find((c) => c.id === lastStudied.chapterId);
+    if (lastChapter && !lastChapter.isCompleted) {
+      return {
+        status: "continue",
+        chapterNumber: lastChapter.chapterNumber,
+        chapterSlug: lastChapter.slug,
+        vocabMastered: lastChapter.vocabMastered,
+        vocabCount: lastChapter.vocabCount,
+        completedChapters: completedCount,
+        totalChapters: totalCount,
+      };
+    }
+    // Last studied is completed — find next incomplete
+    const nextIncomplete = chaptersWithMastery.find((c) => !c.isCompleted);
+    if (nextIncomplete) {
+      return {
+        status: "continue",
+        chapterNumber: nextIncomplete.chapterNumber,
+        chapterSlug: nextIncomplete.slug,
+        vocabMastered: nextIncomplete.vocabMastered,
+        vocabCount: nextIncomplete.vocabCount,
+        completedChapters: completedCount,
+        totalChapters: totalCount,
+      };
+    }
+  }
+
+  // No progress — suggest first chapter
+  const first = chaptersWithMastery[0];
+  return {
+    status: "start",
+    chapterNumber: first.chapterNumber,
+    chapterSlug: first.slug,
+    vocabMastered: 0,
+    vocabCount: first.vocabCount,
+    completedChapters: 0,
+    totalChapters: totalCount,
+  };
 }

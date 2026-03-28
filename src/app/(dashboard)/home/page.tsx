@@ -94,15 +94,40 @@ export default async function HomePage() {
           </div>
         </Link>
         <Link
-          href="/learn/mnn"
+          href={
+            data.mnnRecommendation
+              ? data.mnnRecommendation.status === "completed"
+                ? "/learn/mnn"
+                : `/learn/mnn/${data.mnnRecommendation.chapterSlug}`
+              : "/learn/mnn"
+          }
           className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
         >
           <div className="flex size-9 items-center justify-center rounded-lg bg-blue-500/10">
             <Brain className="size-4.5 text-blue-500" />
           </div>
-          <div>
-            <p className="text-sm font-semibold">Belajar MNN</p>
-            <p className="text-xs text-muted-foreground">Lanjutkan bab</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold">
+                {data.mnnRecommendation?.status === "completed"
+                  ? `N${data.profile.jlptTarget === "N5" ? "5" : "4"} Selesai! Siap untuk N${data.profile.jlptTarget === "N5" ? "4" : "3"}?`
+                  : "Belajar MNN"}
+              </p>
+              {data.mnnRecommendation?.status === "completed" && (
+                <span className="shrink-0 rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-green-600 dark:text-green-400">
+                  Completed
+                </span>
+              )}
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {!data.mnnRecommendation
+                ? "Lanjutkan bab"
+                : data.mnnRecommendation.status === "completed"
+                  ? `Semua ${data.mnnRecommendation.totalChapters} bab JLPT ${data.profile.jlptTarget} telah dikuasai`
+                  : data.mnnRecommendation.status === "start"
+                    ? `Mulai dari Bab ${data.mnnRecommendation.chapterNumber}`
+                    : `Lanjutkan Bab ${data.mnnRecommendation.chapterNumber} · ${data.mnnRecommendation.vocabMastered}/${data.mnnRecommendation.vocabCount} kata dikuasai`}
+            </p>
           </div>
         </Link>
         <Link
