@@ -3,33 +3,54 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  User,
+  Target,
+  BookOpen,
+  Check,
+  Coffee,
+  Flame,
+  Zap,
+  Rocket,
+  Crown,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/ui/logo";
 import { completeOnboarding } from "./actions";
 
 const TOTAL_STEPS = 3;
 
+const STEP_LABELS = ["Profil", "Target", "Mulai"];
+
 const JLPT_OPTIONS = [
   {
     value: "N5" as const,
-    label: "N5 - Pemula",
-    description: "Baru mulai belajar bahasa Jepang",
+    label: "N5",
+    subtitle: "Pemula",
+    description: "800 kata dasar, tata bahasa sederhana",
+    color: "text-green-500",
+    bg: "bg-green-500/10",
+    borderSelected: "border-green-500",
   },
   {
     value: "N4" as const,
-    label: "N4 - Dasar",
-    description: "Sudah mengerti dasar-dasar bahasa Jepang",
+    label: "N4",
+    subtitle: "Dasar",
+    description: "1.500 kata, percakapan sehari-hari",
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    borderSelected: "border-blue-500",
   },
 ];
 
 const DAILY_GOAL_OPTIONS = [
-  { value: "100" as const, label: "Santai", description: "100 XP / hari", minutes: "~10 menit" },
-  { value: "300" as const, label: "Reguler", description: "300 XP / hari", minutes: "~20 menit" },
-  { value: "500" as const, label: "Serius", description: "500 XP / hari", minutes: "~30 menit" },
-  { value: "750" as const, label: "Intens", description: "750 XP / hari", minutes: "~45 menit" },
-  { value: "1000" as const, label: "Intensif", description: "1000 XP / hari", minutes: "~60 menit" },
+  { value: "100" as const, label: "Santai", description: "100 XP", minutes: "~10 mnt", icon: Coffee },
+  { value: "300" as const, label: "Reguler", description: "300 XP", minutes: "~20 mnt", icon: Flame },
+  { value: "500" as const, label: "Serius", description: "500 XP", minutes: "~30 mnt", icon: Zap },
+  { value: "750" as const, label: "Intens", description: "750 XP", minutes: "~45 mnt", icon: Rocket },
+  { value: "1000" as const, label: "Intensif", description: "1000 XP", minutes: "~60 mnt", icon: Crown },
 ];
 
 const slideVariants = {
@@ -102,50 +123,50 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-          Selamat Datang!
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Atur profil kamu untuk memulai belajar bahasa Jepang
-        </p>
+      {/* Logo */}
+      <div className="flex justify-center">
+        <img src="/logo-white.svg" alt="Kioku" className="h-7 w-auto" />
       </div>
 
       {/* Stepper */}
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-0">
         {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
-          <div key={s} className="flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
-                s === step
-                  ? "bg-primary text-primary-foreground"
-                  : s < step
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {s < step ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : (
-                s
-              )}
+          <div key={s} className="flex items-center">
+            <div className="flex flex-col items-center gap-1.5">
+              <div
+                className={`flex size-9 items-center justify-center rounded-full text-sm font-bold transition-all ${
+                  s === step
+                    ? "bg-[#C2E959] text-[#0A3A3A] shadow-lg shadow-[#C2E959]/20"
+                    : s < step
+                      ? "bg-[#C2E959] text-[#0A3A3A]"
+                      : "bg-white/10 text-white/40"
+                }`}
+              >
+                {s < step ? (
+                  <Check className="size-4" strokeWidth={3} />
+                ) : (
+                  s
+                )}
+              </div>
+              <span className={`text-[11px] font-medium ${
+                s <= step ? "text-white/80" : "text-white/30"
+              }`}>
+                {STEP_LABELS[s - 1]}
+              </span>
             </div>
             {s < TOTAL_STEPS && (
-              <div
-                className={`h-0.5 w-8 transition-colors ${
-                  s < step ? "bg-accent" : "bg-muted"
-                }`}
-              />
+              <div className={`mx-3 mb-5 h-0.5 w-10 rounded-full transition-colors sm:w-14 ${
+                s < step
+                  ? "bg-gradient-to-r from-[#248288] to-[#C2E959]"
+                  : "bg-white/10"
+              }`} />
             )}
           </div>
         ))}
       </div>
 
-      {/* Step Content */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/80 p-4 shadow-lg backdrop-blur-sm sm:p-8">
+      {/* Card */}
+      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.07] p-5 shadow-xl backdrop-blur-xl dark:bg-white/[0.05] sm:p-8">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
@@ -183,31 +204,41 @@ export default function OnboardingPage() {
 
         {/* Error */}
         {error && (
-          <p className="mt-4 text-center text-sm text-destructive">{error}</p>
+          <p className="mt-4 text-center text-sm text-red-400">{error}</p>
         )}
 
         {/* Navigation */}
         {step < TOTAL_STEPS && (
           <div className="mt-8 flex items-center justify-between">
-            <Button
-              variant="ghost"
+            <button
+              type="button"
               onClick={goBack}
               disabled={step === 1}
-              className={step === 1 ? "invisible" : ""}
+              className={`h-12 rounded-full px-6 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none ${
+                step === 1 ? "invisible" : ""
+              }`}
             >
               Kembali
-            </Button>
-            <Button onClick={goNext}>
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              className="h-12 rounded-full bg-[#C2E959] px-8 text-sm font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/80"
+            >
               Lanjut
-            </Button>
+            </button>
           </div>
         )}
 
         {step === TOTAL_STEPS && (
           <div className="mt-8 flex justify-start">
-            <Button variant="ghost" onClick={goBack}>
+            <button
+              type="button"
+              onClick={goBack}
+              className="h-12 rounded-full px-6 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            >
               Kembali
-            </Button>
+            </button>
           </div>
         )}
       </div>
@@ -229,16 +260,21 @@ function StepProfile({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-display text-xl font-bold">Profil Kamu</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Perkenalkan dirimu untuk pengalaman belajar yang lebih personal
-        </p>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-[#248288]/20">
+          <User className="size-7 text-[#C2E959]" />
+        </div>
+        <div>
+          <h2 className="font-display text-xl font-bold text-white sm:text-2xl">Kenalan Dulu!</h2>
+          <p className="mt-1 text-sm text-white/50">
+            Isi nama kamu agar pengalaman belajar lebih personal
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="displayName">Nama Lengkap</Label>
+          <Label htmlFor="displayName" className="text-white/70">Nama Lengkap</Label>
           <Input
             id="displayName"
             placeholder="Masukkan nama kamu"
@@ -246,13 +282,14 @@ function StepProfile({
             onChange={(e) => setDisplayName(e.target.value)}
             maxLength={100}
             autoFocus
+            className="h-12 rounded-xl border-white/10 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-[#C2E959]/50 focus-visible:ring-[#C2E959]/20"
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="preferredName">
+          <Label htmlFor="preferredName" className="text-white/70">
             Nama Panggilan{" "}
-            <span className="text-muted-foreground">(opsional)</span>
+            <span className="text-white/30">(opsional)</span>
           </Label>
           <Input
             id="preferredName"
@@ -260,6 +297,7 @@ function StepProfile({
             value={preferredName}
             onChange={(e) => setPreferredName(e.target.value)}
             maxLength={50}
+            className="h-12 rounded-xl border-white/10 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-[#C2E959]/50 focus-visible:ring-[#C2E959]/20"
           />
         </div>
       </div>
@@ -281,32 +319,40 @@ function StepTarget({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-display text-xl font-bold">Target Belajar</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Pilih level dan intensitas belajar yang sesuai
-        </p>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-[#248288]/20">
+          <Target className="size-7 text-[#C2E959]" />
+        </div>
+        <div>
+          <h2 className="font-display text-xl font-bold text-white sm:text-2xl">Target Belajar</h2>
+          <p className="mt-1 text-sm text-white/50">
+            Pilih level dan intensitas belajar yang sesuai
+          </p>
+        </div>
       </div>
 
       {/* JLPT Target */}
       <div className="flex flex-col gap-3">
-        <Label>Target JLPT</Label>
+        <Label className="text-white/70">Target JLPT</Label>
         <div className="grid gap-3">
           {JLPT_OPTIONS.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => setJlptTarget(option.value)}
-              className={`flex flex-col gap-1 rounded-xl border-2 p-4 text-left transition-all ${
+              className={`flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all ${
                 jlptTarget === option.value
-                  ? "border-accent bg-accent/10"
-                  : "border-border hover:border-border/80 hover:bg-muted/50"
+                  ? "border-[#C2E959] bg-[#C2E959]/10"
+                  : "border-white/10 hover:border-white/20 hover:bg-white/5"
               }`}
             >
-              <span className="font-semibold">{option.label}</span>
-              <span className="text-sm text-muted-foreground">
-                {option.description}
-              </span>
+              <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${option.bg}`}>
+                <span className={`text-sm font-bold ${option.color}`}>{option.label}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-white">{option.label} &mdash; {option.subtitle}</span>
+                <p className="mt-0.5 text-sm text-white/40">{option.description}</p>
+              </div>
             </button>
           ))}
         </div>
@@ -314,26 +360,29 @@ function StepTarget({
 
       {/* Daily Goal */}
       <div className="flex flex-col gap-3">
-        <Label>Target Harian</Label>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Label className="text-white/70">Target Harian</Label>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
           {DAILY_GOAL_OPTIONS.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => setDailyGoalXp(option.value)}
-              className={`flex flex-col items-center gap-1 rounded-xl border-2 p-4 transition-all ${
+              className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3.5 transition-all ${
                 dailyGoalXp === option.value
-                  ? "border-accent bg-accent/10"
-                  : "border-border hover:border-border/80 hover:bg-muted/50"
+                  ? "border-[#C2E959] bg-[#C2E959]/10"
+                  : "border-white/10 hover:border-white/20 hover:bg-white/5"
               }`}
             >
-              <span className="font-semibold">{option.label}</span>
-              <span className="text-sm font-medium text-accent">
+              <option.icon className={`size-5 ${
+                dailyGoalXp === option.value ? "text-[#C2E959]" : "text-white/30"
+              }`} />
+              <span className="text-sm font-semibold text-white">{option.label}</span>
+              <span className={`text-xs font-medium ${
+                dailyGoalXp === option.value ? "text-[#C2E959]" : "text-white/40"
+              }`}>
                 {option.description}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {option.minutes}
-              </span>
+              <span className="text-[11px] text-white/30">{option.minutes}</span>
             </button>
           ))}
         </div>
@@ -352,43 +401,59 @@ function StepAssessment({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-display text-xl font-bold">Asesmen Kana</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Satu pertanyaan terakhir sebelum mulai belajar
-        </p>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-[#248288]/20">
+          <BookOpen className="size-7 text-[#C2E959]" />
+        </div>
+        <div>
+          <h2 className="font-display text-xl font-bold text-white sm:text-2xl">Asesmen Kana</h2>
+          <p className="mt-1 text-sm text-white/50">
+            Satu pertanyaan terakhir sebelum mulai belajar
+          </p>
+        </div>
       </div>
 
-      <div className="rounded-xl bg-muted/50 p-6 text-center">
-        <p className="font-jp text-4xl font-bold">
-          あ ア
+      <div className="rounded-xl bg-white/5 p-6 text-center">
+        <p className="font-jp text-4xl font-bold text-white">
+          {"\u3042"} {"\u30A2"}
         </p>
-        <p className="mt-4 text-lg font-medium">
+        <p className="mt-4 text-lg font-medium text-white">
           Apakah kamu sudah bisa membaca Hiragana & Katakana?
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-white/40">
           Hiragana dan Katakana adalah huruf dasar bahasa Jepang
         </p>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <Button
-          size="lg"
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
           onClick={() => onSelect(true)}
           disabled={isPending}
-          className="h-12"
+          className="flex flex-col items-center gap-2 rounded-xl border-2 border-[#248288]/50 bg-[#248288]/10 p-5 transition-all hover:border-[#248288] hover:bg-[#248288]/20 disabled:pointer-events-none disabled:opacity-50"
         >
-          {isPending ? "Menyimpan..." : "Ya, saya sudah bisa"}
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
+          <div className="flex size-10 items-center justify-center rounded-full bg-[#248288]/20">
+            <Check className="size-5 text-[#248288]" strokeWidth={2.5} />
+          </div>
+          <span className="font-semibold text-white">
+            {isPending ? "Menyimpan..." : "Ya, saya sudah bisa"}
+          </span>
+          <span className="text-xs text-white/40">Langsung mulai kosakata MNN Bab 1</span>
+        </button>
+        <button
+          type="button"
           onClick={() => onSelect(false)}
           disabled={isPending}
-          className="h-12"
+          className="flex flex-col items-center gap-2 rounded-xl border-2 border-[#C2E959]/50 bg-[#C2E959]/10 p-5 transition-all hover:border-[#C2E959] hover:bg-[#C2E959]/20 disabled:pointer-events-none disabled:opacity-50"
         >
-          {isPending ? "Menyimpan..." : "Belum, saya mau belajar dulu"}
-        </Button>
+          <div className="flex size-10 items-center justify-center rounded-full bg-[#C2E959]/20">
+            <BookOpen className="size-5 text-[#C2E959]" />
+          </div>
+          <span className="font-semibold text-white">
+            {isPending ? "Menyimpan..." : "Belum, saya mau belajar"}
+          </span>
+          <span className="text-xs text-white/40">Mulai dari Hiragana & Katakana dasar</span>
+        </button>
       </div>
     </div>
   );
