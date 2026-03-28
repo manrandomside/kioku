@@ -6,7 +6,6 @@ import {
   Home,
   BookOpen,
   RotateCcw,
-  HelpCircle,
   MessageCircle,
   Menu,
 } from "lucide-react";
@@ -32,7 +31,6 @@ const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/learn", label: "Belajar", icon: BookOpen },
   { href: "/review", label: "Review", icon: RotateCcw },
-  { href: "/quiz", label: "Quiz", icon: HelpCircle },
   { href: "/chat", label: "Chat", icon: MessageCircle },
 ] as const;
 
