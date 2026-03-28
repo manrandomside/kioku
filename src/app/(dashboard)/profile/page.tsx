@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "Profil" };
 import {
   Trophy,
   Settings,

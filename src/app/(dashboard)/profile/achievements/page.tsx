@@ -7,7 +7,7 @@ import { getAllAchievementsWithStatus } from "@/lib/gamification/achievement-ser
 import { AchievementsGrid } from "@/components/gamification/achievements-grid";
 
 export const metadata = {
-  title: "Achievement - Kioku",
+  title: "Achievement",
 };
 
 export default async function AchievementsPage() {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,6 +19,8 @@ import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
 import { StreakFlame } from "@/components/gamification/streak-flame";
 import { LearningProgress } from "@/components/gamification/learning-progress";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 // Always fetch fresh data — XP/streak may have changed from flashcard/quiz sessions
 export const dynamic = "force-dynamic";

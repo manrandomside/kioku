@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, Languages, Info } from "lucide-react";
+
+export const metadata: Metadata = { title: "Pilih Materi Belajar" };
 
 export default function LearnPage() {
   return (

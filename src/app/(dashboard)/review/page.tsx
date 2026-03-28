@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { getDueCards, getSrsStats } from "@/lib/queries/review";
+
+export const metadata: Metadata = { title: "Review" };
 import { ReviewSession } from "@/components/review/review-session";
 
 export default async function ReviewPage() {
