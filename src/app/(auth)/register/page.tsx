@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { signUpWithEmail } from "@/app/(auth)/actions";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -42,17 +41,17 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          kioku
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          Buat Akun Kioku
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Buat akun baru
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Buat akun baru untuk mulai belajar bahasa Jepang
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
           {error}
         </div>
       )}
@@ -75,6 +74,7 @@ export default function RegisterPage() {
             placeholder="nama@email.com"
             required
             autoComplete="email"
+            className="h-11 rounded-xl"
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -86,6 +86,7 @@ export default function RegisterPage() {
             placeholder="Minimal 6 karakter"
             required
             autoComplete="new-password"
+            className="h-11 rounded-xl"
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -97,11 +98,16 @@ export default function RegisterPage() {
             placeholder="Ulangi password"
             required
             autoComplete="new-password"
+            className="h-11 rounded-xl"
           />
         </div>
-        <Button type="submit" size="lg" className="h-11 w-full" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className="h-12 w-full rounded-full bg-[#C2E959] text-base font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/80 disabled:pointer-events-none disabled:opacity-50"
+        >
           {loading ? "Memproses..." : "Daftar"}
-        </Button>
+        </button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { signInWithMagicLink } from "@/app/(auth)/actions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -28,24 +27,24 @@ export default function MagicLinkPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-          kioku
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          Masuk Tanpa Password
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Masuk tanpa password
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Kami akan mengirim link masuk ke email kamu
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
           {error}
         </div>
       )}
 
       {success ? (
         <div className="flex flex-col gap-4">
-          <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-center text-sm text-success">
+          <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-center text-sm text-success">
             Link masuk sudah dikirim ke email kamu. Cek inbox dan klik link untuk masuk.
           </div>
           <Link
@@ -68,11 +67,16 @@ export default function MagicLinkPage() {
                 placeholder="nama@email.com"
                 required
                 autoComplete="email"
+                className="h-11 rounded-xl"
               />
             </div>
-            <Button type="submit" size="lg" className="h-11 w-full" disabled={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-12 w-full rounded-full bg-[#C2E959] text-base font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/80 disabled:pointer-events-none disabled:opacity-50"
+            >
               {loading ? "Mengirim..." : "Kirim Magic Link"}
-            </Button>
+            </button>
           </form>
 
           <Link

@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 
 import { signInWithEmail } from "@/app/(auth)/actions";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -30,29 +29,29 @@ function LoginForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          kioku
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          Masuk ke Kioku
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Masuk ke akun kamu
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Masuk ke akun kamu untuk melanjutkan belajar
         </p>
       </div>
 
       {message === "check_email" && (
-        <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-center text-sm text-success">
+        <div className="rounded-xl border border-success/30 bg-success/10 p-3 text-center text-sm text-success">
           Cek email kamu untuk verifikasi akun.
         </div>
       )}
 
       {authError === "auth_failed" && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
           Autentikasi gagal. Silakan coba lagi.
         </div>
       )}
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
           {error}
         </div>
       )}
@@ -75,6 +74,7 @@ function LoginForm() {
             placeholder="nama@email.com"
             required
             autoComplete="email"
+            className="h-11 rounded-xl"
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -94,11 +94,16 @@ function LoginForm() {
             placeholder="Masukkan password"
             required
             autoComplete="current-password"
+            className="h-11 rounded-xl"
           />
         </div>
-        <Button type="submit" size="lg" className="h-11 w-full" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className="h-12 w-full rounded-full bg-[#C2E959] text-base font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/80 disabled:pointer-events-none disabled:opacity-50"
+        >
           {loading ? "Memproses..." : "Masuk"}
-        </Button>
+        </button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
