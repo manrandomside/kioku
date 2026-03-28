@@ -50,13 +50,22 @@ function LoginForm() {
         </div>
       )}
 
+      {authError === "not_registered" && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+          Akun belum terdaftar.{" "}
+          <Link href="/register" className="font-medium underline underline-offset-2">
+            Daftar terlebih dahulu
+          </Link>
+        </div>
+      )}
+
       {error && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
           {error}
         </div>
       )}
 
-      <OAuthButtons />
+      <OAuthButtons mode="login" />
 
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />

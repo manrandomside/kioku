@@ -61,7 +61,7 @@ export async function signUpWithEmail(formData: FormData) {
   redirect("/login?message=check_email");
 }
 
-export async function signInWithOAuth(provider: "google" | "github") {
+export async function signInWithOAuth(provider: "google" | "github", mode: "login" | "register" = "login") {
   let redirectUrl: string | undefined;
 
   try {
@@ -72,7 +72,7 @@ export async function signInWithOAuth(provider: "google" | "github") {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: `${origin}/auth/callback?mode=${mode}`,
       },
     });
 

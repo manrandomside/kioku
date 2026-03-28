@@ -56,7 +56,7 @@ export default function RegisterPage() {
         </div>
       )}
 
-      <OAuthButtons />
+      <OAuthButtons mode="register" />
 
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />

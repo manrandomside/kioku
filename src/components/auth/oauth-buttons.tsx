@@ -36,13 +36,13 @@ function GitHubIcon() {
   );
 }
 
-export function OAuthButtons() {
+export function OAuthButtons({ mode = "login" }: { mode?: "login" | "register" }) {
   const [loading, setLoading] = useState<string | null>(null);
 
   async function handleOAuth(provider: "google" | "github") {
     setLoading(provider);
     try {
-      const result = await signInWithOAuth(provider);
+      const result = await signInWithOAuth(provider, mode);
       if (result?.error) {
         setLoading(null);
       }
