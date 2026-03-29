@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { href: "/learn", label: "Belajar", icon: BookOpen },
   { href: "/search", label: "Cari", icon: Search },
   { href: "/review", label: "Review", icon: RotateCcw },
-  { href: "/chat", label: "Chat", icon: MessageCircle },
+  { href: "/chat", label: "Tutor", icon: MessageCircle },
 ] as const;
 
 export function BottomNav() {

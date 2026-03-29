@@ -25,7 +25,7 @@ const SIDEBAR_ITEMS = [
     ],
   },
   {
-    title: "Konten",
+    title: "Belajar",
     items: [
       { href: "/learn/hirakata", label: "HIRAKATA", icon: Languages },
       { href: "/learn/mnn", label: "Minna no Nihongo", icon: BookOpen },

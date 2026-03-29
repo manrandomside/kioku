@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/learn", label: "Belajar", icon: BookOpen },
   { href: "/review", label: "Review", icon: RotateCcw },
-  { href: "/chat", label: "Chat", icon: MessageCircle },
+  { href: "/chat", label: "AI Tutor", icon: MessageCircle },
 ] as const;
 
 export function Navbar({ user }: NavbarProps) {
