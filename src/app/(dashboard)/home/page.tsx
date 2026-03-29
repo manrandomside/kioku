@@ -20,6 +20,7 @@ import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
 import { StreakFlame } from "@/components/gamification/streak-flame";
 import { LearningProgress } from "@/components/gamification/learning-progress";
+import { ReviewCountdown } from "@/components/gamification/review-countdown";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -236,9 +237,9 @@ export default async function HomePage() {
             )}
 
             {data.srs.dueNow === 0 && data.srs.nextDueAt && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Review berikutnya: {formatRelativeTime(data.srs.nextDueAt)}
-              </p>
+              <div className="mt-1">
+                <ReviewCountdown nextDueAt={data.srs.nextDueAt} dueNow={data.srs.dueNow} />
+              </div>
             )}
 
             {data.srs.dueNow === 0 && !data.srs.nextDueAt && (

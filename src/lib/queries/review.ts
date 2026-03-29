@@ -1,4 +1,4 @@
-import { eq, and, lte, gt, ne, sql, count, or, isNull } from "drizzle-orm";
+import { eq, and, lte, gt, sql, count, or, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { srsCard } from "@/db/schema/srs";
@@ -126,18 +126,18 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
     statusMap[row.status] = row.count;
   }
 
-  // Breakdown of due cards by status
+  // Breakdown of due cards by status (exclude 'new')
   const dueBreakdown = await db
     .select({
       status: srsCard.status,
-      count: sql<number>`count(*)::int`,
+      count: count(),
     })
     .from(srsCard)
     .where(
       and(
         eq(srsCard.userId, userId),
         lte(srsCard.dueDate, now),
-        ne(srsCard.status, "new")
+        sql`${srsCard.status} != 'new'`
       )
     )
     .groupBy(srsCard.status);
@@ -149,25 +149,25 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
 
   // Overdue count (due > 1 day ago)
   const [overdueResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({ count: count() })
     .from(srsCard)
     .where(
       and(
         eq(srsCard.userId, userId),
         lte(srsCard.dueDate, oneDayAgo),
-        ne(srsCard.status, "new")
+        sql`${srsCard.status} != 'new'`
       )
     );
 
   // Next due card (after now)
   const [nextDueResult] = await db
-    .select({ nextDue: sql<string>`MIN(due_date)` })
+    .select({ nextDue: sql<string>`min(${srsCard.dueDate})` })
     .from(srsCard)
     .where(
       and(
         eq(srsCard.userId, userId),
         gt(srsCard.dueDate, now),
-        ne(srsCard.status, "new")
+        sql`${srsCard.status} != 'new'`
       )
     );
 
