@@ -6,6 +6,7 @@ import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { db } from "@/db";
 import { pronunciationAttempt } from "@/db/schema/ai";
 import { calculatePronunciationScore } from "@/lib/audio/pronunciation-scoring";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   vocabulary_id: z.string().uuid().optional(),
@@ -37,6 +38,12 @@ export async function POST(request: NextRequest) {
         { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } },
         { status: 404 }
       );
+    }
+
+    // Rate limit per user
+    const rl = checkRateLimit(`pronunciation:${userId}`, RATE_LIMITS.aiPronunciation);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl) as unknown as NextResponse;
     }
 
     const body = await request.json();

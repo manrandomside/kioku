@@ -10,9 +10,16 @@ import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 
 const dailyGoalSchema = z.enum(["100", "300", "500", "750", "1000"]);
+const autoPlaySchema = z.boolean();
+const displayModeSchema = z.enum(["kanji", "kana"]);
 
 export async function updateAutoPlayAudio(enabled: boolean) {
   try {
+    const parsed = autoPlaySchema.safeParse(enabled);
+    if (!parsed.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: "Invalid value" } };
+    }
+
     const supabase = await createClient();
     const {
       data: { user: authUser },
@@ -41,6 +48,11 @@ export async function updateAutoPlayAudio(enabled: boolean) {
 
 export async function updateDisplayMode(mode: "kanji" | "kana") {
   try {
+    const parsed = displayModeSchema.safeParse(mode);
+    if (!parsed.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: "Invalid display mode" } };
+    }
+
     const supabase = await createClient();
     const {
       data: { user: authUser },

@@ -3,9 +3,17 @@ import { or, ilike, eq, asc, and } from "drizzle-orm";
 
 import { db } from "@/db";
 import { vocabulary, chapter } from "@/db/schema/content";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit by IP (public endpoint, no user ID available)
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const rl = checkRateLimit(`search:${ip}`, RATE_LIMITS.search);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl) as unknown as NextResponse;
+    }
+
     const { searchParams } = request.nextUrl;
     const query = searchParams.get("q")?.trim();
     const limitParam = searchParams.get("limit");

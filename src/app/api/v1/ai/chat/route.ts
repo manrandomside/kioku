@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
@@ -12,6 +13,19 @@ import {
   getSessionMessages,
   verifySessionOwner,
 } from "@/lib/queries/chat";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
+
+const chatBodySchema = z.object({
+  messages: z.array(z.object({
+    role: z.string(),
+    parts: z.array(z.object({
+      type: z.string(),
+      text: z.string().optional(),
+    })).optional(),
+    content: z.string().optional(),
+  }).passthrough()).min(1),
+  sessionId: z.string().uuid().optional().nullable(),
+}).passthrough();
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +49,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    // Rate limit per user
+    const rl = checkRateLimit(`ai-chat:${userId}`, RATE_LIMITS.aiChat);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl);
+    }
+
+    const rawBody = await request.json();
+    const parsed = chatBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return Response.json(
+        { success: false, error: { code: "BAD_REQUEST", message: "Format pesan tidak valid" } },
+        { status: 400 }
+      );
+    }
+    const body = parsed.data;
     // `id` is the useChat client-side chat ID (not a DB UUID) — ignore it.
     // `sessionId` is our DB session UUID, passed via transport body.
     const { messages: clientMessages, sessionId: bodySessionId } = body;

@@ -1,6 +1,7 @@
 "use server";
 
 import { eq, and } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/db";
 import { srsCard } from "@/db/schema/srs";
@@ -16,6 +17,12 @@ import {
 import { awardReviewXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
+
+const kanaReviewSchema = z.object({
+  kanaId: z.string().uuid(),
+  rating: z.enum(["again", "hard", "good", "easy"]),
+  reviewDurationMs: z.number().int().nonnegative().max(600_000),
+});
 
 // Ensure SRS card exists for a kana, create if needed (race-safe via unique index)
 async function ensureSrsCard(userId: string, kanaId: string) {
@@ -50,6 +57,11 @@ export async function submitKanaReview(
   reviewDurationMs: number
 ) {
   try {
+    const validated = kanaReviewSchema.safeParse({ kanaId, rating, reviewDurationMs });
+    if (!validated.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: "Input tidak valid" } };
+    }
+
     const supabase = await createClient();
     const {
       data: { user },

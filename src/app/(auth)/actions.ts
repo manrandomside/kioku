@@ -3,15 +3,31 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+
+const authSchema = z.object({
+  email: z.string().email("Email tidak valid").max(255),
+  password: z.string().min(6, "Password minimal 6 karakter").max(128),
+});
+
+const emailOnlySchema = z.object({
+  email: z.string().email("Email tidak valid").max(255),
+});
 
 export async function signInWithEmail(formData: FormData) {
   try {
     const supabase = await createClient();
 
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const parsed = authSchema.safeParse({
+      email: formData.get("email"),
+      password: formData.get("password"),
+    });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+    }
+    const { email, password } = parsed.data;
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -37,8 +53,14 @@ export async function signUpWithEmail(formData: FormData) {
     const headersList = await headers();
     const origin = headersList.get("origin") ?? "";
 
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const parsed = authSchema.safeParse({
+      email: formData.get("email"),
+      password: formData.get("password"),
+    });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+    }
+    const { email, password } = parsed.data;
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -97,7 +119,11 @@ export async function signInWithMagicLink(formData: FormData) {
     const headersList = await headers();
     const origin = headersList.get("origin") ?? "";
 
-    const email = formData.get("email") as string;
+    const parsed = emailOnlySchema.safeParse({ email: formData.get("email") });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Input tidak valid" };
+    }
+    const { email } = parsed.data;
 
     const { error } = await supabase.auth.signInWithOtp({
       email,

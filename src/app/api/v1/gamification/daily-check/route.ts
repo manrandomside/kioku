@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST() {
   try {
@@ -24,6 +25,12 @@ export async function POST() {
         { success: false, error: { code: "NOT_FOUND", message: "User tidak ditemukan" } },
         { status: 404 }
       );
+    }
+
+    // Rate limit per user
+    const rl = checkRateLimit(`daily-check:${userId}`, RATE_LIMITS.dailyCheck);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl) as unknown as NextResponse;
     }
 
     const result = await checkAndUpdateStreak(userId);
