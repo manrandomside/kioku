@@ -76,7 +76,7 @@ export const reviewLog = pgTable(
     prevStatus: srsStatusEnum("prev_status"),
     newStatus: srsStatusEnum("new_status"),
     reviewDurationMs: integer("review_duration_ms"),
-    reviewedAt: text("reviewed_at").notNull().default("now()"),
+    reviewedAt: text("reviewed_at").notNull().default(sql`now()`),
   },
   (table) => [
     index("idx_review_log_user_id").on(table.userId),

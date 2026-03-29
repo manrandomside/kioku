@@ -8,6 +8,7 @@ import {
   Brain,
   Shield,
   Trophy,
+  AlertTriangle,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -210,13 +211,59 @@ export default async function HomePage() {
                 kartu
               </span>
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Jatuh tempo untuk review
-            </p>
+
+            {data.srs.dueNow > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                {data.srs.dueLearning > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-yellow-400" />
+                    {data.srs.dueLearning} learning
+                  </span>
+                )}
+                {data.srs.dueReview > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-green-400" />
+                    {data.srs.dueReview} review
+                  </span>
+                )}
+                {data.srs.overdue > 0 && (
+                  <span className="flex items-center gap-1 font-medium text-red-400">
+                    <span className="size-1.5 rounded-full bg-red-400" />
+                    {data.srs.overdue} terlambat!
+                  </span>
+                )}
+              </div>
+            )}
+
+            {data.srs.dueNow === 0 && data.srs.nextDueAt && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Review berikutnya: {formatRelativeTime(data.srs.nextDueAt)}
+              </p>
+            )}
+
+            {data.srs.dueNow === 0 && !data.srs.nextDueAt && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Belum ada kartu untuk di-review
+              </p>
+            )}
           </div>
           <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
+
+      {/* Overdue warning banner */}
+      {data.srs.overdue >= 5 && (
+        <Link
+          href="/review"
+          className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3"
+        >
+          <AlertTriangle className="size-5 shrink-0 text-red-400" />
+          <p className="text-sm text-red-400">
+            Kamu punya {data.srs.overdue} kartu yang sudah terlambat di-review.
+            Semakin lama ditunda, semakin banyak yang terlupa. Review sekarang hanya butuh ~{Math.ceil(data.srs.dueNow * 0.3)} menit!
+          </p>
+        </Link>
+      )}
 
       {/* Section 4: Progres Belajar */}
       <LearningProgress progress={data.progress} />
@@ -272,4 +319,22 @@ export default async function HomePage() {
       <ActivityHeatmap />
     </div>
   );
+}
+
+function formatRelativeTime(isoDate: string): string {
+  const now = new Date();
+  const target = new Date(isoDate);
+  const diffMs = target.getTime() - now.getTime();
+
+  if (diffMs < 0) return "sekarang";
+
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 60) return `${diffMin} menit lagi`;
+
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours} jam lagi`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "besok";
+  return `${diffDays} hari lagi`;
 }

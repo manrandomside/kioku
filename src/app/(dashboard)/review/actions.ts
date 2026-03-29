@@ -77,7 +77,7 @@ export async function submitReviewByCardId(
       .limit(1);
 
     if (recentReview) {
-      return { success: false, error: { code: "DUPLICATE_REVIEW", message: "Review sudah tercatat" } };
+      return { success: true, data: { newStatus: card.status, isLapse: false } };
     }
 
     const cardData: SrsCardData = {
@@ -117,6 +117,7 @@ export async function submitReviewByCardId(
       prevStatus: result.prevStatus as "new" | "learning" | "review" | "relearning",
       newStatus: result.newStatus as "new" | "learning" | "review" | "relearning",
       reviewDurationMs,
+      reviewedAt: new Date().toISOString(),
     });
 
     // Update chapter progress if this is a vocabulary card

@@ -105,6 +105,7 @@ export async function submitKanaReview(
       prevStatus: result.prevStatus as "new" | "learning" | "review" | "relearning",
       newStatus: result.newStatus as "new" | "learning" | "review" | "relearning",
       reviewDurationMs,
+      reviewedAt: new Date().toISOString(),
     });
 
     // Award XP and check streak

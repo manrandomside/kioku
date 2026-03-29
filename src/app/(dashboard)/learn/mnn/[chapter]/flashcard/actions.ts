@@ -106,6 +106,7 @@ export async function submitVocabReview(
       prevStatus: result.prevStatus as "new" | "learning" | "review" | "relearning",
       newStatus: result.newStatus as "new" | "learning" | "review" | "relearning",
       reviewDurationMs,
+      reviewedAt: new Date().toISOString(),
     });
 
     // Update chapter progress after SRS review

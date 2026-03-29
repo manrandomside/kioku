@@ -1,4 +1,4 @@
-import { eq, and, lte, sql, count, or, isNull } from "drizzle-orm";
+import { eq, and, lte, gt, ne, sql, count, or, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { srsCard } from "@/db/schema/srs";
@@ -43,6 +43,10 @@ export interface SrsStats {
   learningCount: number;
   reviewCount: number;
   relearningCount: number;
+  dueLearning: number;
+  dueReview: number;
+  overdue: number;
+  nextDueAt: string | null;
 }
 
 export async function getDueCards(userId: string): Promise<DueCard[]> {
@@ -96,6 +100,7 @@ export async function getDueCards(userId: string): Promise<DueCard[]> {
 
 export async function getSrsStats(userId: string): Promise<SrsStats> {
   const now = new Date().toISOString();
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const [totalResult] = await db
     .select({ count: count() })
@@ -121,6 +126,51 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
     statusMap[row.status] = row.count;
   }
 
+  // Breakdown of due cards by status
+  const dueBreakdown = await db
+    .select({
+      status: srsCard.status,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(srsCard)
+    .where(
+      and(
+        eq(srsCard.userId, userId),
+        lte(srsCard.dueDate, now),
+        ne(srsCard.status, "new")
+      )
+    )
+    .groupBy(srsCard.status);
+
+  const dueStatusMap: Record<string, number> = {};
+  for (const row of dueBreakdown) {
+    dueStatusMap[row.status] = row.count;
+  }
+
+  // Overdue count (due > 1 day ago)
+  const [overdueResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(srsCard)
+    .where(
+      and(
+        eq(srsCard.userId, userId),
+        lte(srsCard.dueDate, oneDayAgo),
+        ne(srsCard.status, "new")
+      )
+    );
+
+  // Next due card (after now)
+  const [nextDueResult] = await db
+    .select({ nextDue: sql<string>`MIN(due_date)` })
+    .from(srsCard)
+    .where(
+      and(
+        eq(srsCard.userId, userId),
+        gt(srsCard.dueDate, now),
+        ne(srsCard.status, "new")
+      )
+    );
+
   return {
     totalCards: totalResult.count,
     dueNow: dueResult.count,
@@ -128,5 +178,9 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
     learningCount: statusMap["learning"] ?? 0,
     reviewCount: statusMap["review"] ?? 0,
     relearningCount: statusMap["relearning"] ?? 0,
+    dueLearning: (dueStatusMap["learning"] ?? 0) + (dueStatusMap["relearning"] ?? 0),
+    dueReview: dueStatusMap["review"] ?? 0,
+    overdue: overdueResult?.count ?? 0,
+    nextDueAt: nextDueResult?.nextDue ?? null,
   };
 }
