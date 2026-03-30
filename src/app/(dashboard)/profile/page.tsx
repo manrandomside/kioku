@@ -5,7 +5,6 @@ import Link from "next/link";
 export const metadata: Metadata = { title: "Profil" };
 import {
   Trophy,
-  Settings,
   Zap,
   Star,
   Flame,
@@ -22,6 +21,7 @@ import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
 import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
 import { DailyGoalSetting } from "@/components/profile/daily-goal-setting";
 import { SignOutButton } from "@/components/profile/sign-out-button";
+import { EditDisplayName } from "@/components/profile/edit-display-name";
 
 import type { DisplayMode } from "@/stores/display-mode-store";
 
@@ -97,15 +97,18 @@ export default async function ProfilePage() {
             </Avatar>
           </div>
 
-          <div className="text-center">
-            <h1 className="font-display text-xl font-bold tracking-tight text-white">
-              {name}
-            </h1>
+          <div className="flex flex-col items-center text-center">
+            <EditDisplayName initialName={name} />
             <p className="mt-0.5 text-sm text-white/50">{profile.email}</p>
             {profile.jlptTarget && (
-              <span className="mt-2 inline-block rounded-full bg-[#C2E959] px-3 py-1 text-xs font-bold text-[#0A3A3A]">
-                Target JLPT {profile.jlptTarget}
-              </span>
+              <div className="mt-2 flex flex-col items-center gap-1">
+                <span className="inline-block rounded-full bg-[#C2E959] px-3 py-1 text-xs font-bold text-[#0A3A3A]">
+                  Target JLPT {profile.jlptTarget}
+                </span>
+                <span className="text-[10px] text-white/30">
+                  Level otomatis berubah berdasarkan progres belajar
+                </span>
+              </div>
             )}
           </div>
 
@@ -130,23 +133,17 @@ export default async function ProfilePage() {
       </div>
 
       {/* Settings */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Settings className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-muted-foreground">Pengaturan</h2>
+      <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
+        <div className="p-5">
+          <DisplayModeSetting initialMode={(profile.displayMode as DisplayMode) ?? "kanji"} />
         </div>
-        <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">
-          <div className="p-5">
-            <DisplayModeSetting initialMode={(profile.displayMode as DisplayMode) ?? "kanji"} />
-          </div>
-          <div className="h-px bg-border/50" />
-          <div className="p-5">
-            <AutoPlaySetting initialEnabled={profile.autoPlayAudio ?? true} />
-          </div>
-          <div className="h-px bg-border/50" />
-          <div className="p-5">
-            <DailyGoalSetting initialGoal={profile.dailyGoalXp ?? "100"} />
-          </div>
+        <div className="h-px bg-border/50" />
+        <div className="p-5">
+          <AutoPlaySetting initialEnabled={profile.autoPlayAudio ?? true} />
+        </div>
+        <div className="h-px bg-border/50" />
+        <div className="p-5">
+          <DailyGoalSetting initialGoal={profile.dailyGoalXp ?? "100"} />
         </div>
       </div>
 

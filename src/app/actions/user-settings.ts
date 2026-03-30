@@ -12,6 +12,43 @@ import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 const dailyGoalSchema = z.enum(["100", "300", "500", "750", "1000"]);
 const autoPlaySchema = z.boolean();
 const displayModeSchema = z.enum(["kanji", "kana"]);
+const displayNameSchema = z.string().min(2, "Nama minimal 2 karakter").max(50, "Nama maksimal 50 karakter");
+
+export async function updateDisplayName(name: string) {
+  try {
+    const parsed = displayNameSchema.safeParse(name);
+    if (!parsed.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: parsed.error.issues[0]?.message ?? "Nama tidak valid" } };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) {
+      return { success: false, error: { code: "UNAUTHORIZED", message: "Not authenticated" } };
+    }
+
+    const userId = await getInternalUserId(authUser.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User not found" } };
+    }
+
+    await db
+      .update(user)
+      .set({ displayName: parsed.data })
+      .where(eq(user.id, userId));
+
+    revalidatePath("/profile");
+    revalidatePath("/home");
+
+    return { success: true, data: { displayName: parsed.data } };
+  } catch (e) {
+    console.error("[user-settings] updateDisplayName error:", e);
+    return { success: false, error: { code: "INTERNAL", message: "Gagal mengubah nama" } };
+  }
+}
 
 export async function updateAutoPlayAudio(enabled: boolean) {
   try {
