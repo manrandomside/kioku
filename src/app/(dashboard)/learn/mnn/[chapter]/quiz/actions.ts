@@ -11,6 +11,7 @@ import { updateChapterProgress } from "@/lib/progress/update-chapter-progress";
 import { awardQuizXp } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
+import { checkAndUpgradeJlpt } from "@/lib/gamification/jlpt-upgrade-service";
 
 import type { VocabQuizAnswer, VocabQuestionType } from "@/types/vocab-quiz";
 
@@ -150,6 +151,9 @@ export async function submitVocabQuizResult(
     const xpResult = await awardQuizXp(userId, sessionId, correctCount, scorePercent);
     const newAchievements = await checkAndUnlockAchievements(userId);
 
+    // Check JLPT level upgrade
+    const upgradeResult = await checkAndUpgradeJlpt(userId);
+
     return {
       success: true,
       data: {
@@ -167,6 +171,7 @@ export async function submitVocabQuizResult(
           currentLevel: xpResult.currentLevel,
         },
         achievements: newAchievements,
+        jlptUpgrade: upgradeResult.upgraded ? { previousLevel: upgradeResult.previousLevel, newLevel: upgradeResult.newLevel } : null,
       },
     };
   } catch (error) {

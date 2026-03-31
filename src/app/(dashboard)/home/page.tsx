@@ -21,6 +21,7 @@ import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
 import { StreakFlame } from "@/components/gamification/streak-flame";
 import { LearningProgress } from "@/components/gamification/learning-progress";
 import { ReviewCountdown } from "@/components/gamification/review-countdown";
+import { JlptUpgradeHandler } from "@/components/gamification/jlpt-upgrade-handler";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -318,6 +319,9 @@ export default async function HomePage() {
 
       {/* Section 6: Activity Heatmap */}
       <ActivityHeatmap />
+
+      {/* JLPT Upgrade Modal */}
+      <JlptUpgradeHandler upgrade={data.jlptUpgrade} />
     </div>
   );
 }

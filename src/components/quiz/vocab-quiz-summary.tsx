@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock, GraduationCap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useCountUp } from "@/hooks/use-count-up";
@@ -14,6 +14,7 @@ interface VocabQuizSummaryProps {
   chapterSlug: string;
   chapterNumber: number;
   onRestart: () => void;
+  jlptUpgrade?: { previousLevel: string; newLevel: string } | null;
 }
 
 function formatTime(ms: number): string {
@@ -42,6 +43,7 @@ export function VocabQuizSummary({
   chapterSlug,
   chapterNumber,
   onRestart,
+  jlptUpgrade,
 }: VocabQuizSummaryProps) {
   const grade = getGrade(result.scorePercent);
   const hasXpData = result.xpEarned > 0;
@@ -203,6 +205,25 @@ export function VocabQuizSummary({
               </div>
             ))}
           </div>
+        </motion.div>
+      )}
+
+      {/* JLPT Upgrade Banner */}
+      {jlptUpgrade && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.0, duration: 0.5 }}
+          className="w-full max-w-sm rounded-2xl border-2 border-[#C2E959]/30 bg-gradient-to-b from-[#C2E959]/10 to-transparent p-5 text-center"
+        >
+          <GraduationCap className="mx-auto size-8 text-[#C2E959]" />
+          <p className="mt-2 font-display text-lg font-bold">Level JLPT Naik!</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {jlptUpgrade.previousLevel} &rarr; <span className="font-bold text-[#C2E959]">{jlptUpgrade.newLevel}</span>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Selamat! Semua kosakata {jlptUpgrade.previousLevel} telah dikuasai.
+          </p>
         </motion.div>
       )}
 

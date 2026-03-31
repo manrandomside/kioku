@@ -67,6 +67,7 @@ export function VocabQuizSession({
   const [startTime] = useState(() => Date.now());
   const [hearts, setHearts] = useState(3);
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const [jlptUpgrade, setJlptUpgrade] = useState<{ previousLevel: string; newLevel: string } | null>(null);
   const { events: xpEvents, showXp } = useXpPopup();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -290,6 +291,9 @@ export function VocabQuizSession({
             setLevelUpLevel(res.data.xp.currentLevel);
           }
         }
+        if (res.success && res.data?.jlptUpgrade) {
+          setJlptUpgrade(res.data.jlptUpgrade);
+        }
       });
     }
   }, [isCompleted, sessionResult, answers, startTime, hearts, sessionId, showXp]);
@@ -342,6 +346,7 @@ export function VocabQuizSession({
           chapterSlug={chapterSlug}
           chapterNumber={chapterNumber}
           onRestart={handleRestart}
+          jlptUpgrade={jlptUpgrade}
         />
         <XpPopup events={xpEvents} />
         <LevelUpModal

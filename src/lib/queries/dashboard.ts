@@ -9,6 +9,7 @@ import { srsCard } from "@/db/schema/srs";
 
 import { getSrsStats, type SrsStats } from "./review";
 import { getTotalQuizMasteredWords, getQuizMasteredWordsAll } from "@/lib/progress/quiz-mastery";
+import { checkAndUpgradeJlpt, type JlptUpgradeResult } from "@/lib/gamification/jlpt-upgrade-service";
 
 // User profile data for dashboard display
 export interface DashboardUserProfile {
@@ -90,6 +91,7 @@ export interface DashboardData {
   }[];
   totalAchievements: { unlocked: number; total: number };
   mnnRecommendation: MnnRecommendation | null;
+  jlptUpgrade: { previousLevel: string; newLevel: string } | null;
 }
 
 export async function getUserJlptTarget(authUserId: string): Promise<string> {
@@ -184,6 +186,17 @@ export async function getDashboardData(
   const dailyXpEarned = isActiveToday ? gam.dailyXpEarned : 0;
   const dailyGoalMet = isActiveToday ? gam.dailyGoalMet : false;
 
+  // Check JLPT level upgrade (fallback in case quiz trigger missed it)
+  const upgradeResult = await checkAndUpgradeJlpt(internalUserId);
+  const jlptUpgrade = upgradeResult.upgraded
+    ? { previousLevel: upgradeResult.previousLevel, newLevel: upgradeResult.newLevel }
+    : null;
+
+  // If upgraded, refresh the profile jlptTarget for this response
+  if (jlptUpgrade) {
+    userData.jlptTarget = upgradeResult.newLevel as typeof userData.jlptTarget;
+  }
+
   return {
     profile: {
       displayName: userData.displayName ?? "Pelajar",
@@ -227,6 +240,7 @@ export async function getDashboardData(
     recentAchievements: recentAchievementRows,
     totalAchievements: achievementCounts,
     mnnRecommendation,
+    jlptUpgrade,
   };
 }
 
