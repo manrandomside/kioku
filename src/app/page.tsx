@@ -490,7 +490,6 @@ function ForgettingCurve() {
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <InstallBanner variant="landing" />
       <Navbar />
 
       {/* ========= SECTION 2: HERO ========= */}
@@ -798,6 +797,8 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <InstallBanner variant="landing" />
     </div>
   );
 }
