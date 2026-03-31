@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import Link from "next/link";
 
 import { signOut } from "@/app/(auth)/actions";
@@ -49,12 +49,6 @@ export function UserMenu({ user }: UserMenuProps) {
         >
           <User className="mr-2 size-4" />
           Profil
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          render={<Link href="/profile" />}
-        >
-          <Settings className="mr-2 size-4" />
-          Pengaturan
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

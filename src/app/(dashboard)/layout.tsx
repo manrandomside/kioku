@@ -29,22 +29,34 @@ export default async function DashboardLayout({
     avatarUrl: user.user_metadata?.avatar_url,
   };
 
-  // Fetch user preferences
+  // Fetch user preferences and check onboarding
   let displayMode: DisplayMode = "kanji";
   let autoPlayAudio = true;
   const internalUserId = await getInternalUserId(user.id);
-  if (internalUserId) {
-    const [row] = await db
-      .select({ displayMode: userTable.displayMode, autoPlayAudio: userTable.autoPlayAudio })
-      .from(userTable)
-      .where(eq(userTable.id, internalUserId))
-      .limit(1);
-    if (row?.displayMode === "kana") {
-      displayMode = "kana";
-    }
-    if (row?.autoPlayAudio === false) {
-      autoPlayAudio = false;
-    }
+
+  if (!internalUserId) {
+    redirect("/onboarding?from=dashboard");
+  }
+
+  const [row] = await db
+    .select({
+      displayMode: userTable.displayMode,
+      autoPlayAudio: userTable.autoPlayAudio,
+      onboardingDone: userTable.onboardingDone,
+    })
+    .from(userTable)
+    .where(eq(userTable.id, internalUserId))
+    .limit(1);
+
+  if (!row || !row.onboardingDone) {
+    redirect("/onboarding?from=dashboard");
+  }
+
+  if (row.displayMode === "kana") {
+    displayMode = "kana";
+  }
+  if (row.autoPlayAudio === false) {
+    autoPlayAudio = false;
   }
 
   return (

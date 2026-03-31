@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -70,6 +70,8 @@ const slideVariants = {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromDashboard = searchParams.get("from") === "dashboard";
   const [isPending, startTransition] = useTransition();
 
   const [step, setStep] = useState(1);
@@ -123,6 +125,12 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {fromDashboard && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-400">
+          Kamu belum menyelesaikan onboarding. Isi data berikut untuk melanjutkan.
+        </div>
+      )}
+
       {/* Logo */}
       <div className="flex justify-center">
         <img src="/logo-white.svg" alt="Kioku" className="h-7 w-auto" />

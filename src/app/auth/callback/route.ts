@@ -70,6 +70,10 @@ export async function GET(request: Request) {
     }
 
     if (mode === "register" && existingUser) {
+      if (!existingUser.onboardingDone) {
+        console.log("[auth/callback] Register mode, user exists but onboarding not done — redirecting to onboarding");
+        return NextResponse.redirect(`${origin}/onboarding?from=dashboard`);
+      }
       console.log("[auth/callback] Register mode, user exists — redirecting to home");
       return NextResponse.redirect(`${origin}/home`);
     }

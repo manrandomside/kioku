@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { signInWithEmail } from "@/app/(auth)/actions";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
@@ -38,9 +39,9 @@ function LoginForm() {
         </p>
       </div>
 
-      {message === "check_email" && (
-        <div className="rounded-xl border border-success/30 bg-success/10 p-3 text-center text-sm text-success">
-          Cek email kamu untuk verifikasi akun.
+      {message === "register_success" && (
+        <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-600 dark:text-green-400">
+          Akun berhasil dibuat! Silakan masuk dengan email dan password kamu.
         </div>
       )}
 
@@ -96,10 +97,9 @@ function LoginForm() {
               Lupa password?
             </Link>
           </div>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             placeholder="Masukkan password"
             required
             autoComplete="current-password"

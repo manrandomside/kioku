@@ -6,6 +6,7 @@ import Link from "next/link";
 import { signUpWithEmail } from "@/app/(auth)/actions";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
@@ -79,10 +80,9 @@ export default function RegisterPage() {
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="password">Password</Label>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             placeholder="Minimal 6 karakter"
             required
             autoComplete="new-password"
@@ -91,10 +91,9 @@ export default function RegisterPage() {
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="confirmPassword">Konfirmasi Password</Label>
-          <Input
+          <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
-            type="password"
             placeholder="Ulangi password"
             required
             autoComplete="new-password"

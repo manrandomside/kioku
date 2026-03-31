@@ -35,7 +35,13 @@ export async function signInWithEmail(formData: FormData) {
     });
 
     if (error) {
-      return { error: error.message };
+      if (error.message === "Invalid login credentials") {
+        return { error: "Email atau password salah." };
+      }
+      if (error.message === "Email not confirmed") {
+        return { error: "Email belum terverifikasi." };
+      }
+      return { error: "Gagal masuk. Silakan coba lagi." };
     }
 
     revalidatePath("/", "layout");
@@ -50,8 +56,6 @@ export async function signInWithEmail(formData: FormData) {
 export async function signUpWithEmail(formData: FormData) {
   try {
     const supabase = await createClient();
-    const headersList = await headers();
-    const origin = headersList.get("origin") ?? "";
 
     const parsed = authSchema.safeParse({
       email: formData.get("email"),
@@ -65,14 +69,17 @@ export async function signUpWithEmail(formData: FormData) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: `${origin}/auth/callback`,
-      },
     });
 
     if (error) {
-      return { error: error.message };
+      if (error.message?.includes("already registered")) {
+        return { error: "Email sudah terdaftar. Silakan login." };
+      }
+      return { error: "Gagal mendaftar. Silakan coba lagi." };
     }
+
+    // Sign out so user must login manually
+    await supabase.auth.signOut();
 
     revalidatePath("/", "layout");
   } catch (error) {
@@ -80,7 +87,7 @@ export async function signUpWithEmail(formData: FormData) {
     return { error: "Terjadi kesalahan saat mendaftar" };
   }
 
-  redirect("/login?message=check_email");
+  redirect("/login?message=register_success");
 }
 
 export async function signInWithOAuth(provider: "google" | "github", mode: "login" | "register" = "login") {
