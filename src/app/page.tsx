@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { Logo } from "@/components/ui/logo";
+import { InstallBanner } from "@/components/pwa/install-banner";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -489,6 +490,7 @@ function ForgettingCurve() {
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <InstallBanner variant="landing" />
       <Navbar />
 
       {/* ========= SECTION 2: HERO ========= */}

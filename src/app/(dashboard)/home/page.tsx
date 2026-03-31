@@ -22,6 +22,7 @@ import { StreakFlame } from "@/components/gamification/streak-flame";
 import { LearningProgress } from "@/components/gamification/learning-progress";
 import { ReviewCountdown } from "@/components/gamification/review-countdown";
 import { JlptUpgradeHandler } from "@/components/gamification/jlpt-upgrade-handler";
+import { InstallBanner } from "@/components/pwa/install-banner";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -53,6 +54,8 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <InstallBanner variant="dashboard" />
+
       {/* Section 1: Welcome + Level + Daily Goal */}
       <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3 sm:gap-4">
