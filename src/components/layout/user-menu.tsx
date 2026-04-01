@@ -51,7 +51,10 @@ export function UserMenu({ user }: UserMenuProps) {
           Profil
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <LogoutButton className="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none text-destructive focus:bg-destructive/10 hover:bg-destructive/10 data-disabled:pointer-events-none data-disabled:opacity-50">
+        <LogoutButton
+          displayName={user.displayName}
+          className="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none text-destructive focus:bg-destructive/10 hover:bg-destructive/10 data-disabled:pointer-events-none data-disabled:opacity-50"
+        >
           <LogOut className="mr-2 size-4" />
           Keluar
         </LogoutButton>

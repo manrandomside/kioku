@@ -165,7 +165,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Sign Out */}
-      <LogoutButton className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10">
+      <LogoutButton displayName={profile.displayName ?? undefined} className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10">
         <LogOut className="size-4" />
         Keluar
       </LogoutButton>

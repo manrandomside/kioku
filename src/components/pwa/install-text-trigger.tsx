@@ -35,7 +35,7 @@ export function InstallTextTrigger() {
   return (
     <button
       onClick={handleClick}
-      className="mt-6 flex cursor-pointer items-center justify-center gap-2 text-sm text-white/50 transition-colors hover:text-[#C2E959]"
+      className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 text-sm text-white/50 transition-colors hover:text-[#C2E959]"
     >
       <Smartphone className="size-4" />
       <span>Tersedia sebagai aplikasi — install langsung dari browser</span>
