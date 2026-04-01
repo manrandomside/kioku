@@ -3,7 +3,6 @@
 import { LogOut, User } from "lucide-react";
 import Link from "next/link";
 
-import { signOut } from "@/app/(auth)/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -12,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LogoutButton } from "@/components/auth/logout-overlay";
 
 interface UserMenuProps {
   user: {
@@ -51,13 +51,10 @@ export function UserMenu({ user }: UserMenuProps) {
           Profil
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => signOut()}
-          variant="destructive"
-        >
+        <LogoutButton className="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none text-destructive focus:bg-destructive/10 hover:bg-destructive/10 data-disabled:pointer-events-none data-disabled:opacity-50">
           <LogOut className="mr-2 size-4" />
           Keluar
-        </DropdownMenuItem>
+        </LogoutButton>
       </DropdownMenuContent>
     </DropdownMenu>
   );

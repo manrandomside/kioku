@@ -60,77 +60,37 @@ export function InstallBanner({ variant }: InstallBannerProps) {
 
   if (dismissed || !showBanner) return null;
 
-  if (variant === "landing") {
-    return (
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: 20, x: 20 }}
-          animate={{ opacity: 1, y: 0, x: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          className="fixed bottom-4 right-4 left-4 z-50 rounded-2xl border border-[#C2E959]/20 bg-[#0A3A3A]/95 p-4 shadow-2xl backdrop-blur-sm sm:left-auto sm:right-6 sm:bottom-6 sm:w-72"
-        >
-          <button
-            onClick={handleDismiss}
-            className="absolute right-3 top-3 rounded-full p-1 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <X className="size-3.5" />
-          </button>
-          <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#C2E959]/15">
-              <Smartphone className="size-5 text-[#C2E959]" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <p className="text-sm font-semibold text-white">Install Kioku</p>
-              <p className="text-xs text-white/60">
-                Akses lebih cepat dari home screen perangkatmu
-              </p>
-              <button
-                onClick={handleInstall}
-                className="mt-1 flex w-fit items-center gap-1.5 rounded-full bg-[#C2E959] px-4 py-1.5 text-xs font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/90"
-              >
-                <Download className="size-3" />
-                Install App
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
-
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="flex items-center justify-between rounded-2xl border border-[#C2E959]/20 bg-[#C2E959]/5 px-4 py-3 sm:px-5"
+        initial={{ opacity: 0, y: 20, x: 20 }}
+        animate={{ opacity: 1, y: 0, x: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="fixed bottom-4 right-4 left-4 z-50 rounded-2xl border border-[#C2E959]/20 bg-[#0A3A3A]/95 p-4 shadow-2xl backdrop-blur-sm sm:left-auto sm:right-6 sm:bottom-6 sm:w-72"
       >
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-[#C2E959]/15">
-            <Smartphone className="size-4.5 text-[#C2E959]" />
+        <button
+          onClick={handleDismiss}
+          className="absolute right-3 top-3 rounded-full p-1 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <X className="size-3.5" />
+        </button>
+        <div className="flex items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#C2E959]/15">
+            <Smartphone className="size-5 text-[#C2E959]" />
           </div>
-          <div>
-            <p className="text-sm font-semibold">Install Kioku</p>
-            <p className="text-xs text-muted-foreground">
-              Akses lebih cepat dari home screen
+          <div className="flex flex-col gap-1.5">
+            <p className="text-sm font-semibold text-white">Install Kioku</p>
+            <p className="text-xs text-white/60">
+              Akses lebih cepat dari home screen perangkatmu
             </p>
+            <button
+              onClick={handleInstall}
+              className="mt-1 flex w-fit items-center gap-1.5 rounded-full bg-[#C2E959] px-4 py-1.5 text-xs font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/90"
+            >
+              <Download className="size-3" />
+              Install App
+            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleInstall}
-            className="flex items-center gap-1.5 rounded-full bg-[#C2E959] px-4 py-2 text-xs font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/90"
-          >
-            <Download className="size-3.5" />
-            Install
-          </button>
-          <button
-            onClick={handleDismiss}
-            className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
         </div>
       </motion.div>
     </AnimatePresence>

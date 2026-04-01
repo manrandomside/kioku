@@ -20,7 +20,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
 import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
 import { DailyGoalSetting } from "@/components/profile/daily-goal-setting";
-import { SignOutButton } from "@/components/profile/sign-out-button";
+import { LogoutButton } from "@/components/auth/logout-overlay";
 import { EditDisplayName } from "@/components/profile/edit-display-name";
 
 import type { DisplayMode } from "@/stores/display-mode-store";
@@ -164,7 +164,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Sign Out */}
-      <SignOutButton />
+      <LogoutButton className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10" />
 
       {/* Footer */}
       <div className="pb-2 text-center">

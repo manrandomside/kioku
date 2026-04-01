@@ -16,6 +16,7 @@ import {
   X,
   ArrowRight,
   Github,
+  Smartphone,
 } from "lucide-react";
 
 import { Logo } from "@/components/ui/logo";
@@ -732,6 +733,12 @@ export default function LandingPage() {
               >
                 Pelajari Lebih Lanjut
               </a>
+            </div>
+          </FadeIn>
+          <FadeIn delay={0.3}>
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-white/50">
+              <Smartphone className="size-4" />
+              <span>Tersedia sebagai aplikasi — install langsung dari browser</span>
             </div>
           </FadeIn>
         </div>
