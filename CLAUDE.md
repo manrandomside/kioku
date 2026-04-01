@@ -46,7 +46,7 @@ pronunciation_attempt: id, user_id(FK), vocab/kana_id, expected_text, recognized
 ai_question_template: id, vocabulary_id(FK), question_type, question_text, correct_answer, wrong_answers(JSONB)
 ```
 
-RLS: user data tables → `user_id = auth.uid()`. Content tables (vocabulary, kana, book, chapter) → public read.
+RLS: user data tables → `user_id = auth.uid()`. Content tables (vocabulary, kana, book, chapter) → public read. All 20 tables verified with RLS + correct policies.
 
 ## API Endpoints (Grouped)
 
@@ -62,6 +62,8 @@ AI:      POST /api/v1/ai/chat(streaming)  GET /api/v1/ai/chat/sessions|:id/messa
 GAMIF:   GET /api/v1/gamification/overview|achievements|xp-history|heatmap  POST /api/v1/gamification/daily-check
 PROGRESS:GET /api/v1/progress/chapters(/:id)|jlpt/:level|daily
 ```
+
+Rate limited endpoints: AI chat (20/min), pronunciation (30/min), search (30/min), daily-check (10/min).
 
 ## Design System
 
@@ -95,7 +97,9 @@ PROGRESS:GET /api/v1/progress/chapters(/:id)|jlpt/:level|daily
 ```
 src/
 ├── app/(auth)/                    # Login, register, magic-link
+├── app/(onboarding)/              # Onboarding flow (forced)
 ├── app/(dashboard)/home/          # Dashboard with stats
+├── app/(dashboard)/learn/         # Learn hub (HIRAKATA + MNN cards)
 ├── app/(dashboard)/learn/hirakata/# HIRAKATA module
 ├── app/(dashboard)/learn/mnn/[chapter]/
 ├── app/(dashboard)/review/        # SRS review session
@@ -104,7 +108,9 @@ src/
 ├── app/(dashboard)/profile/       # Settings, stats, achievements
 ├── app/api/                       # API routes (auth, v1/*)
 ├── components/{flashcard,quiz,kana,audio,gamification,chat,ui}/
+├── components/{pwa,auth}/         # PWA install + auth components
 ├── lib/{srs,ai,audio,supabase}/   # Business logic
+├── lib/{rate-limit,gamification,progress}/ # Rate limiting, XP, progress
 ├── stores/                        # Zustand stores
 ├── db/{schema,migrations,seed}/   # Drizzle schema + seed data
 └── types/                         # Shared TypeScript types
@@ -116,6 +122,7 @@ src/
 - **[P1] Core**: Kana grid + flashcard (3D flip + FSRS rating) + quiz (7 types + audio) + chapter navigation + progress tracking
 - **[P2] Gamification**: XP system + streak + achievements + dashboard stats + heatmap + PWA
 - **[P3] AI**: Chatbot (Gemini waterfall + streaming) + pronunciation (Web Speech API) + auto-generate quiz bank
+- **[P4] Polish & UX**: Landing page, auth redesign, review improvements, security audit, SEO, JLPT auto-upgrade
 
 ---
 
@@ -127,7 +134,7 @@ src/
 - [x] Supabase project setup + env vars
 - [x] Drizzle ORM config + schema definitions
 - [x] DB migrations (all 20 tables + enums + RLS)
-- [x] Supabase Auth (Google OAuth + GitHub OAuth + magic link)
+- [x] Supabase Auth (Google OAuth + magic link — GitHub OAuth dihapus)
 - [x] Auth middleware + protected routes
 - [x] Seed data: kana (214 characters)
 - [x] Seed data: MNN vocabulary Bab 1-50 (from PDF + MinnaNoDS)
@@ -143,12 +150,12 @@ src/
 - [x] Kana quiz session (romaji ↔ kana)
 - [x] Chapter selection page (progress indicators)
 - [x] Chapter detail page (vocab list + tabs)
-- [x] Vocabulary flashcard session (furigana + flip + audio + FSRS)
+- [x] Vocabulary flashcard session (furigana + flip + audio + FSRS) (2-button: Belum Paham/Sudah Paham)
 - [x] FSRS engine integration (ts-fsrs scheduling + review submission)
-- [x] Quiz session (7 question types + audio + scoring)
-- [x] Review session (due cards queue + daily summary)
-- [x] User onboarding flow (profile + JLPT target + hirakata assessment)
-- [x] Progress tracking per chapter
+- [x] Quiz session (7 question types + audio + scoring) + answer explanations
+- [x] Review session (due cards queue + 4-button FSRS rating + re-queue Again max 3x)
+- [x] User onboarding flow (forced — dashboard blocked until completed)
+- [x] Progress tracking per chapter (quiz-based mastery)
 - [x] Search vocabulary (global search bar)
 
 ### [P2] Gamification & Polish
@@ -157,25 +164,60 @@ src/
 - [x] Streak system (daily check + freeze + notifications)
 - [x] Achievement definitions (seed ~50 badges)
 - [x] Achievement unlock logic + UI
-- [x] Dashboard: stats overview + streak + XP bar + due cards count
+- [x] Dashboard: stats overview + streak + XP bar + due cards breakdown (learning/review/overdue)
 - [x] Dashboard: activity heatmap (365 days)
 - [x] Dashboard: SRS distribution chart
+- [x] Dashboard: review countdown timer (real-time)
 - [x] Animations: card flip, XP increment, level-up confetti, streak fire
 - [x] Sound effects: correct/incorrect ding
-- [x] PWA: service worker + manifest + offline cache
+- [x] PWA: service worker + manifest + offline cache + install banner (floating)
 - [x] Responsive polish (mobile + tablet)
 - [x] Dark mode complete pass
 
 ### [P3] AI Features
 
 - [x] AI provider waterfall (Gemini → Groq → OpenRouter → WebLLM)
-- [x] AI chatbot UI (streaming + message history)
-- [x] AI chatbot system prompt (MNN-aware, level-adaptive)
+- [x] AI chatbot UI (streaming + message history) + delete confirmation
+- [x] AI chatbot system prompt (MNN-aware, level-adaptive, natural conversational Sensei)
+- [x] AI suggested prompts (4 categories: Kosakata, Grammar, Percakapan, Budaya)
 - [x] Pronunciation: Web Speech API integration
 - [x] Pronunciation: scoring (Levenshtein distance)
 - [x] Pronunciation: Whisper.cpp WASM fallback (SKIPPED — Web Speech API sudah cover ~85% browser. Whisper WASM ~75MB terlalu berat untuk fallback. Ditambahkan browser detection message sebagai gantinya. Bisa ditambahkan post-launch jika ada demand.)
 - [x] AI quiz generation: build-time pre-generation script
 - [x] AI response caching (prompt hash → Supabase)
+
+### [P4] Polish & UX Improvements
+
+- [x] Landing page redesign (10 sections: navbar, hero, stats, features, how-it-works, FSRS method, app preview, tech stack, CTA, footer)
+- [x] Login & Register redesign (split layout, branding panel, floating kanji, password eye icon)
+- [x] OAuth: remove GitHub, keep Google only + email/password
+- [x] Register flow: redirect to /login first, not directly to onboarding
+- [x] Force onboarding: dashboard layout blocks access if onboarding_done = false
+- [x] Onboarding polish (glassmorphism, gradient, step labels, icons per step)
+- [x] Profile simplification (no "Pengaturan" label, inline edit display name, JLPT read-only)
+- [x] JLPT auto-upgrade (N5→N4 when all Book 1 chapters mastered via quiz, celebration modal)
+- [x] JLPT target-aware navigation (default MNN tab, reminder dialog, completion banner)
+- [x] Halaman /learn hub (2 premium cards: HIRAKATA + MNN)
+- [x] Sidebar sticky (overflow-x-clip fix)
+- [x] Nav cleanup: remove Quiz from nav, consistent naming (AI Tutor, BELAJAR)
+- [x] Halaman 404 (Japanese-themed, floating kanji, gradient background)
+- [x] SEO: meta tags, OG image (dynamic ImageResponse), per-page titles (%s | Kioku)
+- [x] Loading skeleton screens (8 pages)
+- [x] Quiz: answer explanations, kanji above hiragana format, "Kata yang Perlu Diulang" in summary
+- [x] Review: re-queue Again cards (max 3 retry), "Ulang" label, deduped summary stats
+- [x] Review summary: akurasi %, tips, "Perlu Diulang" section
+- [x] Dashboard: review breakdown + warning banner + countdown timer
+- [x] Daily goal toast redesign
+- [x] AI chatbot: improved system prompt, 4 category suggested prompts, chat input mobile fix
+- [x] Security audit Level 1+2+3 (SECURITY-AUDIT.md)
+- [x] Rate limiting: in-memory sliding window (AI chat, pronunciation, search, daily-check)
+- [x] Zod validation added to review actions, AI chat, auth, user settings
+- [x] Security headers: HSTS, X-Frame-Options, CSP, etc
+- [x] PWA install banner (floating bottom-right) + install text trigger
+- [x] Logout animation overlay (gradient, kanji decorations, loading bar)
+- [x] README.md profesional (screenshots, tech stack, architecture, security, cost)
+- [x] Review bug fixes: duplicate review, reviewed_at timestamp
+- [x] Error messages translated to Indonesian
 
 ---
 
@@ -186,3 +228,9 @@ src/
 - DONE: Toggle switch Kanji/Kana sudah diimplementasi di chapter detail, flashcard, quiz, dan review. Setting global disimpan di DB (user.display_mode), per-halaman override via Zustand store. Komponen: DisplayModeToggle, DisplayModeProvider, useDisplayMode hook. Migration: 0007_add_user_display_mode.sql.
 - Pronunciation scoring menggunakan ~1766 kanji→hiragana mappings (auto-generated dari PDF MNN Bab 1-50). Dictionary: `src/lib/audio/kanji-hiragana-dict.ts`. Data source: `scripts/data/kanji-hiragana-dict.ts`.
 - Whisper.cpp WASM fallback di-skip karena model ~75MB terlalu berat dan Web Speech API sudah cover mayoritas browser (Chrome/Edge). Jika nanti ada demand dari user Firefox/Safari, bisa diimplementasi sebagai lazy-loaded optional feature.
+- Flashcard: 2 tombol (Belum Paham/Sudah Paham) + retry queue max 3x. Review: 4 tombol FSRS (Ulang/Hard/Good/Easy) + re-queue Again max 3x.
+- JLPT auto-upgrade: checkAndUpgradeJlpt() mengecek quiz mastery (bukan completion_percent). Trigger setelah quiz complete + fallback di dashboard load.
+- Supabase Auth: "Confirm email" OFF. GitHub OAuth dihapus. Hanya Google + email/password + magic link.
+- Onboarding: FORCED — dashboard layout redirect ke /onboarding jika onboarding_done = false.
+- Security: SECURITY-AUDIT.md full report. Rate limiting in-memory. Security headers di next.config.ts.
+- Daily goal: 5 tier (100/300/500/750/1000 XP).
