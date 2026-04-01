@@ -16,11 +16,11 @@ import {
   X,
   ArrowRight,
   Github,
-  Smartphone,
 } from "lucide-react";
 
 import { Logo } from "@/components/ui/logo";
 import { InstallBanner } from "@/components/pwa/install-banner";
+import { InstallTextTrigger } from "@/components/pwa/install-text-trigger";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -736,10 +736,7 @@ export default function LandingPage() {
             </div>
           </FadeIn>
           <FadeIn delay={0.3}>
-            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-white/50">
-              <Smartphone className="size-4" />
-              <span>Tersedia sebagai aplikasi — install langsung dari browser</span>
-            </div>
+            <InstallTextTrigger />
           </FadeIn>
         </div>
       </section>
