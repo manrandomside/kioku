@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { dailyActivity } from "@/db/schema/gamification";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
+import { getTodayWIB, toDateStringWIB } from "@/lib/utils/timezone";
 
 export async function GET() {
   try {
@@ -28,13 +29,10 @@ export async function GET() {
       );
     }
 
-    // Last 365 days
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 364);
-
-    const startStr = startDate.toISOString().split("T")[0];
-    const endStr = endDate.toISOString().split("T")[0];
+    // Last 365 days (WIB)
+    const endStr = getTodayWIB();
+    const startDate = new Date(Date.now() - 364 * 24 * 60 * 60 * 1000);
+    const startStr = toDateStringWIB(startDate);
 
     const rows = await db
       .select({

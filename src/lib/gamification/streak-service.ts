@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { userGamification } from "@/db/schema/gamification";
 import { user } from "@/db/schema/user";
 
+import { getTodayWIB, getYesterdayWIB, daysDifference } from "@/lib/utils/timezone";
 import { checkAndAwardStreakMilestone, ensureGamificationRow } from "./xp-service";
 
 export interface StreakCheckResult {
@@ -19,23 +20,58 @@ export interface StreakCheckResult {
   dailyGoalMet: boolean;
 }
 
-// Get today's date string in YYYY-MM-DD
-function getTodayDate(): string {
-  return new Date().toISOString().split("T")[0];
-}
+// Validate streak on read: if gap > 1 day (and no freeze available for 2-day gap),
+// reset current_streak to 0 in the database.
+// Called when dashboard or streak API is loaded.
+export async function validateStreak(userId: string): Promise<void> {
+  const [gamification] = await db
+    .select({
+      currentStreak: userGamification.currentStreak,
+      lastActivityDate: userGamification.lastActivityDate,
+      streakFreezes: userGamification.streakFreezes,
+    })
+    .from(userGamification)
+    .where(eq(userGamification.userId, userId))
+    .limit(1);
 
-// Get yesterday's date string in YYYY-MM-DD
-function getYesterdayDate(): string {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday.toISOString().split("T")[0];
-}
+  if (!gamification) return;
 
-// Calculate difference in calendar days between two date strings
-function daysDifference(dateA: string, dateB: string): number {
-  const a = new Date(dateA + "T00:00:00Z");
-  const b = new Date(dateB + "T00:00:00Z");
-  return Math.round(Math.abs(a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
+  // Streak already 0 — nothing to reset
+  if (gamification.currentStreak === 0) return;
+
+  const today = getTodayWIB();
+  const lastActivity = gamification.lastActivityDate;
+
+  // No activity date recorded — reset
+  if (!lastActivity) {
+    await db
+      .update(userGamification)
+      .set({ currentStreak: 0 })
+      .where(eq(userGamification.userId, userId));
+    return;
+  }
+
+  const gap = daysDifference(today, lastActivity);
+
+  // Active today or yesterday — streak is valid
+  if (gap <= 1) return;
+
+  // Gap of exactly 2 days with streak freeze available — consume freeze, keep streak
+  if (gap === 2 && gamification.streakFreezes > 0) {
+    await db
+      .update(userGamification)
+      .set({
+        streakFreezes: gamification.streakFreezes - 1,
+      })
+      .where(eq(userGamification.userId, userId));
+    return;
+  }
+
+  // Gap > 1 day (no freeze covers it) — reset streak
+  await db
+    .update(userGamification)
+    .set({ currentStreak: 0 })
+    .where(eq(userGamification.userId, userId));
 }
 
 // Check and update streak for a user's daily activity
@@ -53,8 +89,8 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakCheckR
     .limit(1);
 
   const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "30", 10);
-  const today = getTodayDate();
-  const yesterday = getYesterdayDate();
+  const today = getTodayWIB();
+  const yesterday = getYesterdayWIB();
 
   // Atomic update: compute new streak values in SQL based on current state
   // Only updates if last_activity_date != today (idempotent for same-day calls)
@@ -142,8 +178,11 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakCheckR
   };
 }
 
-// Get current streak info without modifying state
+// Get current streak info — validates streak first, then returns accurate data
 export async function getStreakInfo(userId: string) {
+  // Validate and reset streak in DB if stale
+  await validateStreak(userId);
+
   const [gamification] = await db
     .select({
       currentStreak: userGamification.currentStreak,
@@ -157,11 +196,11 @@ export async function getStreakInfo(userId: string) {
 
   if (!gamification) return null;
 
-  const today = getTodayDate();
+  const today = getTodayWIB();
   const isActiveToday = gamification.lastActivityDate === today;
 
   // Check if streak is at risk (not active today and was active yesterday)
-  const yesterday = getYesterdayDate();
+  const yesterday = getYesterdayWIB();
   const streakAtRisk = !isActiveToday && gamification.lastActivityDate === yesterday && gamification.currentStreak > 0;
 
   return {

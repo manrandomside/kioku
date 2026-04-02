@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { userGamification, xpTransaction, dailyActivity } from "@/db/schema/gamification";
 import { user } from "@/db/schema/user";
 
+import { getTodayWIB } from "@/lib/utils/timezone";
+
 // XP amounts per action
 const XP_REVIEW_CARD = 2;
 const XP_QUIZ_PER_CORRECT = 3;
@@ -42,9 +44,8 @@ function calculateLevel(totalXp: number): { level: number; xpForCurrentLevel: nu
   }
 }
 
-function getTodayDate(): string {
-  return new Date().toISOString().split("T")[0];
-}
+// Alias for backward compatibility within this file
+const getTodayDate = getTodayWIB;
 
 // Ensure userGamification row exists, create with defaults if missing
 export async function ensureGamificationRow(userId: string): Promise<void> {
@@ -96,13 +97,14 @@ async function awardXpInternal(
   const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "100", 10);
   const today = getTodayDate();
 
-  // Insert XP transaction
+  // Insert XP transaction with explicit timestamp (default "now()" is a literal string)
   await db.insert(xpTransaction).values({
     userId,
     source,
     amount,
     description,
     referenceId: referenceId ?? null,
+    createdAt: new Date().toISOString(),
   });
 
   // Atomic increment: update total_xp and daily_xp using SQL expressions
@@ -199,6 +201,7 @@ async function upsertDailyActivity(
       quizCount: updates.quizCount ?? 0,
       xpEarned: updates.xpEarned ?? 0,
       goalMet: updates.goalMet ?? false,
+      createdAt: new Date().toISOString(),
     });
   }
 }

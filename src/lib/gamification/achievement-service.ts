@@ -11,6 +11,7 @@ import { quizSession } from "@/db/schema/quiz";
 import { srsCard } from "@/db/schema/srs";
 import { kana } from "@/db/schema/content";
 
+import { getCurrentHourWIB, getCurrentDayWIB } from "@/lib/utils/timezone";
 import { type AwardXpResult } from "./xp-service";
 
 export interface UnlockedAchievement {
@@ -78,8 +79,8 @@ export async function checkAndUnlockAchievements(
     getLatestQuizSpeed(userId),
   ]);
 
-  const currentHour = new Date().getHours();
-  const currentDay = new Date().getDay(); // 0=Sunday, 6=Saturday
+  const currentHour = getCurrentHourWIB();
+  const currentDay = getCurrentDayWIB(); // 0=Sunday, 6=Saturday
 
   const newlyUnlocked: UnlockedAchievement[] = [];
 

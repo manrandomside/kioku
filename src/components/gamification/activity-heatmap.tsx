@@ -76,21 +76,51 @@ interface HeatmapDay {
   weekIndex: number;
 }
 
+// Format a Date as YYYY-MM-DD in WIB
+function toWIBDateStr(d: Date): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+}
+
+// Get WIB day-of-week (0=Sun) for a YYYY-MM-DD string
+function getWIBDayOfWeek(dateStr: string): number {
+  const d = new Date(dateStr + "T12:00:00+07:00");
+  const dayStr = d.toLocaleDateString("en-US", { timeZone: "Asia/Jakarta", weekday: "short" });
+  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return map[dayStr] ?? 0;
+}
+
+// Get WIB month index (0-11) for a YYYY-MM-DD string
+function getWIBMonth(dateStr: string): number {
+  return parseInt(dateStr.split("-")[1], 10) - 1;
+}
+
+// Get WIB day of month for a YYYY-MM-DD string
+function getWIBDayOfMonth(dateStr: string): number {
+  return parseInt(dateStr.split("-")[2], 10);
+}
+
+// Add N days to a YYYY-MM-DD string and return new YYYY-MM-DD
+function addDays(dateStr: string, n: number): string {
+  const d = new Date(dateStr + "T12:00:00+07:00");
+  d.setDate(d.getDate() + n);
+  return toWIBDateStr(d);
+}
+
 function buildHeatmapGrid(activities: DayActivity[]) {
   const activityMap = new Map<string, DayActivity>();
   for (const a of activities) {
     activityMap.set(a.date, a);
   }
 
-  const today = new Date();
+  const todayStr = toWIBDateStr(new Date());
   const grid: HeatmapDay[] = [];
 
-  // Go back 364 days, align to nearest Sunday
-  const rawStart = new Date(today);
-  rawStart.setDate(rawStart.getDate() - 364);
-  rawStart.setDate(rawStart.getDate() - rawStart.getDay());
+  // Go back 364 days, align to nearest Sunday (all in WIB)
+  let rawStartStr = addDays(todayStr, -364);
+  const rawStartDow = getWIBDayOfWeek(rawStartStr);
+  rawStartStr = addDays(rawStartStr, -rawStartDow);
 
-  const cursor = new Date(rawStart);
+  let cursorStr = rawStartStr;
   let weekIndex = 0;
   let prevWeekDay = -1;
   let activeDays = 0;
@@ -98,17 +128,17 @@ function buildHeatmapGrid(activities: DayActivity[]) {
   const monthPositions: { label: string; weekIndex: number }[] = [];
   let lastMonthLabel = "";
 
-  while (cursor <= today) {
-    const dateStr = cursor.toISOString().split("T")[0];
-    const dayOfWeek = cursor.getDay();
+  while (cursorStr <= todayStr) {
+    const dateStr = cursorStr;
+    const dayOfWeek = getWIBDayOfWeek(dateStr);
 
     if (dayOfWeek === 0 && prevWeekDay !== -1) {
       weekIndex++;
     }
     prevWeekDay = dayOfWeek;
 
-    const monthLabel = MONTH_LABELS[cursor.getMonth()];
-    if (cursor.getDate() <= 7 && monthLabel !== lastMonthLabel) {
+    const monthLabel = MONTH_LABELS[getWIBMonth(dateStr)];
+    if (getWIBDayOfMonth(dateStr) <= 7 && monthLabel !== lastMonthLabel) {
       monthPositions.push({ label: monthLabel, weekIndex });
       lastMonthLabel = monthLabel;
     }
@@ -126,15 +156,16 @@ function buildHeatmapGrid(activities: DayActivity[]) {
       weekIndex,
     });
 
-    cursor.setDate(cursor.getDate() + 1);
+    cursorStr = addDays(cursorStr, 1);
   }
 
   return { grid, totalWeeks: weekIndex + 1, activeDays, monthPositions };
 }
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
+  const d = new Date(dateStr + "T12:00:00+07:00");
   return d.toLocaleDateString("id-ID", {
+    timeZone: "Asia/Jakarta",
     weekday: "long",
     year: "numeric",
     month: "long",

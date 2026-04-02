@@ -10,6 +10,8 @@ import { srsCard } from "@/db/schema/srs";
 import { getSrsStats, type SrsStats } from "./review";
 import { getTotalQuizMasteredWords, getQuizMasteredWordsAll } from "@/lib/progress/quiz-mastery";
 import { checkAndUpgradeJlpt, type JlptUpgradeResult } from "@/lib/gamification/jlpt-upgrade-service";
+import { validateStreak } from "@/lib/gamification/streak-service";
+import { getTodayWIB, getYesterdayWIB } from "@/lib/utils/timezone";
 
 // User profile data for dashboard display
 export interface DashboardUserProfile {
@@ -133,8 +135,18 @@ export async function getDashboardData(
     .where(eq(userGamification.userId, internalUserId))
     .limit(1);
 
+  // Validate streak: reset to 0 if user has been inactive > 1 day
+  if (gamification) {
+    await validateStreak(internalUserId);
+  }
+
+  // Re-fetch gamification after validation (streak may have been reset)
+  const [gamificationValidated] = gamification
+    ? await db.select().from(userGamification).where(eq(userGamification.userId, internalUserId)).limit(1)
+    : [null];
+
   // Default gamification values if row doesn't exist yet
-  const gam = gamification ?? {
+  const gam = gamificationValidated ?? {
     totalXp: 0,
     currentStreak: 0,
     longestStreak: 0,
@@ -147,13 +159,11 @@ export async function getDashboardData(
   };
 
   const { level, xpInLevel, xpNeeded } = calculateLevel(gam.totalXp);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayWIB();
   const isActiveToday = gam.lastActivityDate === today;
 
   // Check if streak is at risk
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const yesterdayStr = getYesterdayWIB();
   const atRisk =
     !isActiveToday &&
     gam.lastActivityDate === yesterdayStr &&
