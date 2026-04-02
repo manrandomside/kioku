@@ -21,8 +21,8 @@ export const aiChatSession = pgTable("ai_chat_session", {
     .references(() => user.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 255 }),
   messageCount: integer("message_count").notNull().default(0),
-  createdAt: text("created_at").notNull().default("now()"),
-  updatedAt: text("updated_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // AI chat message
@@ -34,7 +34,7 @@ export const aiChatMessage = pgTable("ai_chat_message", {
   role: chatRoleEnum("role").notNull(),
   content: text("content").notNull(),
   providerUsed: varchar("provider_used", { length: 50 }),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // AI response cache (keyed by prompt hash)
@@ -45,7 +45,7 @@ export const aiResponseCache = pgTable("ai_response_cache", {
   provider: varchar("provider", { length: 50 }).notNull(),
   hitCount: integer("hit_count").notNull().default(1),
   expiresAt: text("expires_at"),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // Pronunciation attempt
@@ -63,7 +63,7 @@ export const pronunciationAttempt = pgTable("pronunciation_attempt", {
   expectedText: varchar("expected_text", { length: 255 }).notNull(),
   recognizedText: varchar("recognized_text", { length: 255 }),
   accuracyScore: real("accuracy_score"),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // AI question template (pre-generated quiz questions)
@@ -76,5 +76,5 @@ export const aiQuestionTemplate = pgTable("ai_question_template", {
   questionText: text("question_text").notNull(),
   correctAnswer: varchar("correct_answer", { length: 255 }).notNull(),
   wrongAnswers: jsonb("wrong_answers").notNull(),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });

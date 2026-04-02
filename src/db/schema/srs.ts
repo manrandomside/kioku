@@ -33,12 +33,12 @@ export const srsCard = pgTable(
     status: srsStatusEnum("status").notNull().default("new"),
     stability: real("stability").notNull().default(0),
     difficulty: real("difficulty").notNull().default(0),
-    dueDate: text("due_date").notNull().default("now()"),
+    dueDate: text("due_date").notNull().$defaultFn(() => new Date().toISOString()),
     scheduledDays: integer("scheduled_days").notNull().default(0),
     reps: integer("reps").notNull().default(0),
     lapses: integer("lapses").notNull().default(0),
-    createdAt: text("created_at").notNull().default("now()"),
-    updatedAt: text("updated_at").notNull().default("now()"),
+    createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+    updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
   },
   (table) => [
     check(

@@ -97,7 +97,7 @@ async function awardXpInternal(
   const dailyGoalXp = parseInt(userData?.dailyGoalXp ?? "100", 10);
   const today = getTodayDate();
 
-  // Insert XP transaction with explicit timestamp (default "now()" is a literal string)
+  // Insert XP transaction
   await db.insert(xpTransaction).values({
     userId,
     source,

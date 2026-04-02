@@ -34,7 +34,7 @@ export const quizSession = pgTable(
     timeSpentMs: integer("time_spent_ms"),
     isCompleted: boolean("is_completed").notNull().default(false),
     isPerfect: boolean("is_perfect").notNull().default(false),
-    createdAt: text("created_at").notNull().default("now()"),
+    createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
     completedAt: text("completed_at"),
   },
   (table) => [

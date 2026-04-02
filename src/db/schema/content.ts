@@ -18,7 +18,7 @@ export const book = pgTable("book", {
   jlptLevel: jlptLevelEnum("jlpt_level").notNull(),
   chapterStart: integer("chapter_start").notNull(),
   chapterEnd: integer("chapter_end").notNull(),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // Chapter table
@@ -30,7 +30,7 @@ export const chapter = pgTable("chapter", {
   chapterNumber: integer("chapter_number").notNull(),
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   vocabCount: integer("vocab_count").notNull().default(0),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // Vocabulary table
@@ -51,7 +51,7 @@ export const vocabulary = pgTable("vocabulary", {
   exampleId: text("example_id"),
   isPublished: boolean("is_published").notNull().default(true),
   sortOrder: smallint("sort_order").notNull().default(0),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
 // Kana table (hiragana + katakana characters)
@@ -63,5 +63,5 @@ export const kana = pgTable("kana", {
   rowGroup: varchar("row_group", { length: 20 }).notNull(),
   columnPosition: smallint("column_position").notNull(),
   audioUrl: text("audio_url"),
-  createdAt: text("created_at").notNull().default("now()"),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
