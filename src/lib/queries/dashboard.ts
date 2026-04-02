@@ -11,6 +11,7 @@ import { getSrsStats, type SrsStats } from "./review";
 import { getTotalQuizMasteredWords, getQuizMasteredWordsAll } from "@/lib/progress/quiz-mastery";
 import { checkAndUpgradeJlpt, type JlptUpgradeResult } from "@/lib/gamification/jlpt-upgrade-service";
 import { validateStreak } from "@/lib/gamification/streak-service";
+import { getLeechCardCount } from "@/lib/services/smart-study-service";
 import { getTodayWIB, getYesterdayWIB } from "@/lib/utils/timezone";
 
 // User profile data for dashboard display
@@ -94,6 +95,7 @@ export interface DashboardData {
   totalAchievements: { unlocked: number; total: number };
   mnnRecommendation: MnnRecommendation | null;
   jlptUpgrade: { previousLevel: string; newLevel: string } | null;
+  leechCount: number;
 }
 
 export async function getUserJlptTarget(authUserId: string): Promise<string> {
@@ -170,7 +172,7 @@ export async function getDashboardData(
     gam.currentStreak > 0;
 
   // Fetch quiz stats, SRS stats, mastered words, progress, and achievement data in parallel
-  const [quizStats, srsStats, totalMasteredWords, masteryMap, vocabAndChapterCounts, lastQuizScore, recentAchievementRows, achievementCounts, mnnRecommendation] =
+  const [quizStats, srsStats, totalMasteredWords, masteryMap, vocabAndChapterCounts, lastQuizScore, recentAchievementRows, achievementCounts, mnnRecommendation, leechCount] =
     await Promise.all([
       getQuizStatsForDashboard(internalUserId),
       getSrsStats(internalUserId),
@@ -181,6 +183,7 @@ export async function getDashboardData(
       getRecentAchievements(internalUserId, 5),
       getAchievementCounts(internalUserId),
       getRecommendedChapter(internalUserId, userData.jlptTarget ?? "N5"),
+      getLeechCardCount(internalUserId),
     ]);
 
   // Count mastered chapters: chapters where mastered >= vocabCount
@@ -251,6 +254,7 @@ export async function getDashboardData(
     totalAchievements: achievementCounts,
     mnnRecommendation,
     jlptUpgrade,
+    leechCount,
   };
 }
 

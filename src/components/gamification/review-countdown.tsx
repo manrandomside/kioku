@@ -4,23 +4,30 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface ReviewCountdownProps {
-  nextDueAt: string;
-  dueNow: number;
+  overdue: number;
+  nextDueAt: string | null;
+  nextDueCount: number;
 }
 
-export function ReviewCountdown({ nextDueAt, dueNow }: ReviewCountdownProps) {
+export function ReviewCountdown({ overdue, nextDueAt, nextDueCount }: ReviewCountdownProps) {
   const router = useRouter();
   const [timeLeft, setTimeLeft] = useState<string>("");
-  const [isDue, setIsDue] = useState(false);
+  const [countdownDone, setCountdownDone] = useState(false);
 
   useEffect(() => {
+    // Condition 1: overdue cards exist — no timer needed
+    if (overdue > 0) return;
+
+    // Condition 3: no future due cards — nothing to show
+    if (!nextDueAt) return;
+
     function calculateTimeLeft() {
       const now = new Date().getTime();
-      const target = new Date(nextDueAt).getTime();
+      const target = new Date(nextDueAt!).getTime();
       const diff = target - now;
 
       if (diff <= 0) {
-        setIsDue(true);
+        setCountdownDone(true);
         setTimeLeft("");
         router.refresh();
         return;
@@ -42,19 +49,35 @@ export function ReviewCountdown({ nextDueAt, dueNow }: ReviewCountdownProps) {
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, [nextDueAt, router]);
+  }, [nextDueAt, overdue, router]);
 
-  if (isDue) {
+  // Condition 1: overdue cards exist
+  if (overdue > 0) {
     return (
-      <span className="animate-pulse text-xs font-medium text-[#C2E959]">
-        Kartu baru siap di-review!
+      <span className="text-[11px] font-medium text-red-400">
+        {overdue} kartu siap direview sekarang
       </span>
     );
   }
 
-  return (
-    <span className="text-xs tabular-nums text-muted-foreground">
-      Review berikutnya: {timeLeft}
-    </span>
-  );
+  // Condition 2 → countdown finished: cards just became due
+  if (countdownDone) {
+    return (
+      <span className="animate-pulse text-[11px] font-medium text-[#C2E959]">
+        {nextDueCount} kartu siap direview sekarang
+      </span>
+    );
+  }
+
+  // Condition 2: future cards with active countdown
+  if (nextDueAt && timeLeft) {
+    return (
+      <span className="text-[11px] tabular-nums text-muted-foreground">
+        {nextDueCount} kartu akan siap direview dalam {timeLeft}
+      </span>
+    );
+  }
+
+  // Condition 3: nothing to show
+  return null;
 }

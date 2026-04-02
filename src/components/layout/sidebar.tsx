@@ -9,6 +9,7 @@ import {
   MessageCircle,
   User,
   Languages,
+  AlertTriangle,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const SIDEBAR_ITEMS = [
       { href: "/home", label: "Home", icon: Home },
       { href: "/learn", label: "Belajar", icon: BookOpen },
       { href: "/review", label: "Review", icon: RotateCcw },
+      { href: "/kata-sulit", label: "Kata Sulit", icon: AlertTriangle },
       { href: "/chat", label: "AI Tutor", icon: MessageCircle },
     ],
   },

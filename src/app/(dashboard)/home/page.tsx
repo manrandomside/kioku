@@ -3,12 +3,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Clock,
-  BookOpen,
   ArrowRight,
-  Brain,
   Shield,
   Trophy,
   AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +21,7 @@ import { StreakFlame } from "@/components/gamification/streak-flame";
 import { LearningProgress } from "@/components/gamification/learning-progress";
 import { ReviewCountdown } from "@/components/gamification/review-countdown";
 import { JlptUpgradeHandler } from "@/components/gamification/jlpt-upgrade-handler";
+import { SmartStudyCard } from "@/components/gamification/smart-study-card";
 import { InstallBanner } from "@/components/pwa/install-banner";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -87,75 +87,25 @@ export default async function HomePage() {
         />
       </div>
 
-      {/* Section 2: Quick Actions */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {/* Section 2: Belajar Sekarang — Primary CTA */}
+      <SmartStudyCard />
+
+      {/* Overdue warning banner */}
+      {data.srs.overdue >= 5 && (
         <Link
           href="/review"
-          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
+          className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3"
         >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-green-500/10">
-            <BookOpen className="size-4.5 text-green-500" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold">Review</p>
-            <p className="text-xs text-muted-foreground">{data.srs.dueNow} kartu menunggu</p>
-          </div>
+          <AlertTriangle className="size-5 shrink-0 text-red-400" />
+          <p className="text-sm text-red-400">
+            Kamu punya {data.srs.overdue} kartu yang sudah terlambat di-review.
+            Semakin lama ditunda, semakin banyak yang terlupa. Review sekarang hanya butuh ~{Math.ceil(data.srs.dueNow * 0.3)} menit!
+          </p>
         </Link>
-        <Link
-          href={
-            data.mnnRecommendation
-              ? data.mnnRecommendation.status === "completed"
-                ? "/learn/mnn"
-                : `/learn/mnn/${data.mnnRecommendation.chapterSlug}`
-              : "/learn/mnn"
-          }
-          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
-        >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-500/10">
-            <Brain className="size-4.5 text-blue-500" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold">
-                {data.mnnRecommendation?.status === "completed"
-                  ? `N${data.profile.jlptTarget === "N5" ? "5" : "4"} Selesai! Siap untuk N${data.profile.jlptTarget === "N5" ? "4" : "3"}?`
-                  : "Belajar MNN"}
-              </p>
-              {data.mnnRecommendation?.status === "completed" && (
-                <span className="shrink-0 rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-green-600 dark:text-green-400">
-                  Completed
-                </span>
-              )}
-            </div>
-            <p className="truncate text-xs text-muted-foreground">
-              {!data.mnnRecommendation
-                ? "Lanjutkan bab"
-                : data.mnnRecommendation.status === "completed"
-                  ? `Semua ${data.mnnRecommendation.totalChapters} bab JLPT ${data.profile.jlptTarget} telah dikuasai`
-                  : data.mnnRecommendation.status === "start"
-                    ? `Mulai dari Bab ${data.mnnRecommendation.chapterNumber}`
-                    : `Lanjutkan Bab ${data.mnnRecommendation.chapterNumber} · ${data.mnnRecommendation.vocabMastered}/${data.mnnRecommendation.vocabCount} kata dikuasai`}
-            </p>
-          </div>
-        </Link>
-        <Link
-          href="/learn/hirakata"
-          className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
-        >
-          <div className="flex size-9 items-center justify-center rounded-lg bg-purple-500/10">
-            <span className="text-base font-bold text-purple-500">
-              {"\u3042"}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-semibold">Hirakata</p>
-            <p className="text-xs text-muted-foreground">Hiragana & Katakana</p>
-          </div>
-        </Link>
-      </div>
+      )}
 
-      {/* Section 3: Streak + Due Cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Section 3: Three small cards — Streak + Due Cards + Leech */}
+      <div className="grid gap-4 sm:grid-cols-3">
         {/* Streak Card */}
         <div
           className={`flex items-center gap-4 rounded-2xl border p-5 ${
@@ -165,7 +115,7 @@ export default async function HomePage() {
           }`}
         >
           <div
-            className={`flex size-14 items-center justify-center rounded-xl ${
+            className={`flex size-12 items-center justify-center rounded-xl ${
               data.streak.current > 0
                 ? "bg-orange-500/10"
                 : "bg-muted"
@@ -173,13 +123,13 @@ export default async function HomePage() {
           >
             <StreakFlame streak={data.streak.current} />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-muted-foreground">
               Streak Belajar
             </p>
-            <p className="mt-0.5 text-3xl font-bold leading-none">
+            <p className="mt-0.5 text-2xl font-bold leading-none">
               {data.streak.current}
-              <span className="ml-1 text-base font-normal text-muted-foreground">
+              <span className="ml-1 text-sm font-normal text-muted-foreground">
                 hari
               </span>
             </p>
@@ -188,36 +138,39 @@ export default async function HomePage() {
             </p>
             {data.streak.atRisk && (
               <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                Streak terancam! Belajar hari ini.
+                Streak terancam!
               </p>
             )}
             {data.streak.freezes > 0 && !data.streak.atRisk && (
               <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                 <Shield className="size-3 text-blue-400" />
-                {data.streak.freezes} freeze tersedia
+                {data.streak.freezes} freeze
               </div>
             )}
           </div>
         </div>
 
-        {/* Due Cards */}
+        {/* Due Cards / Review Breakdown */}
         <Link
           href="/review"
           className="group flex items-center gap-4 rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:border-[#248288]/40 hover:bg-[#248288]/5"
         >
-          <div className="flex size-14 items-center justify-center rounded-xl bg-[#248288]/10">
-            <Clock className="size-7 text-[#248288]" />
+          <div className="flex size-12 items-center justify-center rounded-xl bg-[#248288]/10">
+            <Clock className="size-6 text-[#248288]" />
           </div>
-          <div className="flex-1">
-            <p className="text-3xl font-bold leading-none">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-muted-foreground">
+              Review
+            </p>
+            <p className="mt-0.5 text-2xl font-bold leading-none">
               {data.srs.dueNow}
-              <span className="ml-1 text-base font-normal text-muted-foreground">
+              <span className="ml-1 text-sm font-normal text-muted-foreground">
                 kartu
               </span>
             </p>
 
             {data.srs.dueNow > 0 && (
-              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+              <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
                 {data.srs.dueLearning > 0 && (
                   <span className="flex items-center gap-1">
                     <span className="size-1.5 rounded-full bg-yellow-400" />
@@ -233,41 +186,75 @@ export default async function HomePage() {
                 {data.srs.overdue > 0 && (
                   <span className="flex items-center gap-1 font-medium text-red-400">
                     <span className="size-1.5 rounded-full bg-red-400" />
-                    {data.srs.overdue} terlambat!
+                    {data.srs.overdue} terlambat
                   </span>
                 )}
               </div>
             )}
 
-            {data.srs.dueNow === 0 && data.srs.nextDueAt && (
+            {(data.srs.overdue > 0 || data.srs.nextDueAt) && (
               <div className="mt-1">
-                <ReviewCountdown nextDueAt={data.srs.nextDueAt} dueNow={data.srs.dueNow} />
+                <ReviewCountdown
+                  overdue={data.srs.overdue}
+                  nextDueAt={data.srs.nextDueAt}
+                  nextDueCount={data.srs.nextDueCount}
+                />
               </div>
             )}
 
             {data.srs.dueNow === 0 && !data.srs.nextDueAt && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Belum ada kartu untuk di-review
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Belum ada kartu
               </p>
             )}
           </div>
-          <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+        </Link>
+
+        {/* Leech / Kata Sulit Card */}
+        <Link
+          href="/kata-sulit"
+          className="group flex items-center gap-4 rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:border-yellow-500/40 hover:bg-yellow-500/5"
+        >
+          <div
+            className={`flex size-12 items-center justify-center rounded-xl ${
+              data.leechCount > 0 ? "bg-yellow-500/10" : "bg-green-500/10"
+            }`}
+          >
+            {data.leechCount > 0 ? (
+              <AlertTriangle className="size-6 text-yellow-500" />
+            ) : (
+              <CheckCircle2 className="size-6 text-green-500" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-muted-foreground">
+              Kata Sulit
+            </p>
+            {data.leechCount > 0 ? (
+              <>
+                <p className="mt-0.5 text-2xl font-bold leading-none">
+                  {data.leechCount}
+                  <span className="ml-1 text-sm font-normal text-muted-foreground">
+                    kata
+                  </span>
+                </p>
+                <p className="mt-1 text-[11px] text-yellow-600 dark:text-yellow-400">
+                  Perlu latihan khusus
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mt-0.5 text-sm font-medium text-green-600 dark:text-green-400">
+                  Tidak ada kata sulit
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Terus pertahankan!
+                </p>
+              </>
+            )}
+          </div>
         </Link>
       </div>
-
-      {/* Overdue warning banner */}
-      {data.srs.overdue >= 5 && (
-        <Link
-          href="/review"
-          className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3"
-        >
-          <AlertTriangle className="size-5 shrink-0 text-red-400" />
-          <p className="text-sm text-red-400">
-            Kamu punya {data.srs.overdue} kartu yang sudah terlambat di-review.
-            Semakin lama ditunda, semakin banyak yang terlupa. Review sekarang hanya butuh ~{Math.ceil(data.srs.dueNow * 0.3)} menit!
-          </p>
-        </Link>
-      )}
 
       {/* Section 4: Progres Belajar */}
       <LearningProgress progress={data.progress} />
@@ -328,22 +315,4 @@ export default async function HomePage() {
       <InstallBanner variant="dashboard" />
     </div>
   );
-}
-
-function formatRelativeTime(isoDate: string): string {
-  const now = new Date();
-  const target = new Date(isoDate);
-  const diffMs = target.getTime() - now.getTime();
-
-  if (diffMs < 0) return "sekarang";
-
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 60) return `${diffMin} menit lagi`;
-
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours} jam lagi`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return "besok";
-  return `${diffDays} hari lagi`;
 }

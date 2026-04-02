@@ -47,6 +47,7 @@ export interface SrsStats {
   dueReview: number;
   overdue: number;
   nextDueAt: string | null;
+  nextDueCount: number;
 }
 
 export async function getDueCards(userId: string): Promise<DueCard[]> {
@@ -159,7 +160,7 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
       )
     );
 
-  // Next due card (after now)
+  // Next due card (after now) — get earliest due_date and count of cards at that time
   const [nextDueResult] = await db
     .select({ nextDue: sql<string>`min(${srsCard.dueDate})` })
     .from(srsCard)
@@ -171,6 +172,23 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
       )
     );
 
+  const nextDueAt = nextDueResult?.nextDue ?? null;
+  let nextDueCount = 0;
+
+  if (nextDueAt) {
+    const [nextDueCountResult] = await db
+      .select({ count: count() })
+      .from(srsCard)
+      .where(
+        and(
+          eq(srsCard.userId, userId),
+          eq(srsCard.dueDate, nextDueAt),
+          sql`${srsCard.status} != 'new'`
+        )
+      );
+    nextDueCount = nextDueCountResult?.count ?? 0;
+  }
+
   return {
     totalCards: totalResult.count,
     dueNow: dueResult.count,
@@ -181,6 +199,7 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
     dueLearning: (dueStatusMap["learning"] ?? 0) + (dueStatusMap["relearning"] ?? 0),
     dueReview: dueStatusMap["review"] ?? 0,
     overdue: overdueResult?.count ?? 0,
-    nextDueAt: nextDueResult?.nextDue ?? null,
+    nextDueAt,
+    nextDueCount,
   };
 }
