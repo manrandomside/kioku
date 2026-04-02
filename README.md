@@ -2,9 +2,17 @@
 
 # 記憶 Kioku
 
-**Platform Belajar Kosakata Bahasa Jepang untuk Penutur Indonesia**
+**AI-Powered Japanese Learning Platform for Indonesian Speakers**
 
-[Live Demo](https://kioku-learn.vercel.app) · [Laporan Security](./SECURITY-AUDIT.md) · [Spesifikasi Project](./designs/kioku-project-spec.md)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-000?logo=vercel)](https://kioku-learn.vercel.app)
+
+A fullstack web platform combining spaced repetition (FSRS), interactive quizzes, and an AI tutor to help Indonesian speakers learn Japanese vocabulary — completely free.
+
+[Live Demo](https://kioku-learn.vercel.app) · [Security Audit](./SECURITY-AUDIT.md) · [Project Spec](./designs/kioku-project-spec.md)
 
 ![Landing Page](./public/screenshots/landing-kioku.png)
 
@@ -12,18 +20,14 @@
 
 ---
 
-## Tentang Kioku
+## Why Kioku?
 
-**Kioku** (記憶 — "Memori") adalah platform web fullstack berbasis AI untuk belajar kosakata bahasa Jepang. Dirancang khusus untuk penutur Indonesia, platform ini menggabungkan spaced repetition (FSRS), flashcard interaktif, quiz bergaya Duolingo, dan AI tutor — semuanya gratis.
+- **Scientific** — Uses the FSRS algorithm (same as Anki v23.10+), 20-30% more efficient than SM-2
+- **Comprehensive** — 2,909 vocabulary words, 214 kana characters, 3,085 audio files, 7 quiz types, AI tutor
+- **Free** — Runs entirely on free tiers ($0/month)
+- **Indonesia-first** — All translations and UI in Bahasa Indonesia
 
-Konten bersumber dari buku **Minna no Nihongo** Buku I (Bab 1–25, JLPT N5) dan Buku II (Bab 26–50, JLPT N4), dilengkapi modul Hiragana & Katakana untuk pemula.
-
-### Mengapa Kioku?
-
-- **Saintifik** — Menggunakan algoritma FSRS (sama dengan Anki v23.10+), 20-30% lebih efisien dari SM-2
-- **Lengkap** — 2.900+ kosakata, 214 kana, 3.000+ audio, 7 tipe quiz, AI tutor
-- **Gratis** — Seluruh platform berjalan di free tier (Rp0/bulan)
-- **Indonesia-first** — Semua terjemahan dan antarmuka dalam Bahasa Indonesia
+Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II (Ch. 26-50, JLPT N4), plus a complete Hiragana & Katakana module for beginners.
 
 ---
 
@@ -34,16 +38,16 @@ Konten bersumber dari buku **Minna no Nihongo** Buku I (Bab 1–25, JLPT N5) dan
 ### Dashboard
 ![Dashboard](./public/screenshots/full-dashboard-kioku.png)
 
-### Flashcard dengan Spaced Repetition
+### Flashcard with Spaced Repetition
 ![Flashcard](./public/screenshots/flashcard-mnn-kioku.png)
 
-### Quiz Interaktif dengan Penjelasan
+### Interactive Quiz with Explanations
 ![Quiz](./public/screenshots/quiz-mnn-kioku.png)
 
 ### AI Tutor (Sensei)
 ![AI Tutor](./public/screenshots/ai-tutor-kioku.png)
 
-### Grid Hiragana & Katakana
+### Hiragana & Katakana Grid
 ![Kana Grid](./public/screenshots/kana-grid-kioku.png)
 
 ### Review Summary
@@ -53,125 +57,128 @@ Konten bersumber dari buku **Minna no Nihongo** Buku I (Bab 1–25, JLPT N5) dan
 
 ---
 
-## Fitur Utama
+## Features
 
-### Pembelajaran
-- **Modul HIRAKATA** — Belajar 214 karakter Hiragana & Katakana dengan grid interaktif, flashcard, dan quiz
-- **Kosakata MNN** — 2.900+ kata dari Minna no Nihongo Bab 1-50 (JLPT N5 & N4)
-- **Flashcard Cerdas** — Kartu interaktif dengan furigana, audio, dan rating FSRS (Again/Hard/Good/Easy)
-- **Quiz 7 Tipe** — Pilihan ganda (JP↔ID), audio recognition, ketik hiragana, isi titik-titik, matching, speaking
-- **Audio Native** — 3.000+ file audio pre-generated dengan suara natural Jepang (Microsoft Edge TTS, Nanami Neural)
-
-### Spaced Repetition (FSRS)
-- **Algoritma FSRS** — Free Spaced Repetition Scheduler, state-of-the-art (via ts-fsrs v5)
-- **Review Session** — Kartu jatuh tempo otomatis muncul, dengan re-queue untuk kartu "Again" (max 3 retry)
-- **Real-time Countdown** — Timer countdown saat menunggu kartu berikutnya jatuh tempo
-- **Dashboard Informatif** — Breakdown kartu (learning/review/overdue), warning jika banyak terlambat
+### Learning
+- **HIRAKATA Module** — Learn 214 hiragana & katakana characters with an interactive color-coded grid, flashcards, and quizzes
+- **MNN Vocabulary** — 2,909 words from Minna no Nihongo Ch. 1-50 (JLPT N5 & N4), with Indonesian translations
+- **Vocabulary Flashcard** — 2-button design (Don't Know / Know) with retry queue (max 3x), simpler than Anki's 4-button approach
+- **SRS Review** — 4-button FSRS rating (Again / Hard / Good / Easy) with re-queue for failed cards (max 3x)
+- **Duolingo-style Quiz** — 7 question types: multiple choice (JP-ID, ID-JP), audio recognition, type hiragana, fill-in-the-blank, matching, speaking. 20 questions per session with answer explanations
+- **Kanji/Kana Toggle** — Switch between kanji and kana-only display across flashcards, quizzes, and reviews
+- **Native Audio** — 3,085 pre-generated audio files using Microsoft Edge TTS (ja-JP-NanamiNeural voice)
 
 ### AI Features
-- **AI Tutor "Sensei"** — Chatbot yang memahami level JLPT user, streaming response, context-aware
-- **Multi-Provider Waterfall** — Gemini 2.5 Flash-Lite → Groq → OpenRouter (auto-fallback jika limit tercapai)
-- **Pronunciation Check** — Web Speech API untuk menilai pengucapan user
-- **Response Caching** — Cache respons AI untuk mengurangi API calls
+- **AI Tutor "Sensei"** — Context-aware chatbot that adapts to the user's JLPT level, with streaming responses and conversation history
+- **Multi-Provider Waterfall** — Gemini 2.5 Flash-Lite → Groq (Llama 3.3 70B) → OpenRouter, auto-fallback on rate limits
+- **Pronunciation Check** — Web Speech API integration with accuracy scoring (Levenshtein distance + kanji-to-hiragana mapping)
+- **Response Caching** — SHA-256 prompt hashing to reduce redundant API calls
 
-### Gamifikasi
-- **Sistem XP & Level** — Earn XP dari flashcard, quiz, dan review. Level 1-60 dengan formula progresif
-- **Streak Harian** — Streak counter dengan freeze protection dan milestone rewards
-- **50+ Achievement** — Badge untuk berbagai pencapaian (streak, kata dikuasai, skor quiz, dll)
-- **Activity Heatmap** — Visualisasi aktivitas 365 hari (seperti GitHub contribution graph)
+### Gamification
+- **XP & Levels** — Earn XP from flashcards (2 XP), quizzes (3 XP/correct + tier bonus), and achievements. Level 1-60 with progressive formula
+- **Daily Streak** — Streak counter with freeze protection and milestone rewards (7, 14, 30, 60, 90, 180, 365 days)
+- **50 Achievements** — Badges for streaks, words learned, quiz scores, speed runs, chapter completion, time-of-day activity, and more
+- **Activity Heatmap** — 365-day activity visualization (GitHub-style contribution graph)
+- **Daily Goal** — 5 configurable tiers (100 / 300 / 500 / 750 / 1,000 XP) with goal-met bonus
 
-### JLPT-Aware Navigation
-- **Rekomendasi Bab** — Dashboard mengarahkan ke bab yang sesuai level target
-- **Default Tab** — Halaman MNN otomatis buka tab sesuai JLPT target (N5→Buku 1, N4→Buku 2)
-- **Dialog Pengingat** — User N5 yang akses materi N4 mendapat pengingat sopan jika N5 belum selesai
-- **Badge Completion** — Notifikasi dan saran upgrade saat level N5 selesai
+### Smart Navigation
+- **JLPT-Aware** — Dashboard recommends chapters matching the user's target level
+- **Auto-upgrade** — Automatically advances from N5 to N4 when all Book 1 chapters are mastered via quiz
+- **Progress Tracking** — Quiz-based mastery: a word is "mastered" when answered correctly in a quiz
+- **Forced Onboarding** — New users must complete onboarding before accessing the dashboard
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-| Teknologi | Fungsi |
-|-----------|--------|
-| **Next.js 15** (App Router) | Framework fullstack dengan RSC, Server Actions, streaming |
-| **React 19** | UI library dengan Server Components dan Suspense |
-| **TypeScript 5** | Type safety end-to-end |
-| **Tailwind CSS 4** | Utility-first CSS |
+| Technology | Purpose |
+|---|---|
+| **Next.js 15** (App Router) | Fullstack framework with RSC, Server Actions, streaming |
+| **React 19** | UI with Server Components and Suspense |
+| **TypeScript 5** | End-to-end type safety (strict mode) |
+| **Tailwind CSS 4** | Utility-first styling |
 | **shadcn/ui** | Accessible, customizable component library |
-| **Framer Motion** | Animasi (card flip 3D, page transitions, micro-interactions) |
-| **Zustand** | Client state management (quiz/flashcard session) |
+| **Framer Motion** | Animations (3D card flip, page transitions, micro-interactions) |
+| **Zustand** | Client state (quiz/flashcard sessions, display mode) |
 | **TanStack Query v5** | Server state, caching, background refetch |
 
 ### Backend & Database
-| Teknologi | Fungsi |
-|-----------|--------|
-| **Supabase** | PostgreSQL + Auth (50K MAU) + Storage (1GB) + RLS |
-| **Drizzle ORM** | Type-safe SQL, edge-compatible, auto migrations |
-| **Zod** | Runtime + compile-time validation |
-| **ts-fsrs v5** | FSRS algorithm implementation |
+| Technology | Purpose |
+|---|---|
+| **Supabase** | PostgreSQL + Auth (Google OAuth, email/password, magic link) + Storage (1 GB) |
+| **Drizzle ORM** | Type-safe SQL with auto migrations |
+| **Zod** | Runtime + compile-time validation on all API routes and Server Actions |
+| **ts-fsrs v5** | FSRS spaced repetition algorithm |
 
 ### AI & Audio
-| Teknologi | Fungsi |
-|-----------|--------|
-| **Vercel AI SDK** | Unified streaming interface untuk semua AI provider |
-| **Google Gemini 2.5 Flash-Lite** | Primary AI provider (1000 RPD gratis) |
-| **Groq Cloud** | Fallback AI #1 (Llama 3.3 70B) |
-| **OpenRouter** | Fallback AI #2 |
-| **Microsoft Edge TTS** | Pre-generated audio (ja-JP-NanamiNeural) |
-| **Web Speech API** | Browser-native speech recognition |
+| Technology | Purpose |
+|---|---|
+| **Vercel AI SDK** | Unified streaming interface for all AI providers |
+| **Google Gemini 2.5 Flash-Lite** | Primary AI provider (free tier) |
+| **Groq Cloud** | Fallback #1 — Llama 3.3 70B |
+| **OpenRouter** | Fallback #2 |
+| **Microsoft Edge TTS** | Pre-generated audio (ja-JP-NanamiNeural), 3,085 files in Supabase Storage |
+| **Web Speech API** | Browser-native speech recognition for pronunciation check |
 
 ### Infrastructure
-| Teknologi | Fungsi |
-|-----------|--------|
-| **Vercel** | Hosting + CDN + serverless (free tier) |
+| Technology | Purpose |
+|---|---|
+| **Vercel Hobby** | Hosting + CDN + Serverless (free tier) |
 | **GitHub Actions** | CI/CD + Supabase keep-alive cron |
-| **ESLint + Prettier** | Code quality |
+| **PWA** | Service worker + manifest + offline cache + install banner |
 
 ---
 
-## Arsitektur
+## Architecture
 
 ```
-┌──────────────────────────────────────────────────┐
-│                 CLIENT (Browser)                  │
-│  Next.js 15 + React 19 + TypeScript              │
-│  Tailwind CSS 4 + shadcn/ui + Framer Motion      │
-│  Zustand + TanStack Query                        │
-├──────────────────────────────────────────────────┤
-│                SERVER (Vercel Edge)               │
-│  Server Components + Server Actions              │
-│  Vercel AI SDK + ts-fsrs v5                      │
-│  Drizzle ORM + Zod                               │
-├──────────────────────────────────────────────────┤
-│              BACKEND SERVICES (Free)              │
-│  Supabase PostgreSQL + Auth + Storage             │
-│  Gemini → Groq → OpenRouter (waterfall)          │
-├──────────────────────────────────────────────────┤
-│              DEPLOYMENT & CI/CD                   │
-│  Vercel Hobby + GitHub Actions                    │
-└──────────────────────────────────────────────────┘
++--------------------------------------------------+
+|               CLIENT (Browser / PWA)              |
+|  Next.js 15 + React 19 + TypeScript              |
+|  Tailwind CSS 4 + shadcn/ui + Framer Motion      |
+|  Zustand + TanStack Query                         |
++--------------------------------------------------+
+|              SERVER (Vercel Serverless)            |
+|  Server Components + Server Actions               |
+|  Vercel AI SDK + ts-fsrs v5                       |
+|  Drizzle ORM + Zod validation                     |
++--------------------------------------------------+
+|             BACKEND SERVICES (Free Tier)           |
+|  Supabase PostgreSQL + Auth + Storage              |
+|  Gemini -> Groq -> OpenRouter (AI waterfall)       |
++--------------------------------------------------+
+|              DEPLOYMENT & CI/CD                    |
+|  Vercel Hobby + GitHub Actions                     |
++--------------------------------------------------+
 ```
 
-### Database Schema
+**Key data flows:**
+- **SRS Engine** — ts-fsrs calculates optimal review intervals per card, scheduling is stored in PostgreSQL
+- **AI Waterfall** — Gemini (primary) → Groq → OpenRouter, each provider tried in sequence on failure/rate-limit
+- **Audio** — Pre-generated at build time via Edge TTS, stored in Supabase Storage, zero runtime cost
+- **Timezone** — All date calculations use WIB (Asia/Jakarta) via centralized utility
 
-20 tabel dengan Row Level Security (RLS) pada semua tabel:
+### Database
 
-- **Konten**: book, chapter, vocabulary (2.900+ kata), kana (214 karakter), achievement (50+ badge), ai_question_template
-- **User Data**: user, srs_card, review_log, quiz_session, quiz_answer, user_gamification, xp_transaction, achievement_unlock, user_chapter_progress, daily_activity
-- **AI**: ai_chat_session, ai_chat_message, ai_response_cache, pronunciation_attempt
+20 tables with Row Level Security (RLS) on all tables:
+
+- **Content** (public read): `book`, `chapter`, `vocabulary` (2,909 words), `kana` (214 chars), `achievement` (50 badges), `ai_question_template`
+- **User Data** (RLS protected): `user`, `srs_card`, `review_log`, `quiz_session`, `quiz_answer`, `user_gamification`, `xp_transaction`, `achievement_unlock`, `user_chapter_progress`, `daily_activity`
+- **AI** (RLS protected): `ai_chat_session`, `ai_chat_message`, `ai_response_cache`, `pronunciation_attempt`
 
 ### Security
 
-Audit keamanan lengkap telah dilakukan — lihat [SECURITY-AUDIT.md](./SECURITY-AUDIT.md).
+Full security audit completed — see [SECURITY-AUDIT.md](./SECURITY-AUDIT.md).
 
 | Area | Status |
-|------|--------|
-| Row Level Security (RLS) | 20/20 tabel protected |
-| API Authentication | Semua endpoint verified |
-| Input Validation (Zod) | Semua form dan API validated |
-| Rate Limiting | AI chat, pronunciation, search, daily-check |
-| Security Headers | HSTS, X-Frame-Options, CSP, dll |
-| SQL Injection | Protected (Drizzle ORM parameterized) |
+|---|---|
+| Row Level Security (RLS) | 20/20 tables |
+| API Authentication | All endpoints verified |
+| Input Validation (Zod) | All forms and API routes |
+| Rate Limiting | AI chat (20/min), pronunciation (30/min), search (30/min) |
+| Security Headers | HSTS, X-Frame-Options, CSP, X-Content-Type-Options |
+| SQL Injection | Protected (Drizzle ORM parameterized queries) |
 | XSS | Protected (React auto-escape) |
 | CSRF | Protected (Next.js Server Actions) |
 
@@ -182,9 +189,9 @@ Audit keamanan lengkap telah dilakukan — lihat [SECURITY-AUDIT.md](./SECURITY-
 ### Prerequisites
 
 - Node.js 18+
-- npm atau pnpm
-- Akun Supabase (free tier)
-- API keys: Gemini, Groq, OpenRouter (semua gratis)
+- npm or pnpm
+- [Supabase](https://supabase.com/) account (free tier)
+- API keys: [Gemini](https://aistudio.google.com/), [Groq](https://console.groq.com/), [OpenRouter](https://openrouter.ai/) (all free)
 
 ### Installation
 
@@ -198,7 +205,7 @@ npm install
 
 # Setup environment variables
 cp .env.example .env.local
-# Edit .env.local dengan credentials kamu
+# Edit .env.local with your credentials
 
 # Run database migrations
 npm run db:migrate
@@ -217,6 +224,7 @@ npm run dev
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+DATABASE_URL=your_database_url
 
 # AI Providers
 GEMINI_API_KEY=your_gemini_key
@@ -234,41 +242,60 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 src/
 ├── app/
-│   ├── (auth)/          # Login, register, magic link
-│   ├── (dashboard)/     # Dashboard, learn, review, chat, profile
-│   ├── (onboarding)/    # User onboarding flow
-│   └── api/             # API routes
+│   ├── (auth)/            # Login, register, magic link
+│   ├── (onboarding)/      # Forced onboarding flow
+│   ├── (dashboard)/       # Dashboard, learn, review, quiz, chat, profile
+│   └── api/               # API routes (auth, v1/*)
 ├── components/
-│   ├── flashcard/       # Flashcard components
-│   ├── quiz/            # Quiz components (7 types)
-│   ├── review/          # Review session
-│   ├── chat/            # AI tutor interface
-│   ├── kana/            # Kana grid & modal
-│   ├── gamification/    # XP, streak, achievements, heatmap
-│   └── ui/              # shadcn/ui + custom components
+│   ├── flashcard/         # Flashcard components (3D flip)
+│   ├── quiz/              # Quiz components (7 question types)
+│   ├── review/            # SRS review session
+│   ├── chat/              # AI tutor interface
+│   ├── kana/              # Kana grid & detail modal
+│   ├── gamification/      # XP bar, streak, achievements, heatmap
+│   ├── pwa/               # PWA install banner
+│   └── ui/                # shadcn/ui + custom components
 ├── lib/
-│   ├── srs/             # FSRS engine wrapper
-│   ├── ai/              # AI provider waterfall + system prompt
-│   ├── audio/           # Audio playback + pronunciation
-│   └── supabase/        # Supabase client helpers
+│   ├── srs/               # FSRS engine (ts-fsrs wrapper)
+│   ├── ai/                # AI provider waterfall + system prompt
+│   ├── audio/             # Audio playback + pronunciation scoring
+│   ├── gamification/      # XP, streak, achievement services
+│   ├── progress/          # Chapter progress + quiz mastery
+│   ├── rate-limit/        # In-memory sliding window rate limiter
+│   ├── supabase/          # Supabase client helpers
+│   └── utils/             # Timezone (WIB) utilities
 ├── db/
-│   ├── schema/          # Drizzle ORM schema (20 tables)
-│   └── migrations/      # SQL migrations
-└── stores/              # Zustand stores
+│   ├── schema/            # Drizzle ORM schema (20 tables)
+│   └── migrations/        # SQL migrations
+├── stores/                # Zustand stores
+└── types/                 # Shared TypeScript types
 ```
 
 ---
 
-## Biaya Operasional
+## Key Technical Decisions
 
-| Layanan | Free Tier | Penggunaan Kioku |
-|---------|-----------|-----------------|
-| Vercel | 100GB bandwidth | Hosting + CDN |
-| Supabase | 500MB DB, 1GB storage, 50K MAU | Database + Auth + Audio storage |
-| Gemini | 1000 req/day | AI chatbot primary |
-| Groq | ~500K token/day | AI fallback #1 |
+| Decision | Rationale |
+|---|---|
+| **Flashcard: 2 buttons** vs Review: 4 FSRS buttons | Simpler UX for learning; full FSRS control only during review sessions |
+| **Quiz-based mastery** instead of SRS-based | More intuitive — users understand "answered correctly in quiz" better than SRS status |
+| **AI waterfall** (multi-provider) | Maximizes reliability on free tiers; no single point of failure |
+| **WIB timezone** for all dates | Target audience is Indonesian; avoids UTC date boundary confusion |
+| **Pre-generated audio** (3,085 files) | Zero runtime cost, instant playback, no TTS API dependency at runtime |
+| **2,909 published** out of 2,692 total vocab | Unpublished entries (`is_published = false`) are words not in the MNN textbook PDFs |
+
+---
+
+## Running Costs
+
+| Service | Free Tier Limit | Kioku Usage |
+|---|---|---|
+| Vercel | 100 GB bandwidth | Hosting + CDN |
+| Supabase | 500 MB database, 1 GB storage, 50K MAU | PostgreSQL + Auth + Audio storage |
+| Gemini | 1,000 req/day | AI chatbot (primary) |
+| Groq | ~500K tokens/day | AI fallback #1 |
 | OpenRouter | 50 req/day | AI fallback #2 |
-| **Total** | | **Rp0/bulan** |
+| **Total** | | **$0/month** |
 
 ---
 
@@ -280,7 +307,7 @@ This project is created for educational and portfolio purposes.
 
 <div align="center">
 
-**Kioku** — Dibuat dengan dedikasi untuk pembelajar bahasa Jepang Indonesia
+**Kioku** (記憶) — Built for Indonesian learners of Japanese
 
 [Live Demo](https://kioku-learn.vercel.app)
 
