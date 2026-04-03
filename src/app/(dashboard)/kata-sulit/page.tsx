@@ -207,17 +207,15 @@ function LeechTab({
 
       {/* Bulk action button */}
       <div className="mt-2">
-        <button
-          type="button"
-          disabled
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C2E959]/50 text-base font-bold text-[#0A3A3A]/50 cursor-not-allowed"
-          title="Segera hadir"
+        <Link
+          href="/kata-sulit/latihan"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#C2E959] text-base font-bold text-[#0A3A3A] transition-colors hover:bg-[#C2E959]/80"
         >
           Latih Semua Kata Sulit
           <ArrowRight className="size-5" />
-        </button>
+        </Link>
         <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
-          Latihan khusus kata sulit segera hadir
+          Flashcard intensif + quiz recall khusus kata sulit
         </p>
       </div>
     </div>
@@ -322,7 +320,7 @@ function LeechCardItem({ card }: { card: LeechCard }) {
           </button>
         )}
         <Link
-          href="/review"
+          href={`/kata-sulit/latihan?vocab=${card.vocabularyId}`}
           className="flex h-8 items-center gap-1.5 rounded-lg bg-primary/10 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
         >
           Latih Kata Ini

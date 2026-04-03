@@ -235,6 +235,114 @@ export async function getConfusedPairs(userId: string): Promise<ConfusedPair[]> 
   );
 }
 
+// Extended leech card with extra fields needed for flashcard + quiz training
+export interface LeechCardFull extends LeechCard {
+  meaningEn: string;
+  wordType: string;
+  jlptLevel: string;
+  exampleJp: string | null;
+  exampleId: string | null;
+  sortOrder: number;
+}
+
+export async function getLeechCardsForTraining(
+  userId: string,
+  vocabId?: string
+): Promise<LeechCardFull[]> {
+  const conditions = [
+    eq(srsCard.userId, userId),
+    sql`${srsCard.lapses} >= 4`,
+    sql`${srsCard.vocabularyId} IS NOT NULL`,
+  ];
+
+  if (vocabId) {
+    conditions.push(eq(srsCard.vocabularyId, vocabId));
+  }
+
+  const rows = await db
+    .select({
+      srsCardId: srsCard.id,
+      vocabularyId: srsCard.vocabularyId,
+      kanji: vocabulary.kanji,
+      hiragana: vocabulary.hiragana,
+      romaji: vocabulary.romaji,
+      meaningId: vocabulary.meaningId,
+      meaningEn: vocabulary.meaningEn,
+      wordType: vocabulary.wordType,
+      jlptLevel: vocabulary.jlptLevel,
+      audioUrl: vocabulary.audioUrl,
+      exampleJp: vocabulary.exampleJp,
+      exampleId: vocabulary.exampleId,
+      sortOrder: vocabulary.sortOrder,
+      chapterNumber: chapter.chapterNumber,
+      chapterId: vocabulary.chapterId,
+      lapses: srsCard.lapses,
+      difficulty: srsCard.difficulty,
+      status: srsCard.status,
+    })
+    .from(srsCard)
+    .innerJoin(vocabulary, eq(srsCard.vocabularyId, vocabulary.id))
+    .innerJoin(chapter, eq(vocabulary.chapterId, chapter.id))
+    .where(and(...conditions))
+    .orderBy(desc(srsCard.lapses), desc(srsCard.difficulty));
+
+  return rows.map((row) => ({
+    srsCardId: row.srsCardId,
+    vocabularyId: row.vocabularyId!,
+    kanji: row.kanji,
+    hiragana: row.hiragana!,
+    romaji: row.romaji!,
+    meaningId: row.meaningId!,
+    meaningEn: row.meaningEn,
+    wordType: row.wordType,
+    jlptLevel: row.jlptLevel,
+    audioUrl: row.audioUrl,
+    exampleJp: row.exampleJp,
+    exampleId: row.exampleId,
+    sortOrder: row.sortOrder,
+    chapterNumber: row.chapterNumber,
+    lapses: row.lapses,
+    lastReview: null,
+    difficulty: row.difficulty,
+    status: row.status,
+  }));
+}
+
+// Get vocabulary from same chapters as leech cards (for distractor pool)
+export async function getChapterVocabPool(
+  chapterNumbers: number[]
+): Promise<{ id: string; kanji: string | null; hiragana: string; meaningId: string; audioUrl: string | null }[]> {
+  if (chapterNumbers.length === 0) return [];
+
+  const rows = await db
+    .select({
+      id: vocabulary.id,
+      kanji: vocabulary.kanji,
+      hiragana: vocabulary.hiragana,
+      meaningId: vocabulary.meaningId,
+      audioUrl: vocabulary.audioUrl,
+    })
+    .from(vocabulary)
+    .innerJoin(chapter, eq(vocabulary.chapterId, chapter.id))
+    .where(
+      and(
+        eq(vocabulary.isPublished, true),
+        sql`${chapter.chapterNumber} IN (${sql.join(
+          chapterNumbers.map((n) => sql`${n}`),
+          sql`, `
+        )})`
+      )
+    );
+
+  return rows.map((r) => ({
+    id: r.id,
+    kanji: r.kanji,
+    hiragana: r.hiragana!,
+    meaningId: r.meaningId!,
+    audioUrl: r.audioUrl,
+  }));
+}
+
 export async function getLeechSummary(userId: string): Promise<LeechSummary> {
   // Get leech count and most difficult word in one query
   const leechRows = await db
