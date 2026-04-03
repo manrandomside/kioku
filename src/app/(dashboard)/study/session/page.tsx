@@ -1089,17 +1089,44 @@ function QuizPhase() {
                         <p className="text-center text-base font-bold">
                           {isCorrect ? "Benar!" : "Salah!"}
                         </p>
-                        {!isCorrect && (
-                          <p className="mt-1 text-center text-sm">
-                            Jawaban yang benar:{" "}
-                            <span className="font-jp font-bold">
-                              {currentQuestion.correctAnswer}
-                            </span>
-                            {currentQuestion.hint && (
-                              <span className="opacity-70"> ({currentQuestion.hint})</span>
-                            )}
-                          </p>
-                        )}
+                        {!isCorrect && (() => {
+                          const feedbackVocab = (() => {
+                            if (!store.sessionData) return null;
+                            for (const card of store.sessionData.reviewCards) {
+                              if (card.vocabulary?.id === currentQuestion.vocabularyId) return card.vocabulary;
+                            }
+                            for (const word of store.sessionData.newWords) {
+                              if (word.vocabulary.id === currentQuestion.vocabularyId) return word.vocabulary;
+                            }
+                            return null;
+                          })();
+                          const isJapaneseAnswer = ["meaning_to_word", "audio_to_word"].includes(currentQuestion.type);
+
+                          return (
+                            <p className="mt-1 text-center text-sm">
+                              Jawaban yang benar:{" "}
+                              {isJapaneseAnswer && feedbackVocab?.kanji ? (
+                                <span className="inline-flex flex-col items-center align-bottom">
+                                  <span className="font-jp text-[10px] leading-tight opacity-50">
+                                    {isKanaMode ? feedbackVocab.kanji : feedbackVocab.hiragana}
+                                  </span>
+                                  <span className="font-jp font-bold">
+                                    {isKanaMode ? feedbackVocab.hiragana : feedbackVocab.kanji}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="font-jp font-bold">
+                                  {isJapaneseAnswer ? toKana(currentQuestion.correctAnswer) : currentQuestion.correctAnswer}
+                                </span>
+                              )}
+                              {feedbackVocab ? (
+                                <span className="opacity-70"> ({feedbackVocab.meaningId})</span>
+                              ) : currentQuestion.hint ? (
+                                <span className="opacity-70"> ({currentQuestion.hint})</span>
+                              ) : null}
+                            </p>
+                          );
+                        })()}
                       </div>
 
                       <button
@@ -1155,7 +1182,7 @@ function SummaryScreen() {
 
   // New words stats
   const newWordsLearned = store.newWordUnderstoodIds.size;
-  const newWordsNotMastered = sessionData.summary.newWordsCount - store.newWordCompletedCount;
+  const newWordsNotMastered = sessionData.summary.newWordsCount - newWordsLearned;
   const activeChapterNumber = sessionData.summary.activeChapter?.chapterNumber;
 
   // Quiz stats
