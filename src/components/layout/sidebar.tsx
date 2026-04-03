@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -43,6 +44,19 @@ const SIDEBAR_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [leechBadge, setLeechBadge] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/v1/leech/summary")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          const total = (json.data.totalLeechCards ?? 0) + (json.data.totalConfusedPairs ?? 0);
+          setLeechBadge(total);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <aside className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden bg-sidebar p-4 pt-6">
@@ -72,7 +86,12 @@ export function Sidebar() {
                 )}
               >
                 <item.icon className="size-4 shrink-0" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.href === "/kata-sulit" && leechBadge > 0 && (
+                  <span className="flex size-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
+                    {leechBadge > 99 ? "99+" : leechBadge}
+                  </span>
+                )}
               </Link>
             );
           })}

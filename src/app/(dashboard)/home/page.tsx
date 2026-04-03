@@ -217,10 +217,10 @@ export default async function HomePage() {
         >
           <div
             className={`flex size-12 items-center justify-center rounded-xl ${
-              data.leechCount > 0 ? "bg-yellow-500/10" : "bg-green-500/10"
+              data.leechCount > 0 || data.confusedPairsCount > 0 ? "bg-yellow-500/10" : "bg-green-500/10"
             }`}
           >
-            {data.leechCount > 0 ? (
+            {data.leechCount > 0 || data.confusedPairsCount > 0 ? (
               <AlertTriangle className="size-6 text-yellow-500" />
             ) : (
               <CheckCircle2 className="size-6 text-green-500" />
@@ -230,18 +230,25 @@ export default async function HomePage() {
             <p className="text-xs font-semibold text-muted-foreground">
               Kata Sulit
             </p>
-            {data.leechCount > 0 ? (
-              <>
-                <p className="mt-0.5 text-2xl font-bold leading-none">
-                  {data.leechCount}
-                  <span className="ml-1 text-sm font-normal text-muted-foreground">
-                    kata
-                  </span>
-                </p>
-                <p className="mt-1 text-[11px] text-yellow-600 dark:text-yellow-400">
-                  Perlu latihan khusus
-                </p>
-              </>
+            {data.leechCount > 0 || data.confusedPairsCount > 0 ? (
+              <div className="mt-0.5 flex flex-col gap-0.5">
+                {data.leechCount > 0 && (
+                  <p className="text-sm font-bold leading-snug">
+                    {data.leechCount}
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      kata sering lupa
+                    </span>
+                  </p>
+                )}
+                {data.confusedPairsCount > 0 && (
+                  <p className="text-sm font-bold leading-snug">
+                    {data.confusedPairsCount}
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      pasangan tertukar
+                    </span>
+                  </p>
+                )}
+              </div>
             ) : (
               <>
                 <p className="mt-0.5 text-sm font-medium text-green-600 dark:text-green-400">
