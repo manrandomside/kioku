@@ -702,6 +702,8 @@ function NewWordsPhase() {
 // Phase 3: Quiz
 function QuizPhase() {
   const store = useSmartStudyStore();
+  const { effectiveMode, toggleLocal } = useDisplayMode();
+  const isKanaMode = effectiveMode === "kana";
   const { playIfEnabled } = useAutoPlayAudio();
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
@@ -717,6 +719,28 @@ function QuizPhase() {
     ? questions[store.quizCurrentIndex]
     : null;
   const progress = totalQuestions > 0 ? (store.quizCurrentIndex / totalQuestions) * 100 : 0;
+
+  // Build kanji→hiragana mapping from session vocabulary for kana mode display
+  const kanjiToHiragana = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (!store.sessionData) return map;
+    for (const card of store.sessionData.reviewCards) {
+      if (card.vocabulary?.kanji) {
+        map[card.vocabulary.kanji] = card.vocabulary.hiragana;
+      }
+    }
+    for (const word of store.sessionData.newWords) {
+      if (word.vocabulary.kanji) {
+        map[word.vocabulary.kanji] = word.vocabulary.hiragana;
+      }
+    }
+    return map;
+  }, [store.sessionData]);
+
+  function toKana(text: string): string {
+    if (!isKanaMode) return text;
+    return kanjiToHiragana[text] ?? text;
+  }
 
   // Create quiz session on mount
   useEffect(() => {
@@ -896,6 +920,11 @@ function QuizPhase() {
         />
       </div>
 
+      {/* Display mode toggle */}
+      <div className="flex justify-end">
+        <DisplayModeToggle mode={effectiveMode} onToggle={toggleLocal} />
+      </div>
+
       {/* Question */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -930,7 +959,7 @@ function QuizPhase() {
                     : "text-xl font-semibold text-primary sm:text-2xl"
                 )}
               >
-                {currentQuestion.questionText}
+                {isJapaneseDisplay ? toKana(currentQuestion.questionText) : currentQuestion.questionText}
               </span>
             )}
 
@@ -952,7 +981,7 @@ function QuizPhase() {
               {currentQuestion.options.map((option) => (
                 <QuizOption
                   key={option}
-                  label={option}
+                  label={isOptionJapanese() ? toKana(option) : option}
                   state={getOptionState(option)}
                   isJapanese={isOptionJapanese()}
                   onClick={() => handleSelectAnswer(option)}
