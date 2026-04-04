@@ -56,6 +56,8 @@ USER:    GET|PUT /api/v1/user/profile  POST /api/v1/user/onboarding  GET /api/v1
 CONTENT: GET /api/v1/books  GET /api/v1/books/:slug/chapters  GET /api/v1/chapters/:slug(/vocabulary)
          GET /api/v1/vocabulary/:id|search  GET /api/v1/kana(/:category)  GET /api/v1/jlpt/:level/vocabulary
 SRS:     GET /api/v1/srs/due|stats  GET /api/v1/srs/chapter/:id|kana/:cat  POST /api/v1/srs/cards|review
+STUDY:   GET /api/v1/study/session|status
+LEECH:   GET /api/v1/leech/cards|confused-pairs|summary
 QUIZ:    POST /api/v1/quiz/start  POST /api/v1/quiz/:id/answer|complete  GET /api/v1/quiz/history|:id
 AI:      POST /api/v1/ai/chat(streaming)  GET /api/v1/ai/chat/sessions|:id/messages  DELETE /api/v1/ai/chat/:id
          POST /api/v1/ai/generate-questions|pronunciation/check
@@ -103,6 +105,8 @@ src/
 ├── app/(dashboard)/learn/hirakata/# HIRAKATA module
 ├── app/(dashboard)/learn/mnn/[chapter]/
 ├── app/(dashboard)/review/        # SRS review session
+├── app/(dashboard)/smart-study/   # Smart Study session (3 phases)
+├── app/(dashboard)/kata-sulit/    # Leech detection + training
 ├── app/(dashboard)/quiz/[chapter]/# Quiz session
 ├── app/(dashboard)/chat/          # AI tutor
 ├── app/(dashboard)/profile/       # Settings, stats, achievements
@@ -111,6 +115,8 @@ src/
 ├── components/{pwa,auth}/         # PWA install + auth components
 ├── lib/{srs,ai,audio,supabase}/   # Business logic
 ├── lib/{rate-limit,gamification,progress}/ # Rate limiting, XP, progress
+├── lib/{smart-study,leech}/       # Smart Study + leech detection services
+├── lib/utils/                     # Timezone (WIB) + shared utilities
 ├── stores/                        # Zustand stores
 ├── db/{schema,migrations,seed}/   # Drizzle schema + seed data
 └── types/                         # Shared TypeScript types
@@ -123,6 +129,7 @@ src/
 - **[P2] Gamification**: XP system + streak + achievements + dashboard stats + heatmap + PWA
 - **[P3] AI**: Chatbot (Gemini waterfall + streaming) + pronunciation (Web Speech API) + auto-generate quiz bank
 - **[P4] Polish & UX**: Landing page, auth redesign, review improvements, security audit, SEO, JLPT auto-upgrade
+- **[P5] Smart Study & Leech**: Smart Study session (3 phases), leech detection, dashboard redesign, bug fixes
 
 ---
 
@@ -219,6 +226,38 @@ src/
 - [x] Review bug fixes: duplicate review, reviewed_at timestamp
 - [x] Error messages translated to Indonesian
 
+### [P5] Smart Study & Leech Detection
+
+- [x] Smart Study Session ("Belajar Sekarang") — 3 phases: review due cards + learn new words + quiz
+- [x] Smart Study backend: smart-study-service.ts (generateSmartSession, getSmartSessionStatus)
+- [x] Smart Study API: GET /api/v1/study/session, GET /api/v1/study/status
+- [x] Smart Study UI: full session page with phase indicator, Framer Motion transitions
+- [x] Smart Study new words: selected based on user progress + JLPT target
+- [x] Smart Study quiz: 8 questions from mix of review + new words (no matching/speaking types)
+- [x] Smart Study summary: breakdown per phase, XP breakdown, count-up animation
+- [x] Smart Study bonus: +15 XP on session complete (idempotent)
+- [x] Smart Study: Kanji/Kana toggle in all 3 phases + feedback
+- [x] Dashboard redesign: "Belajar Sekarang" large CTA card (surface color, lime button)
+- [x] Dashboard: remove 3 old cards (Review/Belajar MNN/Hirakata)
+- [x] Dashboard: 3 small cards (Streak, Review Breakdown with countdown, Kata Sulit)
+- [x] Dashboard countdown: "X kartu siap direview sekarang" or "X kartu akan siap direview dalam..."
+- [x] Leech detection backend: leech-service.ts (getLeechCards, getConfusedPairs, getLeechSummary)
+- [x] Leech API: GET /api/v1/leech/cards, confused-pairs, summary
+- [x] Kata Sulit page (/kata-sulit): 2 tabs (Sering Lupa + Sering Tertukar) + Kanji/Kana toggle
+- [x] Leech training (/kata-sulit/latihan): Phase 1 intensive flashcard (retry 5x) + Phase 2 forced recall quiz (3 hard types)
+- [x] Sidebar badge: red badge showing leech count
+- [x] Logout overlay redesign: full-screen elegant (deep teal gradient, Framer Motion)
+- [x] CTA "Tersedia sebagai aplikasi" centered
+- [x] Streak bug fix: no reset when user skips a day, fixed with validateStreak()
+- [x] Timezone audit: 6 files fixed from UTC to WIB (Asia/Jakarta) via centralized timezone.ts
+- [x] Schema fix: 24 columns .default("now()") changed to .$defaultFn() across 6 schema files
+- [x] XP tracking: fix literal "now()" string in xp_transaction + daily_activity reset bug
+- [x] Quiz feedback: follows Kanji/Kana toggle (furigana style)
+- [x] Review countdown: clarified labels ("X kartu siap direview sekarang" vs "X kartu akan siap direview dalam...")
+- [x] OG image path fix
+- [x] Unused imports cleanup
+- [x] Comprehensive audit: 80+ checks across 16 areas, zero remaining issues
+
 ---
 
 ## Catatan Teknis (Diupdate Seiring Development)
@@ -234,3 +273,9 @@ src/
 - Onboarding: FORCED — dashboard layout redirect ke /onboarding jika onboarding_done = false.
 - Security: SECURITY-AUDIT.md full report. Rate limiting in-memory. Security headers di next.config.ts.
 - Daily goal: 5 tier (100/300/500/750/1000 XP).
+- Smart Study kata baru: berdasarkan progress aktual user, bukan hanya JLPT target. JLPT target hanya starting point untuk user baru.
+- Leech threshold: lapses >= 4. Confused pairs: dari quiz_answer history, confusion_count >= 2.
+- Bonus XP: smart study session complete +15 XP, leech training complete +20 XP.
+- Timezone utility: `src/lib/utils/timezone.ts` — single source of truth untuk semua date calculations (WIB/Asia/Jakarta).
+- Schema timestamps: semua pakai `.$defaultFn(() => new Date().toISOString())`, bukan `.default("now()")`.
+- Streak validation: validateStreak() dipanggil saat dashboard load, tidak auto-reset jika user skip hari.

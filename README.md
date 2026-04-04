@@ -50,6 +50,15 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 ### Hiragana & Katakana Grid
 ![Kana Grid](./public/screenshots/kana-grid-kioku.png)
 
+### Smart Study Session
+![Smart Study](./public/screenshots/smart-study-session-kioku.png)
+
+### Session Summary with XP Breakdown
+![Summary](./public/screenshots/smart-study-summary-kioku.png)
+
+### Kata Sulit (Leech Detection)
+![Kata Sulit](./public/screenshots/kata-sulit-kioku.png)
+
 ### Review Summary
 ![Review](./public/screenshots/review-summary-kioku.png)
 
@@ -60,10 +69,12 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 ## Features
 
 ### Learning
+- **Smart Study Session** — One-click optimal study session ("Belajar Sekarang") with 3 phases: review due cards, learn new words, and quiz. Adaptive chapter selection based on JLPT target and user progress
 - **HIRAKATA Module** — Learn 214 hiragana & katakana characters with an interactive color-coded grid, flashcards, and quizzes
 - **MNN Vocabulary** — 2,909 words from Minna no Nihongo Ch. 1-50 (JLPT N5 & N4), with Indonesian translations
 - **Vocabulary Flashcard** — 2-button design (Don't Know / Know) with retry queue (max 3x), simpler than Anki's 4-button approach
 - **SRS Review** — 4-button FSRS rating (Again / Hard / Good / Easy) with re-queue for failed cards (max 3x)
+- **Leech Detection ("Kata Sulit")** — Automatic detection of frequently forgotten words (lapses >= 4) and confused word pairs from quiz history. Specialized training with intensive flashcard (5x retry) and forced recall quiz
 - **Duolingo-style Quiz** — 7 question types: multiple choice (JP-ID, ID-JP), audio recognition, type hiragana, fill-in-the-blank, matching, speaking. 20 questions per session with answer explanations
 - **Kanji/Kana Toggle** — Switch between kanji and kana-only display across flashcards, quizzes, and reviews
 - **Native Audio** — 3,085 pre-generated audio files using Microsoft Edge TTS (ja-JP-NanamiNeural voice)
@@ -82,6 +93,7 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 - **Daily Goal** — 5 configurable tiers (100 / 300 / 500 / 750 / 1,000 XP) with goal-met bonus
 
 ### Smart Navigation
+- **Redesigned Dashboard** — Prominent "Belajar Sekarang" CTA, review countdown timer with clear labels, leech card indicator with sidebar badge
 - **JLPT-Aware** — Dashboard recommends chapters matching the user's target level
 - **Auto-upgrade** — Automatically advances from N5 to N4 when all Book 1 chapters are mastered via quiz
 - **Progress Tracking** — Quiz-based mastery: a word is "mastered" when answered correctly in a quiz
@@ -244,7 +256,7 @@ src/
 ├── app/
 │   ├── (auth)/            # Login, register, magic link
 │   ├── (onboarding)/      # Forced onboarding flow
-│   ├── (dashboard)/       # Dashboard, learn, review, quiz, chat, profile
+│   ├── (dashboard)/       # Dashboard, learn, review, quiz, chat, profile, smart-study, kata-sulit
 │   └── api/               # API routes (auth, v1/*)
 ├── components/
 │   ├── flashcard/         # Flashcard components (3D flip)
@@ -260,6 +272,8 @@ src/
 │   ├── ai/                # AI provider waterfall + system prompt
 │   ├── audio/             # Audio playback + pronunciation scoring
 │   ├── gamification/      # XP, streak, achievement services
+│   ├── smart-study/       # Smart Study session service
+│   ├── leech/             # Leech detection + confused pairs
 │   ├── progress/          # Chapter progress + quiz mastery
 │   ├── rate-limit/        # In-memory sliding window rate limiter
 │   ├── supabase/          # Supabase client helpers
@@ -280,9 +294,11 @@ src/
 | **Flashcard: 2 buttons** vs Review: 4 FSRS buttons | Simpler UX for learning; full FSRS control only during review sessions |
 | **Quiz-based mastery** instead of SRS-based | More intuitive — users understand "answered correctly in quiz" better than SRS status |
 | **AI waterfall** (multi-provider) | Maximizes reliability on free tiers; no single point of failure |
-| **WIB timezone** for all dates | Target audience is Indonesian; avoids UTC date boundary confusion |
+| **WIB timezone** for all dates | Target audience is Indonesian; avoids UTC date boundary confusion. Centralized via `timezone.ts` |
 | **Pre-generated audio** (3,085 files) | Zero runtime cost, instant playback, no TTS API dependency at runtime |
 | **2,909 published** out of 2,692 total vocab | Unpublished entries (`is_published = false`) are words not in the MNN textbook PDFs |
+| **Smart Study adaptive selection** | New words chosen based on actual user progress, not just JLPT target (target is only the starting point for new users) |
+| **Leech detection** (lapses >= 4) | Automatically identifies frequently forgotten words; confused pairs from quiz history (>= 2 occurrences) |
 
 ---
 
