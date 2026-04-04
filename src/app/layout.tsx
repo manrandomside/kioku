@@ -60,7 +60,7 @@ export const metadata: Metadata = {
       "Platform belajar kosakata bahasa Jepang gratis untuk penutur Indonesia. Flashcard cerdas, quiz interaktif, dan AI tutor.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Kioku — Platform Belajar Kosakata Bahasa Jepang",
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     title: "Kioku — Platform Belajar Kosakata Bahasa Jepang",
     description:
       "Platform belajar kosakata bahasa Jepang gratis untuk penutur Indonesia.",
-    images: ["/og-image.png"],
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,

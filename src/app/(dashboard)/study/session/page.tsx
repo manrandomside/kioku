@@ -33,7 +33,7 @@ import {
 
 import type { SrsRating, SrsCardData } from "@/lib/srs/fsrs-engine";
 import type { SmartStudySession } from "@/lib/services/smart-study-service";
-import type { VocabQuizAnswer, VocabQuestionType } from "@/types/vocab-quiz";
+import type { VocabQuizAnswer } from "@/types/vocab-quiz";
 
 const MAX_RETRIES = 3;
 

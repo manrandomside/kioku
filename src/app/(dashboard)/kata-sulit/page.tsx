@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Volume2,
   ArrowRight,
-  Loader2,
   RefreshCw,
 } from "lucide-react";
 
