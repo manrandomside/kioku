@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans, JetBrains_Mono, Noto_Sans_JP } from "next/font/google";
 
 import { Toaster } from "sonner";
 
@@ -25,6 +25,14 @@ const jetBrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
+});
+
+const notoSansJP = Noto_Sans_JP({
+  variable: "--font-jp",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -101,14 +109,10 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${playfairDisplay.variable} ${plusJakartaSans.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      className={`${playfairDisplay.variable} ${plusJakartaSans.variable} ${jetBrainsMono.variable} ${notoSansJP.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
-          rel="stylesheet"
-        />
         <meta name="theme-color" content="#0A3A3A" />
       </head>
       <body className="min-h-full flex flex-col overflow-x-hidden">

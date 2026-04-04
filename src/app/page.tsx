@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { motion, useInView } from "framer-motion";
+import dynamic from "next/dynamic";
+import { LazyMotion, domAnimation, m, useInView } from "framer-motion";
 import {
   BookOpen,
   Layers,
@@ -19,8 +20,15 @@ import {
 } from "lucide-react";
 
 import { Logo } from "@/components/ui/logo";
-import { InstallBanner } from "@/components/pwa/install-banner";
-import { InstallTextTrigger } from "@/components/pwa/install-text-trigger";
+
+const InstallBanner = dynamic(
+  () => import("@/components/pwa/install-banner").then((mod) => ({ default: mod.InstallBanner })),
+  { ssr: false },
+);
+const InstallTextTrigger = dynamic(
+  () => import("@/components/pwa/install-text-trigger").then((mod) => ({ default: mod.InstallTextTrigger })),
+  { ssr: false },
+);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,7 +56,7 @@ function FadeIn({
   };
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       initial={{ opacity: 0, ...dirMap[direction] }}
       animate={inView ? { opacity: 1, y: 0, x: 0 } : {}}
@@ -56,7 +64,7 @@ function FadeIn({
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -179,7 +187,7 @@ function Navbar() {
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-300 ${
         scrolled
           ? "border-b border-border/50 bg-background/80 backdrop-blur-xl"
           : "bg-transparent"
@@ -231,7 +239,7 @@ function Navbar() {
 
       {/* Mobile menu */}
       {open && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="border-b border-border bg-background/95 backdrop-blur-xl md:hidden"
@@ -262,7 +270,7 @@ function Navbar() {
               </Link>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </nav>
   );
@@ -303,30 +311,30 @@ function FlashcardMockup() {
       </div>
 
       {/* Floating badges */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.8, duration: 0.5 }}
         className="absolute -right-4 top-8 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium shadow-lg sm:-right-8"
       >
         <span className="text-[#C2E959]">2900+</span> Kosakata
-      </motion.div>
-      <motion.div
+      </m.div>
+      <m.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 1.0, duration: 0.5 }}
         className="absolute -left-4 top-1/2 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium shadow-lg sm:-left-8"
       >
         JLPT <span className="text-[#248288]">N5-N4</span>
-      </motion.div>
-      <motion.div
+      </m.div>
+      <m.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 1.2, duration: 0.5 }}
         className="absolute -right-2 bottom-16 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium shadow-lg sm:-right-6"
       >
         <span className="text-purple-500">AI</span> Tutor
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -348,7 +356,7 @@ function PreviewTabs() {
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
+            className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${
               tab === t.key
                 ? "bg-[#C2E959] text-[#0A3A3A]"
                 : "bg-muted text-muted-foreground hover:text-foreground"
@@ -442,7 +450,7 @@ function PreviewTabs() {
 function ForgettingCurve() {
   return (
     <div className="w-full max-w-md">
-      <svg viewBox="0 0 400 200" className="w-full" aria-label="Forgetting curve comparison">
+      <svg viewBox="0 0 400 200" className="w-full" role="img" aria-label="Forgetting curve comparison">
         {/* Grid lines */}
         <line x1="50" y1="20" x2="50" y2="180" stroke="currentColor" className="text-border" strokeWidth="1" />
         <line x1="50" y1="180" x2="380" y2="180" stroke="currentColor" className="text-border" strokeWidth="1" />
@@ -490,6 +498,7 @@ function ForgettingCurve() {
 
 export default function LandingPage() {
   return (
+    <LazyMotion features={domAnimation} strict>
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <Navbar />
 
@@ -503,7 +512,7 @@ export default function LandingPage() {
         </div>
 
         {/* Floating kanji decorations */}
-        <div className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp">
+        <div className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp" aria-hidden="true">
           <span className="absolute left-[8%] top-[15%] text-7xl text-foreground/[0.03]">{"\u8A18"}</span>
           <span className="absolute right-[12%] top-[25%] text-8xl text-foreground/[0.03]">{"\u61B6"}</span>
           <span className="absolute bottom-[20%] left-[15%] text-6xl text-foreground/[0.03]">{"\u8A9E"}</span>
@@ -536,7 +545,7 @@ export default function LandingPage() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/register"
-                  className="flex items-center gap-2 rounded-full bg-[#C2E959] px-8 py-4 text-base font-bold text-[#0A3A3A] transition-all hover:bg-[#C2E959]/80 hover:shadow-lg hover:shadow-[#C2E959]/20"
+                  className="flex items-center gap-2 rounded-full bg-[#C2E959] px-8 py-4 text-base font-bold text-[#0A3A3A] transition-[background-color,box-shadow] hover:bg-[#C2E959]/80 hover:shadow-lg hover:shadow-[#C2E959]/20"
                 >
                   Mulai Belajar Gratis
                   <ArrowRight className="size-4" />
@@ -587,7 +596,7 @@ export default function LandingPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
             {FEATURES.map((f, i) => (
               <FadeIn key={f.title} delay={i * 0.08}>
-                <div className="group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-lg">
+                <div className="group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-[border-color,background-color,box-shadow] hover:border-border hover:bg-card hover:shadow-lg">
                   <div className={`flex size-12 items-center justify-center rounded-xl ${f.bg}`}>
                     <f.icon className={`size-6 ${f.color}`} />
                   </div>
@@ -702,7 +711,7 @@ export default function LandingPage() {
         </div>
 
         {/* Floating kanji */}
-        <div className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp">
+        <div className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp" aria-hidden="true">
           <span className="absolute left-[5%] top-[20%] text-8xl text-foreground/[0.02]">{"\u8A18"}</span>
           <span className="absolute right-[8%] bottom-[15%] text-9xl text-foreground/[0.02]">{"\u61B6"}</span>
         </div>
@@ -722,7 +731,7 @@ export default function LandingPage() {
             <div className="mt-10 flex flex-wrap justify-center gap-4">
               <Link
                 href="/register"
-                className="flex items-center gap-2 rounded-full bg-[#C2E959] px-8 py-4 text-base font-bold text-[#0A3A3A] transition-all hover:bg-[#C2E959]/80 hover:shadow-lg hover:shadow-[#C2E959]/20"
+                className="flex items-center gap-2 rounded-full bg-[#C2E959] px-8 py-4 text-base font-bold text-[#0A3A3A] transition-[background-color,box-shadow] hover:bg-[#C2E959]/80 hover:shadow-lg hover:shadow-[#C2E959]/20"
               >
                 Mulai Belajar Sekarang
                 <ArrowRight className="size-4" />
@@ -804,5 +813,6 @@ export default function LandingPage() {
 
       <InstallBanner variant="landing" />
     </div>
+    </LazyMotion>
   );
 }

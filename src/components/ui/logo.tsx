@@ -6,6 +6,12 @@ const SIZE_CLASSES = {
   lg: "h-9",
 } as const;
 
+const SIZE_DIMS = {
+  sm: { width: 75, height: 24 },
+  md: { width: 88, height: 28 },
+  lg: { width: 113, height: 36 },
+} as const;
+
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -13,6 +19,7 @@ interface LogoProps {
 
 export function Logo({ size = "md", className }: LogoProps) {
   const sizeClass = SIZE_CLASSES[size];
+  const dims = SIZE_DIMS[size];
 
   return (
     <>
@@ -20,12 +27,16 @@ export function Logo({ size = "md", className }: LogoProps) {
       <img
         src="/logo-dark.svg"
         alt="Kioku"
+        width={dims.width}
+        height={dims.height}
         className={cn("block w-auto dark:hidden", sizeClass, className)}
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo-white.svg"
         alt="Kioku"
+        width={dims.width}
+        height={dims.height}
         className={cn("hidden w-auto dark:block", sizeClass, className)}
       />
     </>
