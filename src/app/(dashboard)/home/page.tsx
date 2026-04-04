@@ -18,6 +18,7 @@ import { DailyProgressBars } from "@/components/gamification/daily-progress-bars
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
 import { StreakFlame } from "@/components/gamification/streak-flame";
+import { StreakReminder } from "@/components/gamification/streak-reminder";
 import { LearningProgress } from "@/components/gamification/learning-progress";
 import { ReviewCountdown } from "@/components/gamification/review-countdown";
 import { JlptUpgradeHandler } from "@/components/gamification/jlpt-upgrade-handler";
@@ -107,47 +108,45 @@ export default async function HomePage() {
       {/* Section 3: Three small cards — Streak + Due Cards + Leech */}
       <div className="grid gap-4 sm:grid-cols-3">
         {/* Streak Card */}
-        <div
-          className={`flex items-center gap-4 rounded-2xl border p-5 ${
-            data.streak.atRisk
-              ? "border-yellow-500/40 bg-yellow-500/5"
-              : "border-border/50 bg-card"
-          }`}
-        >
-          <div
-            className={`flex size-12 items-center justify-center rounded-xl ${
-              data.streak.current > 0
-                ? "bg-orange-500/10"
-                : "bg-muted"
-            }`}
-          >
-            <StreakFlame streak={data.streak.current} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-muted-foreground">
-              Streak Belajar
-            </p>
-            <p className="mt-0.5 text-2xl font-bold leading-none">
-              {data.streak.current}
-              <span className="ml-1 text-sm font-normal text-muted-foreground">
-                hari
-              </span>
-            </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Terpanjang: {data.streak.longest} hari
-            </p>
-            {data.streak.atRisk && (
-              <p className="mt-1 text-xs font-medium text-yellow-600 dark:text-yellow-400">
-                Streak terancam!
+        <div className="flex flex-col rounded-2xl border border-border/50 bg-card p-5">
+          <div className="flex items-center gap-4">
+            <div
+              className={`flex size-12 items-center justify-center rounded-xl ${
+                data.streak.current > 0
+                  ? "bg-orange-500/10"
+                  : "bg-muted"
+              }`}
+            >
+              <StreakFlame streak={data.streak.current} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-muted-foreground">
+                Streak Belajar
               </p>
-            )}
-            {data.streak.freezes > 0 && !data.streak.atRisk && (
-              <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Shield className="size-3 text-blue-400" />
-                {data.streak.freezes} freeze
+              <p className="mt-0.5 text-2xl font-bold leading-none">
+                {data.streak.current}
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  hari
+                </span>
+              </p>
+              <div className="mt-1 flex items-center gap-3">
+                <p className="text-[11px] text-muted-foreground">
+                  Terpanjang: {data.streak.longest} hari
+                </p>
+                {data.streak.freezes > 0 && (
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Shield className="size-3 text-blue-400" />
+                    {data.streak.freezes} freeze
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
+          <StreakReminder
+            streak={data.streak.current}
+            isActiveToday={data.streak.isActiveToday}
+            displayName={data.profile.displayName}
+          />
         </div>
 
         {/* Due Cards / Review Breakdown */}
