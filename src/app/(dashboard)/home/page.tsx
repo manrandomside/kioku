@@ -247,6 +247,10 @@ export default async function HomePage() {
                     </span>
                   </p>
                 )}
+                <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-yellow-600 dark:text-yellow-400">
+                  Latihan khusus tersedia
+                  <ArrowRight className="size-3" />
+                </p>
               </div>
             ) : (
               <>
@@ -254,7 +258,7 @@ export default async function HomePage() {
                   Tidak ada kata sulit
                 </p>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  Terus pertahankan!
+                  Semua kata terjawab dengan baik. Terus pertahankan!
                 </p>
               </>
             )}
