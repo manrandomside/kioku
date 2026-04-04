@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useDisplayMode } from "@/hooks/use-display-mode";
+import { DisplayModeToggle } from "@/components/ui/display-mode-toggle";
 import { playAudio } from "@/lib/audio/play-audio";
 
 import type { LeechCard, ConfusedPair } from "@/lib/services/leech-service";
@@ -21,6 +22,7 @@ import type { LeechCard, ConfusedPair } from "@/lib/services/leech-service";
 type TabKey = "leech" | "confused";
 
 export default function KataSulitPage() {
+  const { effectiveMode, toggleLocal } = useDisplayMode();
   const [activeTab, setActiveTab] = useState<TabKey>("leech");
   const [leechCards, setLeechCards] = useState<LeechCard[]>([]);
   const [confusedPairs, setConfusedPairs] = useState<ConfusedPair[]>([]);
@@ -53,15 +55,18 @@ export default function KataSulitPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-6 pb-8">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-yellow-500/10">
-            <AlertTriangle className="size-5 text-yellow-500" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-yellow-500/10">
+              <AlertTriangle className="size-5 text-yellow-500" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+                Kata Sulit
+              </h1>
+            </div>
           </div>
-          <div>
-            <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
-              Kata Sulit
-            </h1>
-          </div>
+          <DisplayModeToggle mode={effectiveMode} onToggle={toggleLocal} />
         </div>
         <p className="text-sm text-muted-foreground">
           Kata-kata yang sering kamu lupa. Latihan khusus akan membantumu mengingatnya lebih baik.
