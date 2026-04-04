@@ -92,6 +92,9 @@ export function LearningProgress({ progress }: LearningProgressProps) {
           </div>
           <ProgressBar value={progress.masteredChapters} max={progress.totalChapters} delay={400} />
         </div>
+        <p className="text-xs text-muted-foreground/70">
+          Dikuasai = pernah dijawab benar di Quiz
+        </p>
       </div>
 
       {/* Divider */}

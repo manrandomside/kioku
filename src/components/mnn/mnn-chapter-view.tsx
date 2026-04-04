@@ -187,6 +187,9 @@ export function MnnChapterView({ books, jlptTarget }: MnnChapterViewProps) {
               />
             )}
           </div>
+          <p className="text-xs italic text-muted-foreground/70">
+            Progres bertambah dengan menjawab benar di Quiz setiap bab
+          </p>
         </div>
       )}
 

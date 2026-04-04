@@ -65,6 +65,9 @@ function StatsBar({ kanaList }: { kanaList: KanaWithSrs[] }) {
           />
         )}
       </div>
+      <p className="text-xs italic text-muted-foreground/70">
+        Progres bertambah dengan menjawab benar di Quiz Hiragana &amp; Katakana
+      </p>
     </div>
   );
 }

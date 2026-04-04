@@ -142,6 +142,9 @@ export function ChapterDetailView({
             Belum dikuasai ({masteryStats.notMastered})
           </div>
         </div>
+        <p className="text-xs italic text-muted-foreground/70">
+          Kata dikuasai = pernah dijawab benar di Quiz bab ini
+        </p>
       </div>
 
       {/* Action Buttons */}

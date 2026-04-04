@@ -75,7 +75,7 @@ const HIRAGANA_BASIC: KanaSeedEntry[] = [
   { character: "ろ", romaji: "ro", category: "hiragana_basic", rowGroup: "ra", columnPosition: 5 },
   // wa-row
   { character: "わ", romaji: "wa", category: "hiragana_basic", rowGroup: "wa", columnPosition: 1 },
-  { character: "を", romaji: "wo", category: "hiragana_basic", rowGroup: "wa", columnPosition: 5 },
+  { character: "を", romaji: "o", category: "hiragana_basic", rowGroup: "wa", columnPosition: 5 },
   // n
   { character: "ん", romaji: "n", category: "hiragana_basic", rowGroup: "n", columnPosition: 1 },
 ];
@@ -95,8 +95,8 @@ const HIRAGANA_DAKUTEN: KanaSeedEntry[] = [
   { character: "ぞ", romaji: "zo", category: "hiragana_dakuten", rowGroup: "za", columnPosition: 5 },
   // da-row
   { character: "だ", romaji: "da", category: "hiragana_dakuten", rowGroup: "da", columnPosition: 1 },
-  { character: "ぢ", romaji: "di", category: "hiragana_dakuten", rowGroup: "da", columnPosition: 2 },
-  { character: "づ", romaji: "du", category: "hiragana_dakuten", rowGroup: "da", columnPosition: 3 },
+  { character: "ぢ", romaji: "ji", category: "hiragana_dakuten", rowGroup: "da", columnPosition: 2 },
+  { character: "づ", romaji: "zu", category: "hiragana_dakuten", rowGroup: "da", columnPosition: 3 },
   { character: "で", romaji: "de", category: "hiragana_dakuten", rowGroup: "da", columnPosition: 4 },
   { character: "ど", romaji: "do", category: "hiragana_dakuten", rowGroup: "da", columnPosition: 5 },
   // ba-row
@@ -159,9 +159,9 @@ const HIRAGANA_COMBO: KanaSeedEntry[] = [
   { character: "ぴゅ", romaji: "pyu", category: "hiragana_combo", rowGroup: "pya", columnPosition: 2 },
   { character: "ぴょ", romaji: "pyo", category: "hiragana_combo", rowGroup: "pya", columnPosition: 3 },
   // dya-row (less common but standard)
-  { character: "ぢゃ", romaji: "dya", category: "hiragana_combo", rowGroup: "dya", columnPosition: 1 },
-  { character: "ぢゅ", romaji: "dyu", category: "hiragana_combo", rowGroup: "dya", columnPosition: 2 },
-  { character: "ぢょ", romaji: "dyo", category: "hiragana_combo", rowGroup: "dya", columnPosition: 3 },
+  { character: "ぢゃ", romaji: "ja", category: "hiragana_combo", rowGroup: "dya", columnPosition: 1 },
+  { character: "ぢゅ", romaji: "ju", category: "hiragana_combo", rowGroup: "dya", columnPosition: 2 },
+  { character: "ぢょ", romaji: "jo", category: "hiragana_combo", rowGroup: "dya", columnPosition: 3 },
 ];
 
 const KATAKANA_BASIC: KanaSeedEntry[] = [
@@ -219,7 +219,7 @@ const KATAKANA_BASIC: KanaSeedEntry[] = [
   { character: "ロ", romaji: "ro", category: "katakana_basic", rowGroup: "ra", columnPosition: 5 },
   // wa-row
   { character: "ワ", romaji: "wa", category: "katakana_basic", rowGroup: "wa", columnPosition: 1 },
-  { character: "ヲ", romaji: "wo", category: "katakana_basic", rowGroup: "wa", columnPosition: 5 },
+  { character: "ヲ", romaji: "o", category: "katakana_basic", rowGroup: "wa", columnPosition: 5 },
   // n
   { character: "ン", romaji: "n", category: "katakana_basic", rowGroup: "n", columnPosition: 1 },
 ];
@@ -239,8 +239,8 @@ const KATAKANA_DAKUTEN: KanaSeedEntry[] = [
   { character: "ゾ", romaji: "zo", category: "katakana_dakuten", rowGroup: "za", columnPosition: 5 },
   // da-row
   { character: "ダ", romaji: "da", category: "katakana_dakuten", rowGroup: "da", columnPosition: 1 },
-  { character: "ヂ", romaji: "di", category: "katakana_dakuten", rowGroup: "da", columnPosition: 2 },
-  { character: "ヅ", romaji: "du", category: "katakana_dakuten", rowGroup: "da", columnPosition: 3 },
+  { character: "ヂ", romaji: "ji", category: "katakana_dakuten", rowGroup: "da", columnPosition: 2 },
+  { character: "ヅ", romaji: "zu", category: "katakana_dakuten", rowGroup: "da", columnPosition: 3 },
   { character: "デ", romaji: "de", category: "katakana_dakuten", rowGroup: "da", columnPosition: 4 },
   { character: "ド", romaji: "do", category: "katakana_dakuten", rowGroup: "da", columnPosition: 5 },
   // ba-row
@@ -303,9 +303,9 @@ const KATAKANA_COMBO: KanaSeedEntry[] = [
   { character: "ピュ", romaji: "pyu", category: "katakana_combo", rowGroup: "pya", columnPosition: 2 },
   { character: "ピョ", romaji: "pyo", category: "katakana_combo", rowGroup: "pya", columnPosition: 3 },
   // dya-row
-  { character: "ヂャ", romaji: "dya", category: "katakana_combo", rowGroup: "dya", columnPosition: 1 },
-  { character: "ヂュ", romaji: "dyu", category: "katakana_combo", rowGroup: "dya", columnPosition: 2 },
-  { character: "ヂョ", romaji: "dyo", category: "katakana_combo", rowGroup: "dya", columnPosition: 3 },
+  { character: "ヂャ", romaji: "ja", category: "katakana_combo", rowGroup: "dya", columnPosition: 1 },
+  { character: "ヂュ", romaji: "ju", category: "katakana_combo", rowGroup: "dya", columnPosition: 2 },
+  { character: "ヂョ", romaji: "jo", category: "katakana_combo", rowGroup: "dya", columnPosition: 3 },
 ];
 
 export const ALL_KANA: KanaSeedEntry[] = [
