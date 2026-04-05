@@ -10,17 +10,21 @@ import {
   Flame,
   LogOut,
 } from "lucide-react";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { db } from "@/db";
 import { user } from "@/db/schema/user";
-import { userGamification } from "@/db/schema/gamification";
+import { userGamification, achievementUnlock } from "@/db/schema/gamification";
+import { quizSession } from "@/db/schema/quiz";
+import { aiChatSession } from "@/db/schema/ai";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
 import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
 import { DailyGoalSetting } from "@/components/profile/daily-goal-setting";
+import { SecuritySetting } from "@/components/profile/security-setting";
+import { DangerZone } from "@/components/profile/danger-zone";
 import { LogoutButton } from "@/components/auth/logout-overlay";
 import { EditDisplayName } from "@/components/profile/edit-display-name";
 
@@ -60,13 +64,33 @@ export default async function ProfilePage() {
       totalXp: userGamification.totalXp,
       currentLevel: userGamification.currentLevel,
       currentStreak: userGamification.currentStreak,
+      totalWordsLearned: userGamification.totalWordsLearned,
     })
     .from(userGamification)
     .where(eq(userGamification.userId, userId))
     .limit(1);
 
-  const stats = gamification ?? { totalXp: 0, currentLevel: 1, currentStreak: 0 };
+  // Detect auth provider — "email" for email/password, "google" for OAuth
+  const authProvider = authUser.app_metadata?.provider ?? "email";
+  const isEmailAuth = authProvider === "email";
+
+  // Fetch stats for danger zone (parallel queries)
+  const [quizCountResult, achievementCountResult, chatCountResult] = await Promise.all([
+    db.select({ value: count() }).from(quizSession).where(eq(quizSession.userId, userId)),
+    db.select({ value: count() }).from(achievementUnlock).where(eq(achievementUnlock.userId, userId)),
+    db.select({ value: count() }).from(aiChatSession).where(eq(aiChatSession.userId, userId)),
+  ]);
+
+  const stats = gamification ?? { totalXp: 0, currentLevel: 1, currentStreak: 0, totalWordsLearned: 0 };
   const name = profile.preferredName ?? profile.displayName ?? "User";
+
+  const dangerZoneStats = {
+    wordsLearned: stats.totalWordsLearned,
+    quizSessions: quizCountResult[0]?.value ?? 0,
+    achievementsUnlocked: achievementCountResult[0]?.value ?? 0,
+    currentStreak: stats.currentStreak,
+    chatSessions: chatCountResult[0]?.value ?? 0,
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -148,6 +172,9 @@ export default async function ProfilePage() {
         </div>
       </div>
 
+      {/* Security — only for email/password users */}
+      {isEmailAuth && <SecuritySetting />}
+
       {/* Quick Links */}
       <div className="grid gap-3">
         <Link
@@ -163,6 +190,9 @@ export default async function ProfilePage() {
           </div>
         </Link>
       </div>
+
+      {/* Danger Zone */}
+      <DangerZone stats={dangerZoneStats} />
 
       {/* Sign Out */}
       <LogoutButton displayName={profile.displayName ?? undefined} className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10">
