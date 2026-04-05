@@ -5,26 +5,24 @@ import Link from "next/link";
 export const metadata: Metadata = { title: "Profil" };
 import {
   Trophy,
-  Zap,
-  Star,
-  Flame,
   LogOut,
 } from "lucide-react";
-import { eq, count } from "drizzle-orm";
+import { eq, count, avg, and, sql } from "drizzle-orm";
 
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { db } from "@/db";
 import { user } from "@/db/schema/user";
-import { userGamification, achievementUnlock } from "@/db/schema/gamification";
+import { userGamification, achievementUnlock, dailyActivity } from "@/db/schema/gamification";
 import { quizSession } from "@/db/schema/quiz";
 import { aiChatSession } from "@/db/schema/ai";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
 import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
 import { DailyGoalSetting } from "@/components/profile/daily-goal-setting";
 import { SecuritySetting } from "@/components/profile/security-setting";
 import { DangerZone } from "@/components/profile/danger-zone";
+import { ProfileStats } from "@/components/profile/profile-stats";
+import { AvatarPicker } from "@/components/profile/avatar-picker";
 import { LogoutButton } from "@/components/auth/logout-overlay";
 import { EditDisplayName } from "@/components/profile/edit-display-name";
 
@@ -51,6 +49,7 @@ export default async function ProfilePage() {
       displayMode: user.displayMode,
       autoPlayAudio: user.autoPlayAudio,
       dailyGoalXp: user.dailyGoalXp,
+      createdAt: user.createdAt,
     })
     .from(user)
     .where(eq(user.id, userId))
@@ -65,31 +64,62 @@ export default async function ProfilePage() {
       currentLevel: userGamification.currentLevel,
       currentStreak: userGamification.currentStreak,
       totalWordsLearned: userGamification.totalWordsLearned,
+      totalReviews: userGamification.totalReviews,
     })
     .from(userGamification)
     .where(eq(userGamification.userId, userId))
     .limit(1);
 
-  // Detect auth provider — "email" for email/password, "google" for OAuth
+  // Detect auth provider
   const authProvider = authUser.app_metadata?.provider ?? "email";
   const isEmailAuth = authProvider === "email";
 
-  // Fetch stats for danger zone (parallel queries)
-  const [quizCountResult, achievementCountResult, chatCountResult] = await Promise.all([
-    db.select({ value: count() }).from(quizSession).where(eq(quizSession.userId, userId)),
+  // Fetch additional stats in parallel
+  const [
+    quizCountResult,
+    achievementCountResult,
+    chatCountResult,
+    quizAccuracyResult,
+    daysActiveResult,
+  ] = await Promise.all([
+    db.select({ value: count() }).from(quizSession).where(
+      and(eq(quizSession.userId, userId), eq(quizSession.isCompleted, true))
+    ),
     db.select({ value: count() }).from(achievementUnlock).where(eq(achievementUnlock.userId, userId)),
     db.select({ value: count() }).from(aiChatSession).where(eq(aiChatSession.userId, userId)),
+    db.select({ value: avg(quizSession.scorePercent) }).from(quizSession).where(
+      and(eq(quizSession.userId, userId), eq(quizSession.isCompleted, true))
+    ),
+    db.select({ value: count(sql`DISTINCT ${dailyActivity.activityDate}`) }).from(dailyActivity).where(
+      eq(dailyActivity.userId, userId)
+    ),
   ]);
 
-  const stats = gamification ?? { totalXp: 0, currentLevel: 1, currentStreak: 0, totalWordsLearned: 0 };
+  const stats = gamification ?? { totalXp: 0, currentLevel: 1, currentStreak: 0, totalWordsLearned: 0, totalReviews: 0 };
   const name = profile.preferredName ?? profile.displayName ?? "User";
+
+  const quizCompleted = quizCountResult[0]?.value ?? 0;
+  const quizAccuracy = Math.round(Number(quizAccuracyResult[0]?.value ?? 0));
+  const daysActive = daysActiveResult[0]?.value ?? 0;
 
   const dangerZoneStats = {
     wordsLearned: stats.totalWordsLearned,
-    quizSessions: quizCountResult[0]?.value ?? 0,
+    quizSessions: quizCompleted,
     achievementsUnlocked: achievementCountResult[0]?.value ?? 0,
     currentStreak: stats.currentStreak,
     chatSessions: chatCountResult[0]?.value ?? 0,
+  };
+
+  const profileStatsData = {
+    totalXp: stats.totalXp,
+    currentLevel: stats.currentLevel,
+    currentStreak: stats.currentStreak,
+    wordsLearned: stats.totalWordsLearned,
+    quizCompleted,
+    quizAccuracy,
+    daysActive,
+    totalReviews: stats.totalReviews,
+    joinedAt: profile.createdAt,
   };
 
   return (
@@ -111,16 +141,7 @@ export default async function ProfilePage() {
         />
 
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="rounded-full ring-2 ring-[#C2E959]/40 ring-offset-2 ring-offset-[#0A3A3A]">
-            <Avatar className="size-20">
-              {profile.avatarUrl ? (
-                <AvatarImage src={profile.avatarUrl} alt={name ?? undefined} />
-              ) : null}
-              <AvatarFallback className="text-xl">
-                {name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </div>
+          <AvatarPicker currentAvatar={profile.avatarUrl} displayName={name} />
 
           <div className="flex flex-col items-center text-center">
             <EditDisplayName initialName={name} />
@@ -136,26 +157,11 @@ export default async function ProfilePage() {
               </div>
             )}
           </div>
-
-          {/* Mini stats */}
-          <div className="mt-1 flex items-center gap-6">
-            <div className="flex items-center gap-1.5">
-              <Zap className="size-4 text-[#C2E959]" />
-              <span className="text-sm font-bold text-white">{stats.totalXp.toLocaleString("id-ID")}</span>
-              <span className="text-xs text-white/40">XP</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Star className="size-4 text-[#C2E959]" />
-              <span className="text-sm font-bold text-white">Lv.{stats.currentLevel}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Flame className="size-4 text-[#C2E959]" />
-              <span className="text-sm font-bold text-white">{stats.currentStreak}</span>
-              <span className="text-xs text-white/40">hari</span>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* Statistik Belajar */}
+      <ProfileStats stats={profileStatsData} />
 
       {/* Settings */}
       <div className="overflow-hidden rounded-2xl border border-border/50 bg-card">

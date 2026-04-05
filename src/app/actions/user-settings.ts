@@ -14,6 +14,17 @@ const autoPlaySchema = z.boolean();
 const displayModeSchema = z.enum(["kanji", "kana"]);
 const displayNameSchema = z.string().min(2, "Nama minimal 2 karakter").max(50, "Nama maksimal 50 karakter");
 
+const VALID_AVATAR_EMOJIS = [
+  "\uD83C\uDF8C", "\uD83D\uDDFE", "\u26E9\uFE0F", "\uD83C\uDF38",
+  "\uD83C\uDF8B", "\uD83C\uDF63", "\uD83C\uDF71", "\uD83C\uDF8E",
+  "\uD83C\uDFEF", "\uD83D\uDDFB", "\uD83D\uDCDA", "\u270F\uFE0F",
+  "\uD83C\uDF93", "\uD83D\uDCAE", "\uD83C\uDF19", "\u2B50",
+] as const;
+const avatarSchema = z.string().refine(
+  (val) => val === "" || (VALID_AVATAR_EMOJIS as readonly string[]).includes(val),
+  "Avatar tidak valid"
+);
+
 export async function updateDisplayName(name: string) {
   try {
     const parsed = displayNameSchema.safeParse(name);
@@ -162,5 +173,41 @@ export async function updateDailyGoal(goal: string) {
     const err = e instanceof Error ? { message: e.message, stack: e.stack } : e;
     console.error("[user-settings] updateDailyGoal error:", err);
     return { success: false, error: { code: "INTERNAL", message: "Failed to update daily goal" } };
+  }
+}
+
+export async function updateAvatar(emoji: string) {
+  try {
+    const parsed = avatarSchema.safeParse(emoji);
+    if (!parsed.success) {
+      return { success: false, error: { code: "VALIDATION_ERROR", message: "Avatar tidak valid" } };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) {
+      return { success: false, error: { code: "UNAUTHORIZED", message: "Not authenticated" } };
+    }
+
+    const userId = await getInternalUserId(authUser.id);
+    if (!userId) {
+      return { success: false, error: { code: "NOT_FOUND", message: "User not found" } };
+    }
+
+    await db
+      .update(user)
+      .set({ avatarUrl: parsed.data || null })
+      .where(eq(user.id, userId));
+
+    revalidatePath("/profile");
+    revalidatePath("/home");
+
+    return { success: true, data: { avatarUrl: parsed.data || null } };
+  } catch (e) {
+    console.error("[user-settings] updateAvatar error:", e);
+    return { success: false, error: { code: "INTERNAL", message: "Gagal mengubah avatar" } };
   }
 }

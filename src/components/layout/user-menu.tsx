@@ -28,14 +28,24 @@ export function UserMenu({ user }: UserMenuProps) {
     .map((s) => s[0]?.toUpperCase() ?? "")
     .join("");
 
+  const isEmoji = user.avatarUrl && !user.avatarUrl.startsWith("http");
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Avatar className="size-8">
-          <AvatarImage src={user.avatarUrl} alt={user.displayName ?? "User"} />
-          <AvatarFallback className="bg-primary text-xs text-primary-foreground">
-            {initials}
-          </AvatarFallback>
+          {isEmoji ? (
+            <AvatarFallback className="bg-primary text-base text-primary-foreground">
+              {user.avatarUrl}
+            </AvatarFallback>
+          ) : (
+            <>
+              <AvatarImage src={user.avatarUrl} alt={user.displayName ?? "User"} />
+              <AvatarFallback className="bg-primary text-xs text-primary-foreground">
+                {initials}
+              </AvatarFallback>
+            </>
+          )}
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

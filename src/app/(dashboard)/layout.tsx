@@ -23,11 +23,8 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const userInfo = {
-    email: user.email,
-    displayName: user.user_metadata?.display_name ?? user.user_metadata?.full_name ?? user.user_metadata?.name,
-    avatarUrl: user.user_metadata?.avatar_url,
-  };
+  // avatarUrl is resolved later after DB fetch; declared here for scope
+  let dbAvatarUrl: string | null = null;
 
   // Fetch user preferences and check onboarding
   let displayMode: DisplayMode = "kanji";
@@ -43,6 +40,7 @@ export default async function DashboardLayout({
       displayMode: userTable.displayMode,
       autoPlayAudio: userTable.autoPlayAudio,
       onboardingDone: userTable.onboardingDone,
+      avatarUrl: userTable.avatarUrl,
     })
     .from(userTable)
     .where(eq(userTable.id, internalUserId))
@@ -52,12 +50,21 @@ export default async function DashboardLayout({
     redirect("/onboarding?from=dashboard");
   }
 
+  dbAvatarUrl = row.avatarUrl;
+
   if (row.displayMode === "kana") {
     displayMode = "kana";
   }
   if (row.autoPlayAudio === false) {
     autoPlayAudio = false;
   }
+
+  // Prefer DB avatarUrl (emoji or custom), fall back to OAuth avatar
+  const userInfo = {
+    email: user.email,
+    displayName: user.user_metadata?.display_name ?? user.user_metadata?.full_name ?? user.user_metadata?.name,
+    avatarUrl: dbAvatarUrl ?? user.user_metadata?.avatar_url,
+  };
 
   return (
     <AutoPlayProvider initialEnabled={autoPlayAudio}>

@@ -61,12 +61,20 @@ export default async function HomePage() {
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="relative shrink-0">
             <Avatar size="lg">
-              {data.profile.avatarUrl ? (
-                <AvatarImage src={data.profile.avatarUrl} alt={name} />
-              ) : null}
-              <AvatarFallback>
-                {name.charAt(0).toUpperCase()}
-              </AvatarFallback>
+              {data.profile.avatarUrl && !data.profile.avatarUrl.startsWith("http") ? (
+                <AvatarFallback className="text-lg">
+                  {data.profile.avatarUrl}
+                </AvatarFallback>
+              ) : (
+                <>
+                  {data.profile.avatarUrl ? (
+                    <AvatarImage src={data.profile.avatarUrl} alt={name} />
+                  ) : null}
+                  <AvatarFallback>
+                    {name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </>
+              )}
             </Avatar>
             <span className="absolute -bottom-1 -right-1 flex h-5 items-center justify-center rounded-full bg-[#248288] px-1.5 text-[10px] font-bold text-white ring-2 ring-card">
               {data.level.current}
