@@ -38,6 +38,12 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 ### Dashboard
 ![Dashboard](./public/screenshots/full-dashboard-kioku.png)
 
+### Learn Hub
+![Learn Hub](./public/screenshots/learn-hub-kioku.png)
+
+### Profile & Stats
+![Profile](./public/screenshots/profile-kioku.png)
+
 ### Flashcard with Spaced Repetition
 ![Flashcard](./public/screenshots/flashcard-mnn-kioku.png)
 
@@ -94,10 +100,23 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 
 ### Smart Navigation
 - **Redesigned Dashboard** — Prominent "Belajar Sekarang" CTA, review countdown timer with clear labels, leech card indicator with sidebar badge
+- **Dynamic Streak Reminder** — Time-based personalized messages with 5 distinct slots (dini hari, pagi, siang, sore, malam), countdown to midnight, and color-coded borders per time of day
+- **Redesigned Learn Hub** — 3 "Metode Belajar" cards (Belajar Sekarang, Review, Kata Sulit) + 2 "Materi" cards (HIRAKATA, MNN) with gradient styling and dynamic info badges
 - **JLPT-Aware** — Dashboard recommends chapters matching the user's target level
 - **Auto-upgrade** — Automatically advances from N5 to N4 when all Book 1 chapters are mastered via quiz
 - **Progress Tracking** — Quiz-based mastery: a word is "mastered" when answered correctly in a quiz
 - **Forced Onboarding** — New users must complete onboarding before accessing the dashboard
+
+### Profile & Personalization
+- **9-Stat Grid** — 3 highlight cards (Total XP with progress bar, Level with XP-to-next, Streak with longest) + 6 detail cards (Kata Dikuasai, Quiz Selesai, Akurasi, Hari Aktif, Total Review, Bergabung Sejak)
+- **Emoji Avatar Picker** — 16 Japanese-themed preset emoji avatars with gradient ring (lime-to-teal) and rotation animation, plus initial-letter fallback
+- **Change Password** — Real-time validation modal for email/password users with strength requirements
+- **Google OAuth Integration** — Clear explanation and direct link to Google Account settings for OAuth users
+- **Safe Account Deletion** — Multi-step confirmation: warning with real data counts, type "HAPUS AKUN" + 5-second countdown timer to prevent accidental clicks. Cascade delete across all tables + Supabase Auth
+- **Real-time Stats** — Force-dynamic ensures fresh data on every navigation
+
+### Data Quality
+- **Verified Kana Data** — All 214 hiragana & katakana characters verified and corrected (12 romaji errors fixed: ぢ→ji, づ→zu, を→o, etc.)
 
 ---
 

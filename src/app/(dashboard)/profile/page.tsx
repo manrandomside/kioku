@@ -32,6 +32,12 @@ import { EditDisplayName } from "@/components/profile/edit-display-name";
 
 import type { DisplayMode } from "@/stores/display-mode-store";
 
+function isValidDateString(value: string | null | undefined): boolean {
+  if (!value || value === "now()") return false;
+  const d = new Date(value);
+  return !isNaN(d.getTime());
+}
+
 export default async function ProfilePage() {
   const supabase = await createClient();
   const {
@@ -130,7 +136,8 @@ export default async function ProfilePage() {
     quizAccuracy,
     daysActive,
     totalReviews: stats.totalReviews,
-    joinedAt: profile.createdAt,
+    // Prefer profile.createdAt if valid, fallback to Supabase Auth created_at (always valid)
+    joinedAt: isValidDateString(profile.createdAt) ? profile.createdAt : (authUser.created_at ?? ""),
   };
 
   return (

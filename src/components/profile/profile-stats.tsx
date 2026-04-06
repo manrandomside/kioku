@@ -29,15 +29,17 @@ interface ProfileStatsProps {
   };
 }
 
+const ID_MONTHS_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+];
+
 function formatDate(isoString: string): string {
   try {
+    if (!isoString || isoString === "now()") return "-";
     const date = new Date(isoString);
-    if (isNaN(date.getTime()) || isoString === "now()") return "-";
-    return date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    if (isNaN(date.getTime())) return "-";
+    return `${date.getDate()} ${ID_MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`;
   } catch {
     return "-";
   }

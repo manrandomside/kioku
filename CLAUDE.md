@@ -257,6 +257,24 @@ src/
 - [x] OG image path fix
 - [x] Unused imports cleanup
 - [x] Comprehensive audit: 80+ checks across 16 areas, zero remaining issues
+- [x] Streak reminder dinamis: 5 time slot (dini hari/pagi/siang/sore/malam), pesan personal dengan nama user, countdown malam, border warna per waktu
+- [x] Halaman /learn redesign: 3 card Metode Belajar (Belajar Sekarang, Review, Kata Sulit) + 2 card Materi (HIRAKATA, MNN), gradient style, badge info dinamis, countdown timer review
+- [x] Kana data fix: 12 romaji errors corrected (ぢ→ji, づ→zu, を→o, combo ぢゃ/ぢゅ/ぢょ), migration 0009_fix_kana_romaji.sql, pronunciation-scoring.ts updated
+- [x] Progress bar notes: 4 lokasi (HIRAKATA, MNN list, MNN per-bab, Dashboard)
+- [x] Profile redesign comprehensive:
+  - Statistik Belajar: 3 highlight cards (XP w/ progress bar, Level w/ XP-to-next, Streak w/ longest) + 6 detail cards (Kata Dikuasai, Quiz Selesai, Akurasi, Hari Aktif, Total Review, Bergabung Sejak)
+  - Avatar picker: 16 preset emoji Jepang, gradient ring (lime-to-teal), hover rotation animation, always-visible pencil edit indicator
+  - Header: enhanced gradient with radial overlay
+  - Ubah Password: modal with real-time validation (email/password users only)
+  - Keamanan untuk Google OAuth: info text + link ke Google Account settings
+  - Hapus Akun multi-step: Step 1 warning with real data counts, Step 2 type "HAPUS AKUN" + 5-second countdown timer, cascade delete all tables + Supabase Auth
+  - Real-time stats: force-dynamic ensures fresh data on every navigation
+  - Bug fix Kata Dikuasai = 0: now uses getTotalQuizMasteredWords() (same query as dashboard)
+  - Bug fix Bergabung Sejak Invalid Date: fallback to authUser.created_at + Indonesian short months format
+  - Footer text removed
+- [x] Dashboard Kata Sulit card: penjelasan untuk empty state
+- [x] Skeleton loading update: dashboard + learn + profile pages match new layouts
+- [x] Lighthouse optimization: Performance 63→86 (font preload, lazy motion, dynamic imports, image dimensions, accessibility fixes)
 
 ---
 
@@ -279,3 +297,10 @@ src/
 - Timezone utility: `src/lib/utils/timezone.ts` — single source of truth untuk semua date calculations (WIB/Asia/Jakarta).
 - Schema timestamps: semua pakai `.$defaultFn(() => new Date().toISOString())`, bukan `.default("now()")`.
 - Streak validation: validateStreak() dipanggil saat dashboard load, tidak auto-reset jika user skip hari.
+- Streak reminder dinamis: getCurrentHourWIB() untuk determine time slot (5 slots), useEffect interval 60s untuk update countdown malam. Komponen: components/dashboard/streak-reminder.tsx.
+- Avatar emoji: stored as plain emoji string in user.avatar_url column (NULL = default initial letter). Detection via !startsWith("http").
+- Delete account: cascade delete semua tabel user data + Supabase Auth admin.deleteUser via service role. Setelah hapus, email bisa dipakai register ulang.
+- Kana migration: 0009_fix_kana_romaji.sql berisi 12 UPDATE statements untuk fix romaji yang salah (ぢ→ji bukan di, dst).
+- Legacy "now()" string fix: migration 0010_fix_legacy_now_string_timestamps.sql update existing rows yang masih punya literal "now()" string ke NOW()::text. Profile fallback ke authUser.created_at jika user.createdAt invalid.
+- Profile stats query: Kata Dikuasai pakai getTotalQuizMasteredWords() (count distinct quiz_answer.vocabularyId where is_correct), bukan userGamification.totalWordsLearned (yang seringkali 0).
+- Profile date format: Indonesian short months array ["Jan","Feb",..."Des"], format "DD MMM YYYY".
