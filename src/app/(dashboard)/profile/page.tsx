@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export const metadata: Metadata = { title: "Profil" };
+export const dynamic = "force-dynamic";
+
 import {
   Trophy,
   LogOut,
@@ -16,6 +18,8 @@ import { user } from "@/db/schema/user";
 import { userGamification, achievementUnlock, dailyActivity } from "@/db/schema/gamification";
 import { quizSession } from "@/db/schema/quiz";
 import { aiChatSession } from "@/db/schema/ai";
+import { getTotalQuizMasteredWords } from "@/lib/progress/quiz-mastery";
+import { calculateLevel } from "@/lib/gamification/xp-service";
 import { DisplayModeSetting } from "@/components/profile/display-mode-setting";
 import { AutoPlaySetting } from "@/components/profile/auto-play-setting";
 import { DailyGoalSetting } from "@/components/profile/daily-goal-setting";
@@ -38,6 +42,9 @@ export default async function ProfilePage() {
 
   const userId = await getInternalUserId(authUser.id);
   if (!userId) redirect("/onboarding");
+
+  // Detect auth provider
+  const authProvider = authUser.app_metadata?.provider ?? "email";
 
   const [profile] = await db
     .select({
@@ -63,24 +70,21 @@ export default async function ProfilePage() {
       totalXp: userGamification.totalXp,
       currentLevel: userGamification.currentLevel,
       currentStreak: userGamification.currentStreak,
-      totalWordsLearned: userGamification.totalWordsLearned,
+      longestStreak: userGamification.longestStreak,
       totalReviews: userGamification.totalReviews,
     })
     .from(userGamification)
     .where(eq(userGamification.userId, userId))
     .limit(1);
 
-  // Detect auth provider
-  const authProvider = authUser.app_metadata?.provider ?? "email";
-  const isEmailAuth = authProvider === "email";
-
-  // Fetch additional stats in parallel
+  // Fetch additional stats in parallel (use same query as dashboard for Kata Dikuasai)
   const [
     quizCountResult,
     achievementCountResult,
     chatCountResult,
     quizAccuracyResult,
     daysActiveResult,
+    totalMasteredWords,
   ] = await Promise.all([
     db.select({ value: count() }).from(quizSession).where(
       and(eq(quizSession.userId, userId), eq(quizSession.isCompleted, true))
@@ -93,17 +97,21 @@ export default async function ProfilePage() {
     db.select({ value: count(sql`DISTINCT ${dailyActivity.activityDate}`) }).from(dailyActivity).where(
       eq(dailyActivity.userId, userId)
     ),
+    getTotalQuizMasteredWords(userId),
   ]);
 
-  const stats = gamification ?? { totalXp: 0, currentLevel: 1, currentStreak: 0, totalWordsLearned: 0, totalReviews: 0 };
+  const stats = gamification ?? { totalXp: 0, currentLevel: 1, currentStreak: 0, longestStreak: 0, totalReviews: 0 };
   const name = profile.preferredName ?? profile.displayName ?? "User";
 
   const quizCompleted = quizCountResult[0]?.value ?? 0;
   const quizAccuracy = Math.round(Number(quizAccuracyResult[0]?.value ?? 0));
   const daysActive = daysActiveResult[0]?.value ?? 0;
 
+  // Calculate XP level progress
+  const { xpForCurrentLevel, xpForNextLevel } = calculateLevel(stats.totalXp);
+
   const dangerZoneStats = {
-    wordsLearned: stats.totalWordsLearned,
+    wordsLearned: totalMasteredWords,
     quizSessions: quizCompleted,
     achievementsUnlocked: achievementCountResult[0]?.value ?? 0,
     currentStreak: stats.currentStreak,
@@ -114,7 +122,10 @@ export default async function ProfilePage() {
     totalXp: stats.totalXp,
     currentLevel: stats.currentLevel,
     currentStreak: stats.currentStreak,
-    wordsLearned: stats.totalWordsLearned,
+    longestStreak: stats.longestStreak,
+    xpInLevel: xpForCurrentLevel,
+    xpForNextLevel,
+    wordsLearned: totalMasteredWords,
     quizCompleted,
     quizAccuracy,
     daysActive,
@@ -126,28 +137,29 @@ export default async function ProfilePage() {
     <div className="flex flex-col gap-6">
       {/* Profile Header Card */}
       <div
-        className="relative overflow-hidden rounded-2xl p-6"
-        style={{ background: "linear-gradient(135deg, #0A3A3A 0%, #0F4F4F 100%)" }}
+        className="relative overflow-hidden rounded-2xl p-6 sm:p-8"
+        style={{ background: "linear-gradient(135deg, #0A3A3A 0%, #0F4F4F 50%, #248288 100%)" }}
       >
         {/* Gradient mesh overlay */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background: [
-              "radial-gradient(ellipse at 80% 20%, rgba(194,233,89,0.1), transparent 50%)",
+              "radial-gradient(ellipse at 80% 20%, rgba(194,233,89,0.12), transparent 50%)",
               "radial-gradient(ellipse at 20% 80%, rgba(166,226,172,0.08), transparent 50%)",
+              "radial-gradient(ellipse at 50% 50%, rgba(36,130,136,0.1), transparent 60%)",
             ].join(", "),
           }}
         />
 
-        <div className="relative z-10 flex flex-col items-center gap-4">
+        <div className="relative z-10 flex flex-col items-center gap-5">
           <AvatarPicker currentAvatar={profile.avatarUrl} displayName={name} />
 
           <div className="flex flex-col items-center text-center">
             <EditDisplayName initialName={name} />
             <p className="mt-0.5 text-sm text-white/50">{profile.email}</p>
             {profile.jlptTarget && (
-              <div className="mt-2 flex flex-col items-center gap-1">
+              <div className="mt-3 flex flex-col items-center gap-1">
                 <span className="inline-block rounded-full bg-[#C2E959] px-3 py-1 text-xs font-bold text-[#0A3A3A]">
                   Target JLPT {profile.jlptTarget}
                 </span>
@@ -178,8 +190,8 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      {/* Security — only for email/password users */}
-      {isEmailAuth && <SecuritySetting />}
+      {/* Security — shown for all users */}
+      <SecuritySetting authProvider={authProvider} email={profile.email} />
 
       {/* Quick Links */}
       <div className="grid gap-3">
@@ -210,9 +222,6 @@ export default async function ProfilePage() {
       <div className="pb-2 text-center">
         <p className="text-xs text-muted-foreground">
           Kioku v1.0 &mdash; Platform belajar kosakata bahasa Jepang
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground/60">
-          Dibuat sebagai project portfolio fullstack + AI
         </p>
       </div>
     </div>

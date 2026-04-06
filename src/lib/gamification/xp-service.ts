@@ -26,7 +26,7 @@ const STREAK_MILESTONES: [number, number, number][] = [
 ];
 
 // Level formula: XP needed to reach level N = 50 * N^2
-function calculateLevel(totalXp: number): { level: number; xpForCurrentLevel: number; xpForNextLevel: number } {
+export function calculateLevel(totalXp: number): { level: number; xpForCurrentLevel: number; xpForNextLevel: number } {
   let level = 1;
   let cumulativeXp = 0;
 

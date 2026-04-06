@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { useState, useTransition, useEffect, useCallback } from "react";
+import { AlertTriangle, OctagonX, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -13,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { deleteUserAccount } from "@/app/actions/account";
 
@@ -28,25 +27,51 @@ interface DangerZoneProps {
 }
 
 export function DangerZone({ stats }: DangerZoneProps) {
-  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
   const [confirmText, setConfirmText] = useState("");
+  const [countdown, setCountdown] = useState(5);
+  const [countdownActive, setCountdownActive] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const isConfirmed = confirmText === "HAPUS AKUN";
 
+  // Start countdown when user types correctly in step 2
+  useEffect(() => {
+    if (step === 2 && isConfirmed && !countdownActive) {
+      setCountdownActive(true);
+      setCountdown(5);
+    }
+  }, [step, isConfirmed, countdownActive]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!countdownActive || countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdownActive, countdown]);
+
+  const canDelete = isConfirmed && countdown <= 0;
+
+  const resetAll = useCallback(() => {
+    setStep(0);
+    setConfirmText("");
+    setCountdown(5);
+    setCountdownActive(false);
+  }, []);
+
   function handleOpenChange(next: boolean) {
     if (isPending) return;
-    setOpen(next);
-    if (!next) setConfirmText("");
+    if (!next) resetAll();
+    else setStep(1);
   }
 
   function handleDelete() {
-    if (!isConfirmed || isPending) return;
+    if (!canDelete || isPending) return;
     startTransition(async () => {
       const result = await deleteUserAccount(confirmText);
       if (result.success) {
-        setOpen(false);
+        resetAll();
         toast.success("Akunmu telah dihapus. Terima kasih telah menggunakan Kioku.");
         router.push("/");
       } else {
@@ -54,6 +79,14 @@ export function DangerZone({ stats }: DangerZoneProps) {
       }
     });
   }
+
+  const dataItems = [
+    { icon: "\uD83D\uDCDA", text: `${stats.wordsLearned.toLocaleString("id-ID")} kata yang sudah dikuasai` },
+    { icon: "\uD83C\uDFAF", text: `${stats.quizSessions} sesi quiz dan seluruh riwayat jawaban` },
+    { icon: "\uD83C\uDFC6", text: `${stats.achievementsUnlocked} achievement yang sudah terbuka` },
+    { icon: "\uD83D\uDD25", text: `Streak ${stats.currentStreak} hari dan seluruh statistik belajar` },
+    { icon: "\uD83D\uDCAC", text: `${stats.chatSessions} percakapan dengan AI Tutor` },
+  ];
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3.5">
@@ -68,52 +101,37 @@ export function DangerZone({ stats }: DangerZoneProps) {
         </div>
       </div>
 
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger
-          render={
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-fit border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-600"
-            />
-          }
-        >
-          Hapus Akun
-        </DialogTrigger>
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-fit border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+        onClick={() => handleOpenChange(true)}
+      >
+        Hapus Akun
+      </Button>
 
+      {/* Step 1: Warning */}
+      <Dialog open={step === 1} onOpenChange={handleOpenChange}>
         <DialogContent className="border-red-500/30 sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-5 text-red-500" />
-              <DialogTitle className="text-red-500">Hapus Akun Permanen</DialogTitle>
+              <DialogTitle className="text-red-500">Apakah kamu yakin?</DialogTitle>
             </div>
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
+            <p className="text-sm font-medium">
+              Menghapus akun akan menghapus SEMUA data berikut secara PERMANEN:
+            </p>
+
             <div className="space-y-2">
-              <p className="text-sm font-medium">Kamu akan kehilangan:</p>
-              <ul className="space-y-1.5 text-xs text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">&#x2022;</span>
-                  <span>Seluruh progres belajar ({stats.wordsLearned.toLocaleString("id-ID")} kata dikuasai)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">&#x2022;</span>
-                  <span>{stats.quizSessions} sesi quiz dan riwayat jawaban</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">&#x2022;</span>
-                  <span>{stats.achievementsUnlocked} achievement yang sudah terbuka</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">&#x2022;</span>
-                  <span>Streak {stats.currentStreak} hari dan statistik belajar</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0">&#x2022;</span>
-                  <span>{stats.chatSessions} sesi chat AI Tutor</span>
-                </li>
-              </ul>
+              {dataItems.map((item) => (
+                <div key={item.icon} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                  <span className="mt-0.5 shrink-0 text-base">{item.icon}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
             </div>
 
             <div className="rounded-lg bg-red-500/10 px-3 py-2">
@@ -121,10 +139,41 @@ export function DangerZone({ stats }: DangerZoneProps) {
                 Tindakan ini TIDAK DAPAT dibatalkan.
               </p>
             </div>
+          </div>
 
+          <DialogFooter>
+            <Button variant="outline" onClick={() => resetAll()}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                setStep(2);
+                setConfirmText("");
+                setCountdown(5);
+                setCountdownActive(false);
+              }}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Ya, Saya Yakin
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Step 2: Final confirmation with timer */}
+      <Dialog open={step === 2} onOpenChange={handleOpenChange}>
+        <DialogContent className="border-red-500/30 sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <OctagonX className="size-5 text-red-500" />
+              <DialogTitle className="text-red-500">Konfirmasi Penghapusan Akun</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                Untuk konfirmasi, ketik <span className="font-bold text-foreground">HAPUS AKUN</span> di bawah:
+                Untuk mengkonfirmasi, ketik <span className="font-bold text-foreground">HAPUS AKUN</span> di bawah:
               </p>
               <Input
                 value={confirmText}
@@ -139,14 +188,14 @@ export function DangerZone({ stats }: DangerZoneProps) {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => handleOpenChange(false)}
+              onClick={() => resetAll()}
               disabled={isPending}
             >
               Batal
             </Button>
             <Button
               onClick={handleDelete}
-              disabled={!isConfirmed || isPending}
+              disabled={!canDelete || isPending}
               className="bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
             >
               {isPending ? (
@@ -154,8 +203,12 @@ export function DangerZone({ stats }: DangerZoneProps) {
                   <Loader2 className="size-4 animate-spin" />
                   Menghapus...
                 </>
+              ) : !isConfirmed ? (
+                "Hapus Akun Saya"
+              ) : countdown > 0 ? (
+                `Hapus Akun Saya (${countdown})`
               ) : (
-                "Hapus Permanen"
+                "Hapus Akun Saya"
               )}
             </Button>
           </DialogFooter>

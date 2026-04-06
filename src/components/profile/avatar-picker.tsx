@@ -77,24 +77,30 @@ export function AvatarPicker({ currentAvatar, displayName }: AvatarPickerProps) 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group relative cursor-pointer rounded-full ring-2 ring-[#C2E959]/40 ring-offset-2 ring-offset-[#0A3A3A]"
+        className="group relative cursor-pointer rounded-full"
         aria-label="Ubah avatar"
       >
-        <div className="flex size-20 items-center justify-center rounded-full bg-muted">
+        {/* Outer gradient ring with rotate animation on hover */}
+        <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-[#C2E959] to-[#248288] opacity-80 transition-all group-hover:opacity-100 group-hover:animate-[spin_3s_linear_infinite]" />
+        {/* Inner white ring */}
+        <div className="absolute -inset-0.5 rounded-full bg-white/20 dark:bg-white/10" />
+        {/* Avatar circle */}
+        <div className="relative flex size-24 items-center justify-center rounded-full bg-muted sm:size-28">
           {currentEmoji ? (
-            <span className="text-4xl leading-none">{currentEmoji}</span>
+            <span className="text-5xl leading-none sm:text-6xl">{currentEmoji}</span>
           ) : selected && selected.startsWith("http") ? (
             <img
               src={selected}
               alt={displayName}
-              className="size-20 rounded-full object-cover"
+              className="size-24 rounded-full object-cover sm:size-28"
             />
           ) : (
-            <span className="text-xl font-bold text-muted-foreground">{initial}</span>
+            <span className="text-3xl font-bold text-muted-foreground sm:text-4xl">{initial}</span>
           )}
         </div>
-        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/40">
-          <Pencil className="size-5 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+        {/* Edit indicator - always visible */}
+        <div className="absolute -right-0.5 -bottom-0.5 flex size-7 items-center justify-center rounded-full border-2 border-[#0A3A3A] bg-[#C2E959] shadow-sm">
+          <Pencil className="size-3.5 text-[#0A3A3A]" />
         </div>
       </button>
 
