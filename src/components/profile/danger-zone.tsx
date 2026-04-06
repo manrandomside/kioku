@@ -81,11 +81,11 @@ export function DangerZone({ stats }: DangerZoneProps) {
   }
 
   const dataItems = [
-    { icon: "\uD83D\uDCDA", text: `${stats.wordsLearned.toLocaleString("id-ID")} kata yang sudah dikuasai` },
-    { icon: "\uD83C\uDFAF", text: `${stats.quizSessions} sesi quiz dan seluruh riwayat jawaban` },
-    { icon: "\uD83C\uDFC6", text: `${stats.achievementsUnlocked} achievement yang sudah terbuka` },
-    { icon: "\uD83D\uDD25", text: `Streak ${stats.currentStreak} hari dan seluruh statistik belajar` },
-    { icon: "\uD83D\uDCAC", text: `${stats.chatSessions} percakapan dengan AI Tutor` },
+    `${stats.wordsLearned.toLocaleString("id-ID")} kata yang sudah dikuasai`,
+    `${stats.quizSessions} sesi quiz dan seluruh riwayat jawaban`,
+    `${stats.achievementsUnlocked} achievement yang sudah terbuka`,
+    `Streak ${stats.currentStreak} hari dan seluruh statistik belajar`,
+    `${stats.chatSessions} percakapan dengan AI Tutor`,
   ];
 
   return (
@@ -125,14 +125,14 @@ export function DangerZone({ stats }: DangerZoneProps) {
               Menghapus akun akan menghapus SEMUA data berikut secara PERMANEN:
             </p>
 
-            <div className="space-y-2">
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
               {dataItems.map((item) => (
-                <div key={item.icon} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                  <span className="mt-0.5 shrink-0 text-base">{item.icon}</span>
-                  <span>{item.text}</span>
-                </div>
+                <li key={item} className="flex items-start gap-2">
+                  <span className="mt-1 shrink-0 text-xs">&#x2022;</span>
+                  <span>{item}</span>
+                </li>
               ))}
-            </div>
+            </ul>
 
             <div className="rounded-lg bg-red-500/10 px-3 py-2">
               <p className="text-xs font-bold text-red-500">
