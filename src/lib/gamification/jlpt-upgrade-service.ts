@@ -13,6 +13,13 @@ export interface JlptUpgradeResult {
 
 const NO_UPGRADE: JlptUpgradeResult = { upgraded: false, previousLevel: "", newLevel: "" };
 
+export interface CheckAndUpgradeJlptOptions {
+  // Pre-fetched user.jlptTarget. If omitted, function fetches it.
+  currentLevel?: string | null;
+  // Shared promise for quiz mastery map. If omitted, function fetches it.
+  masteryMap?: Map<string, number> | Promise<Map<string, number>>;
+}
+
 /**
  * Check if user is eligible for JLPT level upgrade and perform upgrade if yes.
  *
@@ -21,25 +28,33 @@ const NO_UPGRADE: JlptUpgradeResult = { upgraded: false, previousLevel: "", newL
  * - N4 -> N3: Not implemented yet (no N3 content)
  *
  * Mastery is determined by quiz: vocabMastered >= vocabCount for every chapter.
+ *
+ * Accepts pre-fetched currentLevel and masteryMap to avoid duplicate DB queries
+ * when the dashboard already has these values.
  */
-export async function checkAndUpgradeJlpt(userId: string): Promise<JlptUpgradeResult> {
-  // 1. Get current JLPT target
-  const [userData] = await db
-    .select({ jlptTarget: user.jlptTarget })
-    .from(user)
-    .where(eq(user.id, userId))
-    .limit(1);
+export async function checkAndUpgradeJlpt(
+  userId: string,
+  options: CheckAndUpgradeJlptOptions = {}
+): Promise<JlptUpgradeResult> {
+  // 1. Get current JLPT target (skip fetch if caller provided it)
+  let currentLevel: string | null | undefined = options.currentLevel;
+  if (currentLevel === undefined) {
+    const [userData] = await db
+      .select({ jlptTarget: user.jlptTarget })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
 
-  if (!userData) return NO_UPGRADE;
-
-  const currentLevel = userData.jlptTarget;
+    if (!userData) return NO_UPGRADE;
+    currentLevel = userData.jlptTarget;
+  }
 
   // Only process N5 -> N4 for now
   if (currentLevel !== "N5") {
     return { upgraded: false, previousLevel: currentLevel ?? "", newLevel: currentLevel ?? "" };
   }
 
-  // 2. Find the N5 book and its chapters
+  // 2. Find the N5 book and its chapters (parallel with mastery promise if provided)
   const [n5Book] = await db
     .select({ id: book.id })
     .from(book)
@@ -58,8 +73,11 @@ export async function checkAndUpgradeJlpt(userId: string): Promise<JlptUpgradeRe
     return { upgraded: false, previousLevel: "N5", newLevel: "N5" };
   }
 
-  // 3. Get quiz mastery map for user
-  const masteryMap = await getQuizMasteredWordsAll(userId);
+  // 3. Get quiz mastery map (reuse caller's promise/value if provided)
+  const masteryMap =
+    options.masteryMap !== undefined
+      ? await options.masteryMap
+      : await getQuizMasteredWordsAll(userId);
 
   // 4. Check if ALL chapters are fully mastered
   const allCompleted = bookChapters.every((c) => {

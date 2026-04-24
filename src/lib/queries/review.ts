@@ -103,75 +103,78 @@ export async function getSrsStats(userId: string): Promise<SrsStats> {
   const now = new Date().toISOString();
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const [totalResult] = await db
-    .select({ count: count() })
-    .from(srsCard)
-    .where(eq(srsCard.userId, userId));
-
-  const [dueResult] = await db
-    .select({ count: count() })
-    .from(srsCard)
-    .where(and(eq(srsCard.userId, userId), lte(srsCard.dueDate, now)));
-
-  const statusCounts = await db
-    .select({
-      status: srsCard.status,
-      count: count(),
-    })
-    .from(srsCard)
-    .where(eq(srsCard.userId, userId))
-    .groupBy(srsCard.status);
+  // Run 5 independent aggregates in parallel
+  const [
+    [totalResult],
+    [dueResult],
+    statusCounts,
+    dueBreakdown,
+    [overdueResult],
+    [nextDueResult],
+  ] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(srsCard)
+      .where(eq(srsCard.userId, userId)),
+    db
+      .select({ count: count() })
+      .from(srsCard)
+      .where(and(eq(srsCard.userId, userId), lte(srsCard.dueDate, now))),
+    db
+      .select({
+        status: srsCard.status,
+        count: count(),
+      })
+      .from(srsCard)
+      .where(eq(srsCard.userId, userId))
+      .groupBy(srsCard.status),
+    db
+      .select({
+        status: srsCard.status,
+        count: count(),
+      })
+      .from(srsCard)
+      .where(
+        and(
+          eq(srsCard.userId, userId),
+          lte(srsCard.dueDate, now),
+          sql`${srsCard.status} != 'new'`
+        )
+      )
+      .groupBy(srsCard.status),
+    db
+      .select({ count: count() })
+      .from(srsCard)
+      .where(
+        and(
+          eq(srsCard.userId, userId),
+          lte(srsCard.dueDate, oneDayAgo),
+          sql`${srsCard.status} != 'new'`
+        )
+      ),
+    db
+      .select({ nextDue: sql<string>`min(${srsCard.dueDate})` })
+      .from(srsCard)
+      .where(
+        and(
+          eq(srsCard.userId, userId),
+          gt(srsCard.dueDate, now),
+          sql`${srsCard.status} != 'new'`
+        )
+      ),
+  ]);
 
   const statusMap: Record<string, number> = {};
   for (const row of statusCounts) {
     statusMap[row.status] = row.count;
   }
 
-  // Breakdown of due cards by status (exclude 'new')
-  const dueBreakdown = await db
-    .select({
-      status: srsCard.status,
-      count: count(),
-    })
-    .from(srsCard)
-    .where(
-      and(
-        eq(srsCard.userId, userId),
-        lte(srsCard.dueDate, now),
-        sql`${srsCard.status} != 'new'`
-      )
-    )
-    .groupBy(srsCard.status);
-
   const dueStatusMap: Record<string, number> = {};
   for (const row of dueBreakdown) {
     dueStatusMap[row.status] = row.count;
   }
 
-  // Overdue count (due > 1 day ago)
-  const [overdueResult] = await db
-    .select({ count: count() })
-    .from(srsCard)
-    .where(
-      and(
-        eq(srsCard.userId, userId),
-        lte(srsCard.dueDate, oneDayAgo),
-        sql`${srsCard.status} != 'new'`
-      )
-    );
-
-  // Next due card (after now) — get earliest due_date and count of cards at that time
-  const [nextDueResult] = await db
-    .select({ nextDue: sql<string>`min(${srsCard.dueDate})` })
-    .from(srsCard)
-    .where(
-      and(
-        eq(srsCard.userId, userId),
-        gt(srsCard.dueDate, now),
-        sql`${srsCard.status} != 'new'`
-      )
-    );
-
+  // Next-due-count query depends on nextDueAt from previous batch, so it runs after
   const nextDueAt = nextDueResult?.nextDue ?? null;
   let nextDueCount = 0;
 

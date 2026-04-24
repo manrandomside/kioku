@@ -16,7 +16,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 import { DailyProgressBars } from "@/components/gamification/daily-progress-bars";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
-import { ActivityHeatmap } from "@/components/gamification/activity-heatmap";
+import { ActivityHeatmap } from "@/components/gamification/activity-heatmap-lazy";
 import { StreakFlame } from "@/components/gamification/streak-flame";
 import { StreakReminder } from "@/components/gamification/streak-reminder";
 import { LearningProgress } from "@/components/gamification/learning-progress";

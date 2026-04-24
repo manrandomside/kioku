@@ -344,60 +344,59 @@ export async function getChapterVocabPool(
 }
 
 export async function getLeechSummary(userId: string): Promise<LeechSummary> {
-  // Get leech count and most difficult word in one query
-  const leechRows = await db
-    .select({
-      hiragana: vocabulary.hiragana,
-      meaningId: vocabulary.meaningId,
-      lapses: srsCard.lapses,
-    })
-    .from(srsCard)
-    .innerJoin(vocabulary, eq(srsCard.vocabularyId, vocabulary.id))
-    .where(
-      and(
-        eq(srsCard.userId, userId),
-        sql`${srsCard.lapses} >= 4`,
-        sql`${srsCard.vocabularyId} IS NOT NULL`
+  // 3 independent queries run in parallel
+  const [leechRows, [leechCountResult], wrongAnswerGroups] = await Promise.all([
+    db
+      .select({
+        hiragana: vocabulary.hiragana,
+        meaningId: vocabulary.meaningId,
+        lapses: srsCard.lapses,
+      })
+      .from(srsCard)
+      .innerJoin(vocabulary, eq(srsCard.vocabularyId, vocabulary.id))
+      .where(
+        and(
+          eq(srsCard.userId, userId),
+          sql`${srsCard.lapses} >= 4`,
+          sql`${srsCard.vocabularyId} IS NOT NULL`
+        )
       )
-    )
-    .orderBy(desc(srsCard.lapses))
-    .limit(1);
-
-  const [leechCountResult] = await db
-    .select({ count: count() })
-    .from(srsCard)
-    .where(
-      and(
-        eq(srsCard.userId, userId),
-        sql`${srsCard.lapses} >= 4`,
-        sql`${srsCard.vocabularyId} IS NOT NULL`
+      .orderBy(desc(srsCard.lapses))
+      .limit(1),
+    db
+      .select({ count: count() })
+      .from(srsCard)
+      .where(
+        and(
+          eq(srsCard.userId, userId),
+          sql`${srsCard.lapses} >= 4`,
+          sql`${srsCard.vocabularyId} IS NOT NULL`
+        )
+      ),
+    db
+      .select({
+        vocabularyId: quizAnswer.vocabularyId,
+        userAnswer: quizAnswer.userAnswer,
+        questionType: quizAnswer.questionType,
+        cnt: count(),
+      })
+      .from(quizAnswer)
+      .innerJoin(quizSession, eq(quizAnswer.sessionId, quizSession.id))
+      .where(
+        and(
+          eq(quizSession.userId, userId),
+          eq(quizAnswer.isCorrect, false),
+          sql`${quizAnswer.vocabularyId} IS NOT NULL`,
+          sql`${quizAnswer.userAnswer} IS NOT NULL`,
+          sql`${quizAnswer.questionType} IN (${sql.join(
+            MC_TYPES.map((t) => sql`${t}`),
+            sql`, `
+          )})`
+        )
       )
-    );
-
-  // Get confused pairs count (lightweight — just count distinct pairs)
-  const wrongAnswerGroups = await db
-    .select({
-      vocabularyId: quizAnswer.vocabularyId,
-      userAnswer: quizAnswer.userAnswer,
-      questionType: quizAnswer.questionType,
-      cnt: count(),
-    })
-    .from(quizAnswer)
-    .innerJoin(quizSession, eq(quizAnswer.sessionId, quizSession.id))
-    .where(
-      and(
-        eq(quizSession.userId, userId),
-        eq(quizAnswer.isCorrect, false),
-        sql`${quizAnswer.vocabularyId} IS NOT NULL`,
-        sql`${quizAnswer.userAnswer} IS NOT NULL`,
-        sql`${quizAnswer.questionType} IN (${sql.join(
-          MC_TYPES.map((t) => sql`${t}`),
-          sql`, `
-        )})`
-      )
-    )
-    .groupBy(quizAnswer.vocabularyId, quizAnswer.userAnswer, quizAnswer.questionType)
-    .having(sql`COUNT(*) >= 2`);
+      .groupBy(quizAnswer.vocabularyId, quizAnswer.userAnswer, quizAnswer.questionType)
+      .having(sql`COUNT(*) >= 2`),
+  ]);
 
   // Approximate confused pairs count (upper bound, actual may be less due to matching)
   const confusedPairsCount = wrongAnswerGroups.length;

@@ -23,24 +23,36 @@ export interface StreakCheckResult {
 // Validate streak on read: if gap > 1 day (and no freeze available for 2-day gap),
 // reset current_streak to 0 in the database.
 // Called when dashboard or streak API is loaded.
-export async function validateStreak(userId: string): Promise<void> {
-  const [gamification] = await db
-    .select({
-      currentStreak: userGamification.currentStreak,
-      lastActivityDate: userGamification.lastActivityDate,
-      streakFreezes: userGamification.streakFreezes,
-    })
-    .from(userGamification)
-    .where(eq(userGamification.userId, userId))
-    .limit(1);
+//
+// Returns the post-validation values. Accepts an optional pre-fetched snapshot
+// to avoid a redundant SELECT when the caller already has the gamification row.
+export async function validateStreak(
+  userId: string,
+  snapshot?: { currentStreak: number; lastActivityDate: string | null; streakFreezes: number }
+): Promise<{ currentStreak: number; streakFreezes: number } | null> {
+  let state = snapshot;
+  if (!state) {
+    const [row] = await db
+      .select({
+        currentStreak: userGamification.currentStreak,
+        lastActivityDate: userGamification.lastActivityDate,
+        streakFreezes: userGamification.streakFreezes,
+      })
+      .from(userGamification)
+      .where(eq(userGamification.userId, userId))
+      .limit(1);
 
-  if (!gamification) return;
+    if (!row) return null;
+    state = row;
+  }
 
   // Streak already 0 — nothing to reset
-  if (gamification.currentStreak === 0) return;
+  if (state.currentStreak === 0) {
+    return { currentStreak: 0, streakFreezes: state.streakFreezes };
+  }
 
   const today = getTodayWIB();
-  const lastActivity = gamification.lastActivityDate;
+  const lastActivity = state.lastActivityDate;
 
   // No activity date recorded — reset
   if (!lastActivity) {
@@ -48,23 +60,24 @@ export async function validateStreak(userId: string): Promise<void> {
       .update(userGamification)
       .set({ currentStreak: 0 })
       .where(eq(userGamification.userId, userId));
-    return;
+    return { currentStreak: 0, streakFreezes: state.streakFreezes };
   }
 
   const gap = daysDifference(today, lastActivity);
 
   // Active today or yesterday — streak is valid
-  if (gap <= 1) return;
+  if (gap <= 1) {
+    return { currentStreak: state.currentStreak, streakFreezes: state.streakFreezes };
+  }
 
   // Gap of exactly 2 days with streak freeze available — consume freeze, keep streak
-  if (gap === 2 && gamification.streakFreezes > 0) {
+  if (gap === 2 && state.streakFreezes > 0) {
+    const newFreezes = state.streakFreezes - 1;
     await db
       .update(userGamification)
-      .set({
-        streakFreezes: gamification.streakFreezes - 1,
-      })
+      .set({ streakFreezes: newFreezes })
       .where(eq(userGamification.userId, userId));
-    return;
+    return { currentStreak: state.currentStreak, streakFreezes: newFreezes };
   }
 
   // Gap > 1 day (no freeze covers it) — reset streak
@@ -72,6 +85,7 @@ export async function validateStreak(userId: string): Promise<void> {
     .update(userGamification)
     .set({ currentStreak: 0 })
     .where(eq(userGamification.userId, userId));
+  return { currentStreak: 0, streakFreezes: state.streakFreezes };
 }
 
 // Check and update streak for a user's daily activity

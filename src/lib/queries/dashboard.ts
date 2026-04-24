@@ -3,15 +3,14 @@ import { eq, and, count, sql, desc, asc, avg, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { user } from "@/db/schema/user";
 import { userGamification, achievementUnlock, achievement, userChapterProgress } from "@/db/schema/gamification";
-import { quizSession, quizAnswer } from "@/db/schema/quiz";
+import { quizSession } from "@/db/schema/quiz";
 import { book, chapter, vocabulary } from "@/db/schema/content";
-import { srsCard } from "@/db/schema/srs";
 
 import { getSrsStats, type SrsStats } from "./review";
 import { getTotalQuizMasteredWords, getQuizMasteredWordsAll } from "@/lib/progress/quiz-mastery";
-import { checkAndUpgradeJlpt, type JlptUpgradeResult } from "@/lib/gamification/jlpt-upgrade-service";
+import { checkAndUpgradeJlpt } from "@/lib/gamification/jlpt-upgrade-service";
 import { validateStreak } from "@/lib/gamification/streak-service";
-import { getLeechSummary, type LeechSummary } from "@/lib/services/leech-service";
+import { getLeechSummary } from "@/lib/services/leech-service";
 import { getTodayWIB, getYesterdayWIB } from "@/lib/utils/timezone";
 
 // User profile data for dashboard display
@@ -112,7 +111,7 @@ export async function getUserJlptTarget(authUserId: string): Promise<string> {
 export async function getDashboardData(
   authUserId: string
 ): Promise<DashboardData | null> {
-  // Get user profile (includes internal user.id)
+  // Step 1: Fetch user profile — needed to resolve internal user ID before any other query
   const [userData] = await db
     .select({
       id: user.id,
@@ -130,23 +129,63 @@ export async function getDashboardData(
 
   const internalUserId = userData.id;
   const dailyGoalXp = parseInt(userData.dailyGoalXp ?? "100", 10);
+  const currentJlptTarget = userData.jlptTarget ?? "N5";
 
-  // Get gamification stats using internal user ID (not auth ID)
-  const [gamification] = await db
-    .select()
-    .from(userGamification)
-    .where(eq(userGamification.userId, internalUserId))
-    .limit(1);
+  // Step 2: Single parallel batch — shared masteryMap promise is consumed by
+  // getRecommendedChapter + checkAndUpgradeJlpt so we only fetch it once.
+  // Gamification row fetch includes streak validation inline so no re-fetch is needed.
+  const masteryMapPromise = getQuizMasteredWordsAll(internalUserId);
 
-  // Validate streak: reset to 0 if user has been inactive > 1 day
-  if (gamification) {
-    await validateStreak(internalUserId);
-  }
+  const gamificationWithValidationPromise = (async () => {
+    const [row] = await db
+      .select()
+      .from(userGamification)
+      .where(eq(userGamification.userId, internalUserId))
+      .limit(1);
 
-  // Re-fetch gamification after validation (streak may have been reset)
-  const [gamificationValidated] = gamification
-    ? await db.select().from(userGamification).where(eq(userGamification.userId, internalUserId)).limit(1)
-    : [null];
+    if (!row) return null;
+
+    const validated = await validateStreak(internalUserId, {
+      currentStreak: row.currentStreak,
+      lastActivityDate: row.lastActivityDate,
+      streakFreezes: row.streakFreezes,
+    });
+
+    return validated
+      ? { ...row, currentStreak: validated.currentStreak, streakFreezes: validated.streakFreezes }
+      : row;
+  })();
+
+  const [
+    gamificationValidated,
+    masteryMap,
+    quizStats,
+    srsStats,
+    totalMasteredWords,
+    vocabAndChapterCounts,
+    lastQuizScore,
+    recentAchievementRows,
+    achievementCounts,
+    mnnRecommendation,
+    leechSummary,
+    upgradeResult,
+  ] = await Promise.all([
+    gamificationWithValidationPromise,
+    masteryMapPromise,
+    getQuizStatsForDashboard(internalUserId),
+    getSrsStats(internalUserId),
+    getTotalQuizMasteredWords(internalUserId),
+    getVocabAndChapterCounts(),
+    getLastQuizScore(internalUserId),
+    getRecentAchievements(internalUserId, 5),
+    getAchievementCounts(internalUserId),
+    getRecommendedChapter(internalUserId, currentJlptTarget, masteryMapPromise),
+    getLeechSummary(internalUserId),
+    checkAndUpgradeJlpt(internalUserId, {
+      currentLevel: currentJlptTarget,
+      masteryMap: masteryMapPromise,
+    }),
+  ]);
 
   // Default gamification values if row doesn't exist yet
   const gam = gamificationValidated ?? {
@@ -154,7 +193,7 @@ export async function getDashboardData(
     currentStreak: 0,
     longestStreak: 0,
     streakFreezes: 0,
-    lastActivityDate: null,
+    lastActivityDate: null as string | null,
     totalReviews: 0,
     totalWordsLearned: 0,
     dailyXpEarned: 0,
@@ -172,21 +211,6 @@ export async function getDashboardData(
     gam.lastActivityDate === yesterdayStr &&
     gam.currentStreak > 0;
 
-  // Fetch quiz stats, SRS stats, mastered words, progress, and achievement data in parallel
-  const [quizStats, srsStats, totalMasteredWords, masteryMap, vocabAndChapterCounts, lastQuizScore, recentAchievementRows, achievementCounts, mnnRecommendation, leechSummary] =
-    await Promise.all([
-      getQuizStatsForDashboard(internalUserId),
-      getSrsStats(internalUserId),
-      getTotalQuizMasteredWords(internalUserId),
-      getQuizMasteredWordsAll(internalUserId),
-      getVocabAndChapterCounts(),
-      getLastQuizScore(internalUserId),
-      getRecentAchievements(internalUserId, 5),
-      getAchievementCounts(internalUserId),
-      getRecommendedChapter(internalUserId, userData.jlptTarget ?? "N5"),
-      getLeechSummary(internalUserId),
-    ]);
-
   // Count mastered chapters: chapters where mastered >= vocabCount
   let masteredChapters = 0;
   for (const [chapterId, masteredCount] of masteryMap) {
@@ -200,8 +224,6 @@ export async function getDashboardData(
   const dailyXpEarned = isActiveToday ? gam.dailyXpEarned : 0;
   const dailyGoalMet = isActiveToday ? gam.dailyGoalMet : false;
 
-  // Check JLPT level upgrade (fallback in case quiz trigger missed it)
-  const upgradeResult = await checkAndUpgradeJlpt(internalUserId);
   const jlptUpgrade = upgradeResult.upgraded
     ? { previousLevel: upgradeResult.previousLevel, newLevel: upgradeResult.newLevel }
     : null;
@@ -261,15 +283,10 @@ export async function getDashboardData(
 }
 
 async function getQuizStatsForDashboard(userId: string) {
-  const [completedResult] = await db
-    .select({ count: count() })
-    .from(quizSession)
-    .where(
-      and(eq(quizSession.userId, userId), eq(quizSession.isCompleted, true))
-    );
-
-  const [avgResult] = await db
+  // Combine count + avg into a single query — same filter, no reason to run twice
+  const [row] = await db
     .select({
+      count: count(),
       avg: avg(quizSession.scorePercent),
     })
     .from(quizSession)
@@ -278,8 +295,8 @@ async function getQuizStatsForDashboard(userId: string) {
     );
 
   return {
-    completed: completedResult.count,
-    avgScore: avgResult.avg ? Math.round(Number(avgResult.avg)) : 0,
+    completed: row?.count ?? 0,
+    avgScore: row?.avg ? Math.round(Number(row.avg)) : 0,
   };
 }
 
@@ -303,14 +320,13 @@ async function getRecentAchievements(userId: string, limit: number) {
 }
 
 async function getAchievementCounts(userId: string) {
-  const [totalResult] = await db
-    .select({ count: count() })
-    .from(achievement);
-
-  const [unlockedResult] = await db
-    .select({ count: count() })
-    .from(achievementUnlock)
-    .where(eq(achievementUnlock.userId, userId));
+  const [[totalResult], [unlockedResult]] = await Promise.all([
+    db.select({ count: count() }).from(achievement),
+    db
+      .select({ count: count() })
+      .from(achievementUnlock)
+      .where(eq(achievementUnlock.userId, userId)),
+  ]);
 
   return {
     unlocked: unlockedResult.count,
@@ -319,17 +335,18 @@ async function getAchievementCounts(userId: string) {
 }
 
 async function getVocabAndChapterCounts() {
-  const [vocabResult] = await db
-    .select({ count: count() })
-    .from(vocabulary)
-    .where(eq(vocabulary.isPublished, true));
-
-  const chapters = await db
-    .select({
-      id: chapter.id,
-      vocabCount: chapter.vocabCount,
-    })
-    .from(chapter);
+  const [[vocabResult], chapters] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(vocabulary)
+      .where(eq(vocabulary.isPublished, true)),
+    db
+      .select({
+        id: chapter.id,
+        vocabCount: chapter.vocabCount,
+      })
+      .from(chapter),
+  ]);
 
   const chapterVocabMap = new Map<string, number>();
   for (const c of chapters) {
@@ -362,7 +379,8 @@ async function getLastQuizScore(userId: string): Promise<number | null> {
 
 async function getRecommendedChapter(
   userId: string,
-  jlptTarget: string
+  jlptTarget: string,
+  masteryMapInput?: Map<string, number> | Promise<Map<string, number>>
 ): Promise<MnnRecommendation | null> {
   const targetLevel = jlptTarget as "N5" | "N4" | "N3" | "N2" | "N1";
 
@@ -389,8 +407,11 @@ async function getRecommendedChapter(
 
   if (chapters.length === 0) return null;
 
-  // Get quiz mastery for all chapters
-  const masteryMap = await getQuizMasteredWordsAll(userId);
+  // Reuse shared mastery map if caller provided one — avoids duplicate aggregation
+  const masteryMap =
+    masteryMapInput !== undefined
+      ? await masteryMapInput
+      : await getQuizMasteredWordsAll(userId);
 
   // Compute completion per chapter
   const chaptersWithMastery = chapters.map((c) => ({
