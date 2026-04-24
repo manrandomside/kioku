@@ -187,12 +187,18 @@ export function FlashcardSession({ cards, script, filter }: FlashcardSessionProp
 
   if (isCompleted) {
     return (
-      <KanaFlashcardSummary
-        data={summaryData}
-        script={script}
-        filter={filter}
-        onRestart={handleRestart}
-      />
+      <>
+        <KanaFlashcardSummary
+          data={summaryData}
+          script={script}
+          filter={filter}
+          onRestart={handleRestart}
+        />
+        <LevelUpModal
+          level={levelUpLevel}
+          onDismiss={() => setLevelUpLevel(null)}
+        />
+      </>
     );
   }
 

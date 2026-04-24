@@ -242,6 +242,12 @@ export default function StudySessionPage() {
         </AnimatePresence>
       </div>
 
+      {/* Level up modal — lifted to root so it survives phase unmount */}
+      <LevelUpModal
+        level={store.levelUpLevel}
+        onDismiss={() => store.setLevelUpLevel(null)}
+      />
+
       {/* Exit confirmation dialog */}
       <AnimatePresence>
         {showExitConfirm && (
@@ -345,7 +351,6 @@ function ReviewPhase() {
   const { effectiveMode, toggleLocal } = useDisplayMode();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const { events: xpEvents, showXp } = useXpPopup();
   const cardStartRef = useRef(Date.now());
 
@@ -426,7 +431,7 @@ function ReviewPhase() {
           console.error("[smart-study/review] submitReviewByCardId failed:", response.error);
         }
         if (response.success && response.data?.xp?.leveledUp) {
-          setLevelUpLevel(response.data.xp.currentLevel);
+          store.setLevelUpLevel(response.data.xp.currentLevel);
         }
       });
     },
@@ -502,10 +507,6 @@ function ReviewPhase() {
       )}
 
       <XpPopup events={xpEvents} />
-      <LevelUpModal
-        level={levelUpLevel}
-        onDismiss={() => setLevelUpLevel(null)}
-      />
     </div>
   );
 }
@@ -517,7 +518,6 @@ function NewWordsPhase() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pronunciationOpen, setPronunciationOpen] = useState(false);
-  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const { events: xpEvents, showXp } = useXpPopup();
   const cardStartRef = useRef(Date.now());
 
@@ -566,7 +566,7 @@ function NewWordsPhase() {
         console.error("[smart-study/new-word] submitVocabReview failed:", response.error);
       }
       if (response.success && response.data?.xp?.leveledUp) {
-        setLevelUpLevel(response.data.xp.currentLevel);
+        store.setLevelUpLevel(response.data.xp.currentLevel);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -691,10 +691,6 @@ function NewWordsPhase() {
       )}
 
       <XpPopup events={xpEvents} />
-      <LevelUpModal
-        level={levelUpLevel}
-        onDismiss={() => setLevelUpLevel(null)}
-      />
     </div>
   );
 }
@@ -709,7 +705,6 @@ function QuizPhase() {
   const [typedAnswer, setTypedAnswer] = useState("");
   const [kanaInputMode, setKanaInputMode] = useState<"hiragana" | "katakana">("hiragana");
   const [isRevealed, setIsRevealed] = useState(false);
-  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const { events: xpEvents, showXp } = useXpPopup();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -787,7 +782,7 @@ function QuizPhase() {
               currentLevel: res.data.xp.currentLevel,
             });
             if (res.data.xp.leveledUp) {
-              setLevelUpLevel(res.data.xp.currentLevel);
+              store.setLevelUpLevel(res.data.xp.currentLevel);
             }
           }
         });
@@ -1147,10 +1142,6 @@ function QuizPhase() {
       </AnimatePresence>
 
       <XpPopup events={xpEvents} />
-      <LevelUpModal
-        level={levelUpLevel}
-        onDismiss={() => setLevelUpLevel(null)}
-      />
     </div>
   );
 }
@@ -1158,7 +1149,6 @@ function QuizPhase() {
 // Summary Screen
 function SummaryScreen() {
   const store = useSmartStudyStore();
-  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const [bonusAwarded, setBonusAwarded] = useState(false);
 
   const sessionData = store.sessionData;
@@ -1212,8 +1202,8 @@ function SummaryScreen() {
     if (!allPhasesComplete || bonusAwarded || !store.quizSessionId) return;
     setBonusAwarded(true);
     awardSmartStudyBonus(store.quizSessionId).then((res) => {
-      if (res.success && res.data && !res.data.alreadyAwarded) {
-        // Bonus awarded
+      if (res.success && res.data && !res.data.alreadyAwarded && res.data.leveledUp) {
+        store.setLevelUpLevel(res.data.currentLevel);
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1353,11 +1343,6 @@ function SummaryScreen() {
           Belajar Lagi
         </button>
       </motion.div>
-
-      <LevelUpModal
-        level={levelUpLevel}
-        onDismiss={() => setLevelUpLevel(null)}
-      />
     </div>
   );
 }

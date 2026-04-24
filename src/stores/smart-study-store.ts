@@ -58,6 +58,9 @@ interface SmartStudyState {
   quizAnswers: VocabQuizAnswer[];
   quizXpData: QuizXpData | null;
 
+  // Level up (shared across all phases; persists past phase unmount)
+  levelUpLevel: number | null;
+
   // Timing
   sessionStartTime: number;
   phaseStartTime: number;
@@ -86,6 +89,9 @@ interface SmartStudyState {
   addQuizAnswer: (answer: VocabQuizAnswer) => void;
   advanceQuiz: () => void;
   setQuizXpData: (data: QuizXpData) => void;
+
+  // Level up actions
+  setLevelUpLevel: (level: number | null) => void;
 
   // Phase transitions
   startTransition: (message: string, nextPhase: StudyPhase) => void;
@@ -123,6 +129,8 @@ export const useSmartStudyStore = create<SmartStudyState>((set, get) => ({
   quizCurrentIndex: 0,
   quizAnswers: [],
   quizXpData: null,
+
+  levelUpLevel: null,
 
   sessionStartTime: Date.now(),
   phaseStartTime: Date.now(),
@@ -206,6 +214,7 @@ export const useSmartStudyStore = create<SmartStudyState>((set, get) => ({
       quizCurrentIndex: 0,
       quizAnswers: [],
       quizXpData: null,
+      levelUpLevel: null,
       sessionStartTime: now,
       phaseStartTime: now,
       cardStartTime: now,
@@ -294,6 +303,8 @@ export const useSmartStudyStore = create<SmartStudyState>((set, get) => ({
     })),
 
   setQuizXpData: (data) => set({ quizXpData: data }),
+
+  setLevelUpLevel: (level) => set({ levelUpLevel: level }),
 
   // Phase transitions
   startTransition: (message, nextPhase) =>

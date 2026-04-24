@@ -5,12 +5,14 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
-import { xpTransaction } from "@/db/schema/gamification";
+import { xpTransaction, userGamification } from "@/db/schema/gamification";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
-import { awardQuizXp } from "@/lib/gamification/xp-service";
+import { awardQuizXp, calculateLevel } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
+import { getTodayWIB } from "@/lib/utils/timezone";
+import { sql } from "drizzle-orm";
 
 import type { VocabQuizAnswer, VocabQuestionType } from "@/types/vocab-quiz";
 
@@ -177,7 +179,7 @@ export async function awardSmartStudyBonus(quizSessionId: string) {
       .limit(1);
 
     if (existing) {
-      return { success: true, data: { alreadyAwarded: true, xp: SESSION_BONUS_XP } };
+      return { success: true, data: { alreadyAwarded: true, xp: SESSION_BONUS_XP, leveledUp: false, currentLevel: 0 } };
     }
 
     // Award bonus using quiz source (fits existing enum)
@@ -190,13 +192,11 @@ export async function awardSmartStudyBonus(quizSessionId: string) {
       createdAt: new Date().toISOString(),
     });
 
-    // Also increment total XP in gamification (simplified, not going through awardXpInternal to avoid double daily activity update)
-    const { sql } = await import("drizzle-orm");
-    const { userGamification } = await import("@/db/schema/gamification");
-    const { getTodayWIB } = await import("@/lib/utils/timezone");
     const today = getTodayWIB();
 
-    await db
+    // Increment total XP (bypasses awardXpInternal to avoid double daily activity update),
+    // but still detect level-up from prev→new total
+    const [updated] = await db
       .update(userGamification)
       .set({
         totalXp: sql`${userGamification.totalXp} + ${SESSION_BONUS_XP}`,
@@ -204,9 +204,30 @@ export async function awardSmartStudyBonus(quizSessionId: string) {
         lastActivityDate: today,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(userGamification.userId, userId));
+      .where(eq(userGamification.userId, userId))
+      .returning();
 
-    return { success: true, data: { alreadyAwarded: false, xp: SESSION_BONUS_XP } };
+    const prevLevel = updated?.currentLevel ?? 1;
+    const newTotalXp = updated?.totalXp ?? 0;
+    const { level: newLevel } = calculateLevel(newTotalXp);
+    const leveledUp = newLevel > prevLevel;
+
+    if (leveledUp) {
+      await db
+        .update(userGamification)
+        .set({ currentLevel: newLevel })
+        .where(eq(userGamification.userId, userId));
+    }
+
+    return {
+      success: true,
+      data: {
+        alreadyAwarded: false,
+        xp: SESSION_BONUS_XP,
+        leveledUp,
+        currentLevel: leveledUp ? newLevel : prevLevel,
+      },
+    };
   } catch (error) {
     console.error("[awardSmartStudyBonus]", error);
     return { success: false, error: { code: "INTERNAL_ERROR", message: "Gagal memberikan bonus XP" } };

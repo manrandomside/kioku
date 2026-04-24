@@ -68,6 +68,7 @@ export default function LeechTrainingPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
 
   // Data
   const [leechCards, setLeechCards] = useState<LeechCardFull[]>([]);
@@ -222,6 +223,7 @@ export default function LeechTrainingPage() {
           distractorPool={distractorPool}
           sessionStartTime={sessionStartTime.current}
           onXpData={setQuizXpData}
+          onLevelUp={setLevelUpLevel}
           onComplete={() => setPhase("summary")}
         />
       )}
@@ -234,8 +236,15 @@ export default function LeechTrainingPage() {
           quizXpData={quizXpData}
           sessionId={quizSessionId}
           sessionStartTime={sessionStartTime.current}
+          onLevelUp={setLevelUpLevel}
         />
       )}
+
+      {/* Level up modal — lifted to root so it survives phase unmount */}
+      <LevelUpModal
+        level={levelUpLevel}
+        onDismiss={() => setLevelUpLevel(null)}
+      />
 
       {/* Exit confirm dialog */}
       <AnimatePresence>
@@ -504,6 +513,7 @@ function QuizPhase({
   distractorPool,
   sessionStartTime,
   onXpData,
+  onLevelUp,
   onComplete,
 }: {
   questions: VocabQuizQuestion[];
@@ -520,6 +530,7 @@ function QuizPhase({
   distractorPool: DistractorVocab[];
   sessionStartTime: number;
   onXpData: (data: { awarded: number; baseXp: number; bonusXp: number; bonusLabel: string; leveledUp: boolean; currentLevel: number }) => void;
+  onLevelUp: (level: number) => void;
   onComplete: () => void;
 }) {
   const { effectiveMode, toggleLocal } = useDisplayMode();
@@ -529,7 +540,6 @@ function QuizPhase({
   const [typedAnswer, setTypedAnswer] = useState("");
   const [kanaInputMode, setKanaInputMode] = useState<"hiragana" | "katakana">("hiragana");
   const [isRevealed, setIsRevealed] = useState(false);
-  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const { events: xpEvents, showXp } = useXpPopup();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -602,7 +612,7 @@ function QuizPhase({
               currentLevel: res.data.xp.currentLevel,
             });
             if (res.data.xp.leveledUp) {
-              setLevelUpLevel(res.data.xp.currentLevel);
+              onLevelUp(res.data.xp.currentLevel);
             }
           }
         });
@@ -978,10 +988,6 @@ function QuizPhase({
       </AnimatePresence>
 
       <XpPopup events={xpEvents} />
-      <LevelUpModal
-        level={levelUpLevel}
-        onDismiss={() => setLevelUpLevel(null)}
-      />
     </div>
   );
 }
@@ -994,6 +1000,7 @@ function SummaryScreen({
   quizXpData,
   sessionId,
   sessionStartTime,
+  onLevelUp,
 }: {
   leechCards: LeechCardFull[];
   flashcardResults: Map<string, "remembered" | "forgot">;
@@ -1001,11 +1008,11 @@ function SummaryScreen({
   quizXpData: { awarded: number; baseXp: number; bonusXp: number; bonusLabel: string; leveledUp: boolean; currentLevel: number } | null;
   sessionId: string | null;
   sessionStartTime: number;
+  onLevelUp: (level: number) => void;
 }) {
   const { effectiveMode } = useDisplayMode();
   const isKanaMode = effectiveMode === "kana";
   const [bonusAwarded, setBonusAwarded] = useState(false);
-  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
 
   const timeSpentMs = Date.now() - sessionStartTime;
   const timeMin = Math.floor(timeSpentMs / 60000);
@@ -1038,7 +1045,11 @@ function SummaryScreen({
   useEffect(() => {
     if (bonusAwarded || !sessionId) return;
     setBonusAwarded(true);
-    awardLeechTrainingBonus(sessionId);
+    awardLeechTrainingBonus(sessionId).then((res) => {
+      if (res.success && res.data && !res.data.alreadyAwarded && res.data.leveledUp) {
+        onLevelUp(res.data.currentLevel);
+      }
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
@@ -1182,11 +1193,6 @@ function SummaryScreen({
           Latih Lagi
         </button>
       </motion.div>
-
-      <LevelUpModal
-        level={levelUpLevel}
-        onDismiss={() => setLevelUpLevel(null)}
-      />
     </div>
   );
 }

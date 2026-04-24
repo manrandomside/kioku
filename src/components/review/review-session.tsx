@@ -194,6 +194,7 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
     const timeSec = Math.floor((summary.timeSpentMs % 60000) / 1000);
 
     return (
+      <>
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-8 px-4">
         <motion.div
           initial={{ scale: 0 }}
@@ -357,6 +358,11 @@ export function ReviewSession({ dueCards, stats }: ReviewSessionProps) {
           </Link>
         </motion.div>
       </div>
+      <LevelUpModal
+        level={levelUpLevel}
+        onDismiss={() => setLevelUpLevel(null)}
+      />
+      </>
     );
   }
 

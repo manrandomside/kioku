@@ -8,7 +8,7 @@ import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { xpTransaction, userGamification } from "@/db/schema/gamification";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
-import { awardQuizXp } from "@/lib/gamification/xp-service";
+import { awardQuizXp, calculateLevel } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 import { getTodayWIB } from "@/lib/utils/timezone";
@@ -178,7 +178,10 @@ export async function awardLeechTrainingBonus(quizSessionId: string) {
       .limit(1);
 
     if (existing) {
-      return { success: true as const, data: { alreadyAwarded: true, xp: LEECH_BONUS_XP } };
+      return {
+        success: true as const,
+        data: { alreadyAwarded: true, xp: LEECH_BONUS_XP, leveledUp: false, currentLevel: 0 },
+      };
     }
 
     await db.insert(xpTransaction).values({
@@ -191,7 +194,7 @@ export async function awardLeechTrainingBonus(quizSessionId: string) {
     });
 
     const today = getTodayWIB();
-    await db
+    const [updated] = await db
       .update(userGamification)
       .set({
         totalXp: sql`${userGamification.totalXp} + ${LEECH_BONUS_XP}`,
@@ -199,9 +202,30 @@ export async function awardLeechTrainingBonus(quizSessionId: string) {
         lastActivityDate: today,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(userGamification.userId, userId));
+      .where(eq(userGamification.userId, userId))
+      .returning();
 
-    return { success: true as const, data: { alreadyAwarded: false, xp: LEECH_BONUS_XP } };
+    const prevLevel = updated?.currentLevel ?? 1;
+    const newTotalXp = updated?.totalXp ?? 0;
+    const { level: newLevel } = calculateLevel(newTotalXp);
+    const leveledUp = newLevel > prevLevel;
+
+    if (leveledUp) {
+      await db
+        .update(userGamification)
+        .set({ currentLevel: newLevel })
+        .where(eq(userGamification.userId, userId));
+    }
+
+    return {
+      success: true as const,
+      data: {
+        alreadyAwarded: false,
+        xp: LEECH_BONUS_XP,
+        leveledUp,
+        currentLevel: leveledUp ? newLevel : prevLevel,
+      },
+    };
   } catch (error) {
     console.error("[awardLeechTrainingBonus]", error);
     return { success: false as const, error: { code: "INTERNAL_ERROR", message: "Gagal memberikan bonus XP" } };

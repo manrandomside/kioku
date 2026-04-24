@@ -198,12 +198,18 @@ export function VocabFlashcardSession({ cards, chapterSlug, chapterNumber }: Voc
 
   if (isCompleted) {
     return (
-      <VocabFlashcardSummary
-        data={summaryData}
-        chapterSlug={chapterSlug}
-        chapterNumber={chapterNumber}
-        onRestart={handleRestart}
-      />
+      <>
+        <VocabFlashcardSummary
+          data={summaryData}
+          chapterSlug={chapterSlug}
+          chapterNumber={chapterNumber}
+          onRestart={handleRestart}
+        />
+        <LevelUpModal
+          level={levelUpLevel}
+          onDismiss={() => setLevelUpLevel(null)}
+        />
+      </>
     );
   }
 
