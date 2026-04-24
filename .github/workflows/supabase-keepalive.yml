@@ -9,20 +9,66 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST API
+      - name: Validate secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          body=$(curl -s -w "\n%{http_code}" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/book?select=id&limit=1")
-          response=$(echo "$body" | tail -n 1)
-          echo "Response status: $response"
-          if [ "$response" -ne 200 ]; then
-            echo "Response body:"
-            echo "$body" | sed '$d'
-            echo "::error::Supabase ping failed with status $response"
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::error::SUPABASE_URL secret is empty or missing"
             exit 1
           fi
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret is empty or missing"
+            exit 1
+          fi
+          echo "SUPABASE_URL length: ${#SUPABASE_URL}"
+          echo "SUPABASE_ANON_KEY length: ${#SUPABASE_ANON_KEY}"
+          echo "SUPABASE_URL host: $(echo "$SUPABASE_URL" | sed -E 's|https?://([^/]+).*|\1|')"
+
+      - name: Ping Supabase REST API (with retry)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          endpoint="$SUPABASE_URL/rest/v1/book?select=id&limit=1"
+          echo "Pinging: $endpoint"
+
+          max_attempts=3
+          attempt=1
+          status=0
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "--- Attempt $attempt/$max_attempts ---"
+
+            response=$(curl -sS -w "\n__HTTP_STATUS__:%{http_code}" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "Accept: application/json" \
+              "$endpoint" || echo "__HTTP_STATUS__:000")
+
+            status=$(echo "$response" | grep "__HTTP_STATUS__:" | tail -n 1 | cut -d: -f2)
+            body=$(echo "$response" | sed '/__HTTP_STATUS__:/d')
+
+            echo "Response status: $status"
+            echo "Response body: $body"
+
+            if [ "$status" = "200" ]; then
+              echo "Supabase ping successful"
+              exit 0
+            fi
+
+            if [ $attempt -lt $max_attempts ]; then
+              echo "Retrying in 10s..."
+              sleep 10
+            fi
+            attempt=$((attempt + 1))
+          done
+
+          echo "::error::Supabase ping failed after $max_attempts attempts (last status: $status)"
+          case "$status" in
+            401) echo "::error::401 Unauthorized - SUPABASE_ANON_KEY likely invalid/rotated. Update GitHub Secrets." ;;
+            404) echo "::error::404 Not Found - check SUPABASE_URL or table 'book' existence." ;;
+            000) echo "::error::Network/DNS error - SUPABASE_URL may be malformed." ;;
+          esac
+          exit 1
