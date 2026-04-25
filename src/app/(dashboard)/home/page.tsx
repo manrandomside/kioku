@@ -38,7 +38,13 @@ export default async function HomePage() {
 
   if (!user) redirect("/login");
 
-  const data = await getDashboardData(user.id);
+  let data;
+  try {
+    data = await getDashboardData(user.id);
+  } catch (err) {
+    console.error("[home] getDashboardData threw:", err);
+    data = null;
+  }
 
   if (!data) {
     return (

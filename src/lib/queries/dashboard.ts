@@ -7,11 +7,38 @@ import { quizSession } from "@/db/schema/quiz";
 import { book, chapter, vocabulary } from "@/db/schema/content";
 
 import { getSrsStats, type SrsStats } from "./review";
+import { safeQuery } from "./safe-query";
 import { getTotalQuizMasteredWords, getQuizMasteredWordsAll } from "@/lib/progress/quiz-mastery";
 import { checkAndUpgradeJlpt } from "@/lib/gamification/jlpt-upgrade-service";
 import { validateStreak } from "@/lib/gamification/streak-service";
 import { getLeechSummary } from "@/lib/services/leech-service";
 import { getTodayWIB, getYesterdayWIB } from "@/lib/utils/timezone";
+
+// Default values returned when a sub-query fails or times out.
+// Dashboard renders with these instead of blocking the whole page.
+const FALLBACK_SRS_STATS: SrsStats = {
+  totalCards: 0,
+  dueNow: 0,
+  newCount: 0,
+  learningCount: 0,
+  reviewCount: 0,
+  relearningCount: 0,
+  dueLearning: 0,
+  dueReview: 0,
+  overdue: 0,
+  nextDueAt: null,
+  nextDueCount: 0,
+};
+
+const FALLBACK_LEECH = { totalLeechCards: 0, totalConfusedPairs: 0, mostDifficultWord: null };
+
+const FALLBACK_VOCAB_COUNTS = {
+  totalVocab: 0,
+  totalChapters: 0,
+  chapterVocabMap: new Map<string, number>(),
+};
+
+const FALLBACK_UPGRADE = { upgraded: false, previousLevel: "", newLevel: "" };
 
 // User profile data for dashboard display
 export interface DashboardUserProfile {
@@ -111,19 +138,30 @@ export async function getUserJlptTarget(authUserId: string): Promise<string> {
 export async function getDashboardData(
   authUserId: string
 ): Promise<DashboardData | null> {
-  // Step 1: Fetch user profile — needed to resolve internal user ID before any other query
-  const [userData] = await db
-    .select({
-      id: user.id,
-      displayName: user.displayName,
-      preferredName: user.preferredName,
-      avatarUrl: user.avatarUrl,
-      jlptTarget: user.jlptTarget,
-      dailyGoalXp: user.dailyGoalXp,
-    })
-    .from(user)
-    .where(eq(user.supabaseAuthId, authUserId))
-    .limit(1);
+  const overallStart = Date.now();
+  console.log(`[dashboard] getDashboardData start authUserId=${authUserId.slice(0, 8)}`);
+
+  // Step 1: Fetch user profile — needed to resolve internal user ID before any other query.
+  // This is the only query that blocks; if it fails, we can't render anything user-specific.
+  const userData = await safeQuery(
+    "user-profile",
+    async () => {
+      const [row] = await db
+        .select({
+          id: user.id,
+          displayName: user.displayName,
+          preferredName: user.preferredName,
+          avatarUrl: user.avatarUrl,
+          jlptTarget: user.jlptTarget,
+          dailyGoalXp: user.dailyGoalXp,
+        })
+        .from(user)
+        .where(eq(user.supabaseAuthId, authUserId))
+        .limit(1);
+      return row ?? null;
+    },
+    null
+  );
 
   if (!userData) return null;
 
@@ -131,30 +169,44 @@ export async function getDashboardData(
   const dailyGoalXp = parseInt(userData.dailyGoalXp ?? "100", 10);
   const currentJlptTarget = userData.jlptTarget ?? "N5";
 
-  // Step 2: Single parallel batch — shared masteryMap promise is consumed by
-  // getRecommendedChapter + checkAndUpgradeJlpt so we only fetch it once.
-  // Gamification row fetch includes streak validation inline so no re-fetch is needed.
-  const masteryMapPromise = getQuizMasteredWordsAll(internalUserId);
+  // Shared masteryMap promise — consumed by getRecommendedChapter + checkAndUpgradeJlpt.
+  // Wrapped to always resolve (empty Map on failure) so consumers don't need to handle errors.
+  const masteryMapPromise: Promise<Map<string, number>> = safeQuery(
+    "masteryMap",
+    () => getQuizMasteredWordsAll(internalUserId),
+    new Map<string, number>()
+  );
 
-  const gamificationWithValidationPromise = (async () => {
-    const [row] = await db
-      .select()
-      .from(userGamification)
-      .where(eq(userGamification.userId, internalUserId))
-      .limit(1);
+  // Gamification row + streak validation. Streak validation may UPDATE — if it fails,
+  // we still return the unvalidated row rather than null.
+  const gamificationWithValidationPromise = safeQuery(
+    "gamification+validateStreak",
+    async () => {
+      const [row] = await db
+        .select()
+        .from(userGamification)
+        .where(eq(userGamification.userId, internalUserId))
+        .limit(1);
 
-    if (!row) return null;
+      if (!row) return null;
 
-    const validated = await validateStreak(internalUserId, {
-      currentStreak: row.currentStreak,
-      lastActivityDate: row.lastActivityDate,
-      streakFreezes: row.streakFreezes,
-    });
-
-    return validated
-      ? { ...row, currentStreak: validated.currentStreak, streakFreezes: validated.streakFreezes }
-      : row;
-  })();
+      try {
+        const validated = await validateStreak(internalUserId, {
+          currentStreak: row.currentStreak,
+          lastActivityDate: row.lastActivityDate,
+          streakFreezes: row.streakFreezes,
+        });
+        return validated
+          ? { ...row, currentStreak: validated.currentStreak, streakFreezes: validated.streakFreezes }
+          : row;
+      } catch (err) {
+        // Streak validation failed — return unvalidated row rather than blocking dashboard
+        console.error("[dashboard] validateStreak inner error:", err);
+        return row;
+      }
+    },
+    null
+  );
 
   const [
     gamificationValidated,
@@ -172,19 +224,28 @@ export async function getDashboardData(
   ] = await Promise.all([
     gamificationWithValidationPromise,
     masteryMapPromise,
-    getQuizStatsForDashboard(internalUserId),
-    getSrsStats(internalUserId),
-    getTotalQuizMasteredWords(internalUserId),
-    getVocabAndChapterCounts(),
-    getLastQuizScore(internalUserId),
-    getRecentAchievements(internalUserId, 5),
-    getAchievementCounts(internalUserId),
-    getRecommendedChapter(internalUserId, currentJlptTarget, masteryMapPromise),
-    getLeechSummary(internalUserId),
-    checkAndUpgradeJlpt(internalUserId, {
-      currentLevel: currentJlptTarget,
-      masteryMap: masteryMapPromise,
-    }),
+    safeQuery("quizStats", () => getQuizStatsForDashboard(internalUserId), { completed: 0, avgScore: 0 }),
+    safeQuery("srsStats", () => getSrsStats(internalUserId), FALLBACK_SRS_STATS),
+    safeQuery("totalMasteredWords", () => getTotalQuizMasteredWords(internalUserId), 0),
+    safeQuery("vocabAndChapterCounts", () => getVocabAndChapterCounts(), FALLBACK_VOCAB_COUNTS),
+    safeQuery("lastQuizScore", () => getLastQuizScore(internalUserId), null),
+    safeQuery("recentAchievements", () => getRecentAchievements(internalUserId, 5), []),
+    safeQuery("achievementCounts", () => getAchievementCounts(internalUserId), { unlocked: 0, total: 0 }),
+    safeQuery(
+      "mnnRecommendation",
+      () => getRecommendedChapter(internalUserId, currentJlptTarget, masteryMapPromise),
+      null
+    ),
+    safeQuery("leechSummary", () => getLeechSummary(internalUserId), FALLBACK_LEECH),
+    safeQuery(
+      "checkAndUpgradeJlpt",
+      () =>
+        checkAndUpgradeJlpt(internalUserId, {
+          currentLevel: currentJlptTarget,
+          masteryMap: masteryMapPromise,
+        }),
+      FALLBACK_UPGRADE
+    ),
   ]);
 
   // Default gamification values if row doesn't exist yet
@@ -231,6 +292,11 @@ export async function getDashboardData(
   // If upgraded, refresh the profile jlptTarget for this response
   if (jlptUpgrade) {
     userData.jlptTarget = upgradeResult.newLevel as typeof userData.jlptTarget;
+  }
+
+  const totalElapsed = Date.now() - overallStart;
+  if (totalElapsed > 3000) {
+    console.warn(`[dashboard] getDashboardData total elapsed: ${totalElapsed}ms`);
   }
 
   return {
