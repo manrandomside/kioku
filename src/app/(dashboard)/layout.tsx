@@ -23,7 +23,8 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // avatarUrl is resolved later after DB fetch; declared here for scope
+  // avatarUrl is resolved later after DB fetch; declared here for scope.
+  // Treat legacy external URLs (e.g. Google avatars) as null — only emoji avatars are valid.
   let dbAvatarUrl: string | null = null;
 
   // Fetch user preferences and check onboarding
@@ -50,7 +51,7 @@ export default async function DashboardLayout({
     redirect("/onboarding?from=dashboard");
   }
 
-  dbAvatarUrl = row.avatarUrl;
+  dbAvatarUrl = row.avatarUrl && !row.avatarUrl.startsWith("http") ? row.avatarUrl : null;
 
   if (row.displayMode === "kana") {
     displayMode = "kana";
@@ -59,11 +60,11 @@ export default async function DashboardLayout({
     autoPlayAudio = false;
   }
 
-  // Prefer DB avatarUrl (emoji or custom), fall back to OAuth avatar
+  // Avatar: only DB value (emoji preset) — external URLs (legacy Google avatars) ignored downstream.
   const userInfo = {
     email: user.email,
     displayName: user.user_metadata?.display_name ?? user.user_metadata?.full_name ?? user.user_metadata?.name,
-    avatarUrl: dbAvatarUrl ?? user.user_metadata?.avatar_url,
+    avatarUrl: dbAvatarUrl ?? undefined,
   };
 
   return (

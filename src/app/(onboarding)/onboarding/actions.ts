@@ -76,7 +76,7 @@ export async function completeOnboarding(data: OnboardingInput) {
           email: authUser.email!,
           displayName: validated.displayName,
           preferredName: validated.preferredName || null,
-          avatarUrl: authUser.user_metadata?.avatar_url ?? null,
+          avatarUrl: null,
           jlptTarget: validated.jlptTarget,
           dailyGoalXp: validated.dailyGoalXp,
           hirakataKnown: validated.hirakataKnown,

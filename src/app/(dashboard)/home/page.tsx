@@ -12,7 +12,7 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/queries/dashboard";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import { DailyProgressBars } from "@/components/gamification/daily-progress-bars";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
@@ -66,14 +66,9 @@ export default async function HomePage() {
                   {data.profile.avatarUrl}
                 </AvatarFallback>
               ) : (
-                <>
-                  {data.profile.avatarUrl ? (
-                    <AvatarImage src={data.profile.avatarUrl} alt={name} />
-                  ) : null}
-                  <AvatarFallback>
-                    {name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </>
+                <AvatarFallback>
+                  {name.charAt(0).toUpperCase()}
+                </AvatarFallback>
               )}
             </Avatar>
             <span className="absolute -bottom-1 -right-1 flex h-5 items-center justify-center rounded-full bg-[#248288] px-1.5 text-[10px] font-bold text-white ring-2 ring-card">

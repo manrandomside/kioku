@@ -88,12 +88,6 @@ export function AvatarPicker({ currentAvatar, displayName }: AvatarPickerProps) 
         <div className="relative flex size-24 items-center justify-center rounded-full bg-muted sm:size-28">
           {currentEmoji ? (
             <span className="text-5xl leading-none sm:text-6xl">{currentEmoji}</span>
-          ) : selected && selected.startsWith("http") ? (
-            <img
-              src={selected}
-              alt={displayName}
-              className="size-24 rounded-full object-cover sm:size-28"
-            />
           ) : (
             <span className="text-3xl font-bold text-muted-foreground sm:text-4xl">{initial}</span>
           )}

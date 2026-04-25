@@ -1,7 +1,7 @@
 // Kioku Service Worker
 // Cache First for static assets, Network First for API/HTML, offline fallback
 
-const CACHE_NAME = "kioku-v2";
+const CACHE_NAME = "kioku-v3";
 const OFFLINE_URL = "/offline";
 
 // Pre-cache these on install
