@@ -22,11 +22,17 @@ import {
 import { Logo } from "@/components/ui/logo";
 
 const InstallBanner = dynamic(
-  () => import("@/components/pwa/install-banner").then((mod) => ({ default: mod.InstallBanner })),
+  () =>
+    import("@/components/pwa/install-banner").then((mod) => ({
+      default: mod.InstallBanner,
+    })),
   { ssr: false },
 );
 const InstallTextTrigger = dynamic(
-  () => import("@/components/pwa/install-text-trigger").then((mod) => ({ default: mod.InstallTextTrigger })),
+  () =>
+    import("@/components/pwa/install-text-trigger").then((mod) => ({
+      default: mod.InstallTextTrigger,
+    })),
   { ssr: false },
 );
 
@@ -68,7 +74,13 @@ function FadeIn({
   );
 }
 
-function CountUpNumber({ target, suffix = "" }: { target: number; suffix?: string }) {
+function CountUpNumber({
+  target,
+  suffix = "",
+}: {
+  target: number;
+  suffix?: string;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const [value, setValue] = useState(0);
@@ -145,9 +157,24 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { num: "01", title: "Daftar Gratis", desc: "Buat akun dengan Google, GitHub, atau email. Selesaikan onboarding 30 detik untuk personalisasi.", icon: UserPlus },
-  { num: "02", title: "Pilih Bab & Mulai Belajar", desc: "Mulai dari Hiragana & Katakana, atau langsung ke kosakata MNN sesuai levelmu.", icon: BookOpen },
-  { num: "03", title: "Review & Kuasai", desc: "Algoritma FSRS mengingatkanmu kapan harus review. Semakin rutin, semakin cepat kamu menguasai.", icon: Brain },
+  {
+    num: "01",
+    title: "Daftar Gratis",
+    desc: "Buat akun dengan Google, atau email. Selesaikan onboarding 30 detik untuk personalisasi.",
+    icon: UserPlus,
+  },
+  {
+    num: "02",
+    title: "Pilih Bab & Mulai Belajar",
+    desc: "Mulai dari Hiragana & Katakana, atau langsung ke kosakata MNN sesuai levelmu.",
+    icon: BookOpen,
+  },
+  {
+    num: "03",
+    title: "Review & Kuasai",
+    desc: "Algoritma FSRS mengingatkanmu kapan harus review. Semakin rutin, semakin cepat kamu menguasai.",
+    icon: Brain,
+  },
 ];
 
 const STATS = [
@@ -158,8 +185,15 @@ const STATS = [
 ];
 
 const TECH = [
-  "Next.js 15", "React 19", "TypeScript", "Tailwind CSS", "Supabase",
-  "Drizzle ORM", "FSRS", "Vercel AI SDK", "Framer Motion",
+  "Next.js 15",
+  "React 19",
+  "TypeScript",
+  "Tailwind CSS",
+  "Supabase",
+  "Drizzle ORM",
+  "FSRS",
+  "Vercel AI SDK",
+  "Framer Motion",
 ];
 
 // ---------------------------------------------------------------------------
@@ -292,11 +326,19 @@ function FlashcardMockup() {
 
         {/* Card */}
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-background px-4 py-8">
-          <span className="font-jp text-sm text-muted-foreground">{"\u98DF\u3079\u308B"}</span>
-          <span className="font-jp text-4xl font-medium text-foreground">{"\u305F\u3079\u308B"}</span>
-          <span className="font-mono text-xs text-muted-foreground">taberu</span>
+          <span className="font-jp text-sm text-muted-foreground">
+            {"\u98DF\u3079\u308B"}
+          </span>
+          <span className="font-jp text-4xl font-medium text-foreground">
+            {"\u305F\u3079\u308B"}
+          </span>
+          <span className="font-mono text-xs text-muted-foreground">
+            taberu
+          </span>
           <div className="mt-2 h-px w-full bg-border" />
-          <span className="text-sm text-muted-foreground">Makan (Kelompok 2)</span>
+          <span className="text-sm text-muted-foreground">
+            Makan (Kelompok 2)
+          </span>
         </div>
 
         {/* Buttons */}
@@ -372,13 +414,21 @@ function PreviewTabs() {
         {tab === "flashcard" && (
           <div className="flex flex-col items-center gap-4 p-6 sm:p-10">
             <div className="w-full max-w-sm rounded-2xl border border-border/50 bg-background px-6 py-10 text-center">
-              <p className="font-jp text-sm text-muted-foreground">{"\u98DF\u3079\u308B"}</p>
-              <p className="mt-2 font-jp text-5xl font-medium text-foreground">{"\u305F\u3079\u308B"}</p>
-              <p className="mt-2 font-mono text-sm text-muted-foreground">taberu</p>
+              <p className="font-jp text-sm text-muted-foreground">
+                {"\u98DF\u3079\u308B"}
+              </p>
+              <p className="mt-2 font-jp text-5xl font-medium text-foreground">
+                {"\u305F\u3079\u308B"}
+              </p>
+              <p className="mt-2 font-mono text-sm text-muted-foreground">
+                taberu
+              </p>
               <div className="mx-auto mt-4 h-px w-2/3 bg-border" />
               <p className="mt-4 text-muted-foreground">Makan (Kelompok 2)</p>
             </div>
-            <p className="text-xs text-muted-foreground">Tap kartu untuk membalik</p>
+            <p className="text-xs text-muted-foreground">
+              Tap kartu untuk membalik
+            </p>
             <div className="flex w-full max-w-sm gap-3">
               <div className="flex-1 rounded-xl bg-red-500/10 py-3 text-center text-sm font-medium text-red-500">
                 Belum Paham
@@ -397,10 +447,16 @@ function PreviewTabs() {
               <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
                 <div className="h-full w-1/2 rounded-full bg-[#C2E959]" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground">10/20</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                10/20
+              </span>
             </div>
-            <p className="text-sm font-medium text-muted-foreground">Apa arti dari kata ini?</p>
-            <p className="text-center font-jp text-4xl font-medium text-foreground">{"\u304A\u306F\u3088\u3046\u3054\u3056\u3044\u307E\u3059"}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Apa arti dari kata ini?
+            </p>
+            <p className="text-center font-jp text-4xl font-medium text-foreground">
+              {"\u304A\u306F\u3088\u3046\u3054\u3056\u3044\u307E\u3059"}
+            </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="rounded-xl border-2 border-green-500 bg-green-500/10 px-4 py-3 text-sm font-medium text-green-600 dark:text-green-400">
                 Selamat pagi (sopan)
@@ -431,13 +487,24 @@ function PreviewTabs() {
               <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-border bg-muted px-4 py-3 text-sm text-foreground">
                 <p className="mb-2 font-medium">Pertanyaan bagus!</p>
                 <p className="text-muted-foreground">
-                  Secara sederhana: <span className="font-jp font-medium text-foreground">{"\u306F"}</span> (wa) menandai <strong>topik</strong> pembicaraan, sedangkan <span className="font-jp font-medium text-foreground">{"\u304C"}</span> (ga) menandai <strong>subjek gramatikal</strong> yang baru atau ditekankan...
+                  Secara sederhana:{" "}
+                  <span className="font-jp font-medium text-foreground">
+                    {"\u306F"}
+                  </span>{" "}
+                  (wa) menandai <strong>topik</strong> pembicaraan, sedangkan{" "}
+                  <span className="font-jp font-medium text-foreground">
+                    {"\u304C"}
+                  </span>{" "}
+                  (ga) menandai <strong>subjek gramatikal</strong> yang baru
+                  atau ditekankan...
                 </p>
               </div>
             </div>
             {/* Input bar */}
             <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3">
-              <span className="flex-1 text-sm text-muted-foreground">Ketik pertanyaan...</span>
+              <span className="flex-1 text-sm text-muted-foreground">
+                Ketik pertanyaan...
+              </span>
               <ArrowRight className="size-4 text-muted-foreground" />
             </div>
           </div>
@@ -450,19 +517,63 @@ function PreviewTabs() {
 function ForgettingCurve() {
   return (
     <div className="w-full max-w-md">
-      <svg viewBox="0 0 400 200" className="w-full" role="img" aria-label="Forgetting curve comparison">
+      <svg
+        viewBox="0 0 400 200"
+        className="w-full"
+        role="img"
+        aria-label="Forgetting curve comparison"
+      >
         {/* Grid lines */}
-        <line x1="50" y1="20" x2="50" y2="180" stroke="currentColor" className="text-border" strokeWidth="1" />
-        <line x1="50" y1="180" x2="380" y2="180" stroke="currentColor" className="text-border" strokeWidth="1" />
+        <line
+          x1="50"
+          y1="20"
+          x2="50"
+          y2="180"
+          stroke="currentColor"
+          className="text-border"
+          strokeWidth="1"
+        />
+        <line
+          x1="50"
+          y1="180"
+          x2="380"
+          y2="180"
+          stroke="currentColor"
+          className="text-border"
+          strokeWidth="1"
+        />
         {[60, 100, 140].map((y) => (
-          <line key={y} x1="50" y1={y} x2="380" y2={y} stroke="currentColor" className="text-border" strokeWidth="0.5" strokeDasharray="4" />
+          <line
+            key={y}
+            x1="50"
+            y1={y}
+            x2="380"
+            y2={y}
+            stroke="currentColor"
+            className="text-border"
+            strokeWidth="0.5"
+            strokeDasharray="4"
+          />
         ))}
 
         {/* Labels */}
-        <text x="25" y="25" className="fill-muted-foreground text-[10px]">100%</text>
-        <text x="25" y="105" className="fill-muted-foreground text-[10px]">50%</text>
-        <text x="25" y="185" className="fill-muted-foreground text-[10px]">0%</text>
-        <text x="200" y="198" className="fill-muted-foreground text-[10px]" textAnchor="middle">Waktu</text>
+        <text x="25" y="25" className="fill-muted-foreground text-[10px]">
+          100%
+        </text>
+        <text x="25" y="105" className="fill-muted-foreground text-[10px]">
+          50%
+        </text>
+        <text x="25" y="185" className="fill-muted-foreground text-[10px]">
+          0%
+        </text>
+        <text
+          x="200"
+          y="198"
+          className="fill-muted-foreground text-[10px]"
+          textAnchor="middle"
+        >
+          Waktu
+        </text>
 
         {/* Without review — smooth decay */}
         <path
@@ -483,10 +594,29 @@ function ForgettingCurve() {
         />
 
         {/* Legend */}
-        <line x1="220" y1="148" x2="240" y2="148" stroke="#EF4444" strokeWidth="2.5" opacity="0.7" />
-        <text x="245" y="152" className="fill-muted-foreground text-[10px]">Tanpa Review</text>
-        <line x1="220" y1="164" x2="240" y2="164" stroke="#C2E959" strokeWidth="2.5" />
-        <text x="245" y="168" className="fill-muted-foreground text-[10px]">Dengan FSRS</text>
+        <line
+          x1="220"
+          y1="148"
+          x2="240"
+          y2="148"
+          stroke="#EF4444"
+          strokeWidth="2.5"
+          opacity="0.7"
+        />
+        <text x="245" y="152" className="fill-muted-foreground text-[10px]">
+          Tanpa Review
+        </text>
+        <line
+          x1="220"
+          y1="164"
+          x2="240"
+          y2="164"
+          stroke="#C2E959"
+          strokeWidth="2.5"
+        />
+        <text x="245" y="168" className="fill-muted-foreground text-[10px]">
+          Dengan FSRS
+        </text>
       </svg>
     </div>
   );
@@ -499,320 +629,402 @@ function ForgettingCurve() {
 export default function LandingPage() {
   return (
     <LazyMotion features={domAnimation} strict>
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <Navbar />
+      <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+        <Navbar />
 
-      {/* ========= SECTION 2: HERO ========= */}
-      <section className="relative flex min-h-screen items-center overflow-hidden pt-16">
-        {/* Gradient mesh background */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute left-[10%] top-[30%] h-[600px] w-[600px] rounded-full bg-[#A6E2AC] opacity-[0.12] blur-[120px] dark:opacity-[0.06]" />
-          <div className="absolute right-[10%] top-[10%] h-[500px] w-[500px] rounded-full bg-[#C2E959] opacity-[0.10] blur-[120px] dark:opacity-[0.05]" />
-          <div className="absolute bottom-[10%] left-[40%] h-[400px] w-[400px] rounded-full bg-[#248288] opacity-[0.08] blur-[120px] dark:opacity-[0.04]" />
-        </div>
+        {/* ========= SECTION 2: HERO ========= */}
+        <section className="relative flex min-h-screen items-center overflow-hidden pt-16">
+          {/* Gradient mesh background */}
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute left-[10%] top-[30%] h-[600px] w-[600px] rounded-full bg-[#A6E2AC] opacity-[0.12] blur-[120px] dark:opacity-[0.06]" />
+            <div className="absolute right-[10%] top-[10%] h-[500px] w-[500px] rounded-full bg-[#C2E959] opacity-[0.10] blur-[120px] dark:opacity-[0.05]" />
+            <div className="absolute bottom-[10%] left-[40%] h-[400px] w-[400px] rounded-full bg-[#248288] opacity-[0.08] blur-[120px] dark:opacity-[0.04]" />
+          </div>
 
-        {/* Floating kanji decorations */}
-        <div className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp" aria-hidden="true">
-          <span className="absolute left-[8%] top-[15%] text-7xl text-foreground/[0.03]">{"\u8A18"}</span>
-          <span className="absolute right-[12%] top-[25%] text-8xl text-foreground/[0.03]">{"\u61B6"}</span>
-          <span className="absolute bottom-[20%] left-[15%] text-6xl text-foreground/[0.03]">{"\u8A9E"}</span>
-          <span className="absolute bottom-[30%] right-[20%] text-9xl text-foreground/[0.02]">{"\u5B66"}</span>
-        </div>
+          {/* Floating kanji decorations */}
+          <div
+            className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp"
+            aria-hidden="true"
+          >
+            <span className="absolute left-[8%] top-[15%] text-7xl text-foreground/[0.03]">
+              {"\u8A18"}
+            </span>
+            <span className="absolute right-[12%] top-[25%] text-8xl text-foreground/[0.03]">
+              {"\u61B6"}
+            </span>
+            <span className="absolute bottom-[20%] left-[15%] text-6xl text-foreground/[0.03]">
+              {"\u8A9E"}
+            </span>
+            <span className="absolute bottom-[30%] right-[20%] text-9xl text-foreground/[0.02]">
+              {"\u5B66"}
+            </span>
+          </div>
 
-        <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8">
-          {/* Left: Text */}
-          <div className="flex flex-col items-start gap-6 pt-8 lg:pt-0">
-            <FadeIn>
-              <span className="inline-flex rounded-full border border-[#C2E959]/30 bg-[#C2E959]/10 px-4 py-1.5 text-xs font-semibold text-[#C2E959]">
-                Gratis Selamanya &mdash; Tanpa Kartu Kredit
-              </span>
+          <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8">
+            {/* Left: Text */}
+            <div className="flex flex-col items-start gap-6 pt-8 lg:pt-0">
+              <FadeIn>
+                <span className="inline-flex rounded-full border border-[#C2E959]/30 bg-[#C2E959]/10 px-4 py-1.5 text-xs font-semibold text-[#C2E959]">
+                  Gratis Selamanya &mdash; Tanpa Kartu Kredit
+                </span>
+              </FadeIn>
+
+              <FadeIn delay={0.1}>
+                <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+                  Kuasai Kosakata Jepang dengan Cara yang{" "}
+                  <span className="text-[#C2E959]">Terbukti Saintifik</span>
+                </h1>
+              </FadeIn>
+
+              <FadeIn delay={0.2}>
+                <p className="max-w-lg text-lg leading-relaxed text-muted-foreground">
+                  Platform belajar bahasa Jepang gratis untuk penutur Indonesia.
+                  Flashcard cerdas, quiz interaktif, dan AI tutor &mdash; semua
+                  dalam satu tempat.
+                </p>
+              </FadeIn>
+
+              <FadeIn delay={0.3}>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/register"
+                    className="flex items-center gap-2 rounded-full bg-[#C2E959] px-8 py-4 text-base font-bold text-[#0A3A3A] transition-[background-color,box-shadow] hover:bg-[#C2E959]/80 hover:shadow-lg hover:shadow-[#C2E959]/20"
+                  >
+                    Mulai Belajar Gratis
+                    <ArrowRight className="size-4" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-2 rounded-full border border-border px-6 py-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    Sudah Punya Akun? Masuk
+                  </Link>
+                </div>
+              </FadeIn>
+            </div>
+
+            {/* Right: Mockup */}
+            <FadeIn
+              delay={0.4}
+              direction="right"
+              className="flex justify-center lg:justify-end"
+            >
+              <FlashcardMockup />
             </FadeIn>
+          </div>
+        </section>
 
-            <FadeIn delay={0.1}>
-              <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-                Kuasai Kosakata Jepang dengan Cara yang{" "}
-                <span className="text-[#C2E959]">Terbukti Saintifik</span>
-              </h1>
-            </FadeIn>
+        {/* ========= SECTION 3: STATS BAR ========= */}
+        <section className="relative z-10 border-y border-border/50 bg-card/80 backdrop-blur-xl">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4 lg:px-8">
+            {STATS.map((s, i) => (
+              <FadeIn
+                key={s.label}
+                delay={i * 0.1}
+                className="flex flex-col items-center gap-1 text-center"
+              >
+                <span className="font-display text-3xl font-bold text-[#C2E959] sm:text-4xl">
+                  <CountUpNumber target={s.value} suffix={s.suffix} />
+                </span>
+                <span className="text-sm text-muted-foreground">{s.label}</span>
+              </FadeIn>
+            ))}
+          </div>
+        </section>
 
-            <FadeIn delay={0.2}>
-              <p className="max-w-lg text-lg leading-relaxed text-muted-foreground">
-                Platform belajar bahasa Jepang gratis untuk penutur Indonesia. Flashcard cerdas, quiz interaktif, dan AI tutor &mdash; semua dalam satu tempat.
+        {/* ========= SECTION 4: FEATURES GRID ========= */}
+        <section id="fitur" className="scroll-mt-20 py-24 sm:py-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
+              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                Semua yang Kamu Butuhkan untuk Menguasai Bahasa Jepang
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Fitur lengkap yang dirancang khusus untuk penutur Indonesia
               </p>
             </FadeIn>
 
-            <FadeIn delay={0.3}>
-              <div className="flex flex-wrap gap-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
+              {FEATURES.map((f, i) => (
+                <FadeIn key={f.title} delay={i * 0.08}>
+                  <div className="group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-[border-color,background-color,box-shadow] hover:border-border hover:bg-card hover:shadow-lg">
+                    <div
+                      className={`flex size-12 items-center justify-center rounded-xl ${f.bg}`}
+                    >
+                      <f.icon className={`size-6 ${f.color}`} />
+                    </div>
+                    <h3 className="text-lg font-semibold">{f.title}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {f.desc}
+                    </p>
+                  </div>
+                </FadeIn>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ========= SECTION 5: HOW IT WORKS ========= */}
+        <section
+          id="cara-kerja"
+          className="scroll-mt-20 border-y border-border/50 bg-muted/30 py-24 sm:py-32"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
+              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                Mulai dalam 3 Langkah
+              </h2>
+            </FadeIn>
+
+            <div className="relative grid gap-10 md:grid-cols-3 md:gap-8">
+              {/* Connector line (desktop only) */}
+              <div className="pointer-events-none absolute left-0 right-0 top-10 hidden h-0.5 bg-gradient-to-r from-transparent via-border to-transparent md:block" />
+
+              {STEPS.map((step, i) => (
+                <FadeIn
+                  key={step.num}
+                  delay={i * 0.15}
+                  className="relative flex flex-col items-center text-center"
+                >
+                  <div className="relative z-10 mb-6 flex size-20 items-center justify-center rounded-2xl border border-border/50 bg-card shadow-sm">
+                    <span className="font-display text-2xl font-bold text-[#C2E959]">
+                      {step.num}
+                    </span>
+                  </div>
+                  <step.icon className="mb-3 size-5 text-muted-foreground" />
+                  <h3 className="mb-2 text-lg font-semibold">{step.title}</h3>
+                  <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+                    {step.desc}
+                  </p>
+                </FadeIn>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ========= SECTION 6: METHOD / SCIENCE ========= */}
+        <section id="metode" className="scroll-mt-20 py-24 sm:py-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+              <FadeIn>
+                <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                  Ditenagai Spaced Repetition yang{" "}
+                  <span className="text-[#C2E959]">Terbukti Saintifik</span>
+                </h2>
+                <div className="mt-6 flex flex-col gap-4 text-muted-foreground">
+                  <p>
+                    Kioku menggunakan algoritma{" "}
+                    <strong className="text-foreground">FSRS</strong> (Free
+                    Spaced Repetition Scheduler), sistem yang sama digunakan
+                    Anki versi terbaru.
+                  </p>
+                  <p>
+                    Berbeda dengan metode hafalan biasa, FSRS menghitung waktu
+                    review optimal berdasarkan{" "}
+                    <strong className="text-foreground">
+                      kekuatan memorimu
+                    </strong>
+                    .
+                  </p>
+                  <p>
+                    Hasilnya? Kamu bisa{" "}
+                    <strong className="text-foreground">
+                      mengingat lebih banyak kata
+                    </strong>{" "}
+                    dengan waktu belajar yang lebih sedikit.
+                  </p>
+                </div>
+              </FadeIn>
+
+              <FadeIn
+                delay={0.2}
+                direction="right"
+                className="flex justify-center"
+              >
+                <ForgettingCurve />
+              </FadeIn>
+            </div>
+          </div>
+        </section>
+
+        {/* ========= SECTION 7: APP PREVIEW ========= */}
+        <section
+          id="preview"
+          className="scroll-mt-20 border-y border-border/50 bg-muted/30 py-24 sm:py-32"
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <FadeIn className="mx-auto mb-12 max-w-2xl text-center">
+              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                Lihat Kioku dalam Aksi
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Antarmuka yang bersih dan intuitif, dirancang untuk fokus
+                belajar
+              </p>
+            </FadeIn>
+
+            <FadeIn delay={0.2}>
+              <PreviewTabs />
+            </FadeIn>
+          </div>
+        </section>
+
+        {/* ========= SECTION 8: TECH STACK ========= */}
+        <section className="py-16 sm:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <FadeIn className="mb-8 text-center">
+              <p className="text-sm font-medium text-muted-foreground">
+                Dibangun dengan Teknologi Modern
+              </p>
+            </FadeIn>
+            <FadeIn
+              delay={0.1}
+              className="flex flex-wrap justify-center gap-2 sm:gap-3"
+            >
+              {TECH.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full border border-border/50 bg-card px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                >
+                  {t}
+                </span>
+              ))}
+            </FadeIn>
+          </div>
+        </section>
+
+        {/* ========= SECTION 9: FINAL CTA ========= */}
+        <section className="relative overflow-hidden py-24 sm:py-32">
+          {/* Background */}
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A3A3A]/5 to-[#0A3A3A]/10 dark:via-[#0A3A3A]/20 dark:to-[#0A3A3A]/40" />
+            <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#C2E959] opacity-[0.04] blur-[150px]" />
+          </div>
+
+          {/* Floating kanji */}
+          <div
+            className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp"
+            aria-hidden="true"
+          >
+            <span className="absolute left-[5%] top-[20%] text-8xl text-foreground/[0.02]">
+              {"\u8A18"}
+            </span>
+            <span className="absolute right-[8%] bottom-[15%] text-9xl text-foreground/[0.02]">
+              {"\u61B6"}
+            </span>
+          </div>
+
+          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+            <FadeIn>
+              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+                Siap Mulai Perjalanan Bahasa Jepangmu?
+              </h2>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <p className="mt-6 text-lg text-muted-foreground">
+                Gratis selamanya. Tanpa iklan. Tanpa batasan.
+              </p>
+            </FadeIn>
+            <FadeIn delay={0.2}>
+              <div className="mt-10 flex flex-wrap justify-center gap-4">
                 <Link
                   href="/register"
                   className="flex items-center gap-2 rounded-full bg-[#C2E959] px-8 py-4 text-base font-bold text-[#0A3A3A] transition-[background-color,box-shadow] hover:bg-[#C2E959]/80 hover:shadow-lg hover:shadow-[#C2E959]/20"
                 >
-                  Mulai Belajar Gratis
+                  Mulai Belajar Sekarang
                   <ArrowRight className="size-4" />
                 </Link>
-                <Link
-                  href="/login"
+                <a
+                  href="#fitur"
                   className="flex items-center gap-2 rounded-full border border-border px-6 py-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  Sudah Punya Akun? Masuk
-                </Link>
+                  Pelajari Lebih Lanjut
+                </a>
               </div>
             </FadeIn>
-          </div>
-
-          {/* Right: Mockup */}
-          <FadeIn delay={0.4} direction="right" className="flex justify-center lg:justify-end">
-            <FlashcardMockup />
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* ========= SECTION 3: STATS BAR ========= */}
-      <section className="relative z-10 border-y border-border/50 bg-card/80 backdrop-blur-xl">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4 lg:px-8">
-          {STATS.map((s, i) => (
-            <FadeIn key={s.label} delay={i * 0.1} className="flex flex-col items-center gap-1 text-center">
-              <span className="font-display text-3xl font-bold text-[#C2E959] sm:text-4xl">
-                <CountUpNumber target={s.value} suffix={s.suffix} />
-              </span>
-              <span className="text-sm text-muted-foreground">{s.label}</span>
+            <FadeIn delay={0.3}>
+              <InstallTextTrigger />
             </FadeIn>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* ========= SECTION 4: FEATURES GRID ========= */}
-      <section id="fitur" className="scroll-mt-20 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Semua yang Kamu Butuhkan untuk Menguasai Bahasa Jepang
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Fitur lengkap yang dirancang khusus untuk penutur Indonesia
-            </p>
-          </FadeIn>
+        {/* ========= SECTION 10: FOOTER ========= */}
+        <footer className="border-t border-border/50 bg-card">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="grid gap-10 md:grid-cols-3">
+              {/* Col 1: Logo + description */}
+              <div>
+                <Logo size="md" />
+                <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+                  Platform belajar kosakata Jepang gratis untuk penutur
+                  Indonesia. Dibangun dengan cinta dan teknologi modern.
+                </p>
+              </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
-            {FEATURES.map((f, i) => (
-              <FadeIn key={f.title} delay={i * 0.08}>
-                <div className="group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-[border-color,background-color,box-shadow] hover:border-border hover:bg-card hover:shadow-lg">
-                  <div className={`flex size-12 items-center justify-center rounded-xl ${f.bg}`}>
-                    <f.icon className={`size-6 ${f.color}`} />
-                  </div>
-                  <h3 className="text-lg font-semibold">{f.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+              {/* Col 2: Navigation */}
+              <div>
+                <p className="mb-4 text-sm font-semibold text-foreground">
+                  Navigasi
+                </p>
+                <div className="flex flex-col gap-2.5">
+                  {[
+                    { label: "Fitur", href: "#fitur" },
+                    { label: "Cara Kerja", href: "#cara-kerja" },
+                    { label: "Metode", href: "#metode" },
+                    { label: "Masuk", href: "/login" },
+                    { label: "Daftar", href: "/register" },
+                  ].map((l) =>
+                    l.href.startsWith("/") ? (
+                      <Link
+                        key={l.label}
+                        href={l.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {l.label}
+                      </Link>
+                    ) : (
+                      <a
+                        key={l.label}
+                        href={l.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {l.label}
+                      </a>
+                    ),
+                  )}
                 </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========= SECTION 5: HOW IT WORKS ========= */}
-      <section id="cara-kerja" className="scroll-mt-20 border-y border-border/50 bg-muted/30 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeIn className="mx-auto mb-16 max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Mulai dalam 3 Langkah
-            </h2>
-          </FadeIn>
-
-          <div className="relative grid gap-10 md:grid-cols-3 md:gap-8">
-            {/* Connector line (desktop only) */}
-            <div className="pointer-events-none absolute left-0 right-0 top-10 hidden h-0.5 bg-gradient-to-r from-transparent via-border to-transparent md:block" />
-
-            {STEPS.map((step, i) => (
-              <FadeIn key={step.num} delay={i * 0.15} className="relative flex flex-col items-center text-center">
-                <div className="relative z-10 mb-6 flex size-20 items-center justify-center rounded-2xl border border-border/50 bg-card shadow-sm">
-                  <span className="font-display text-2xl font-bold text-[#C2E959]">{step.num}</span>
-                </div>
-                <step.icon className="mb-3 size-5 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-semibold">{step.title}</h3>
-                <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========= SECTION 6: METHOD / SCIENCE ========= */}
-      <section id="metode" className="scroll-mt-20 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            <FadeIn>
-              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-                Ditenagai Spaced Repetition yang{" "}
-                <span className="text-[#C2E959]">Terbukti Saintifik</span>
-              </h2>
-              <div className="mt-6 flex flex-col gap-4 text-muted-foreground">
-                <p>
-                  Kioku menggunakan algoritma <strong className="text-foreground">FSRS</strong> (Free Spaced Repetition Scheduler), sistem yang sama digunakan Anki versi terbaru.
-                </p>
-                <p>
-                  Berbeda dengan metode hafalan biasa, FSRS menghitung waktu review optimal berdasarkan <strong className="text-foreground">kekuatan memorimu</strong>.
-                </p>
-                <p>
-                  Hasilnya? Kamu bisa <strong className="text-foreground">mengingat lebih banyak kata</strong> dengan waktu belajar yang lebih sedikit.
-                </p>
               </div>
-            </FadeIn>
 
-            <FadeIn delay={0.2} direction="right" className="flex justify-center">
-              <ForgettingCurve />
-            </FadeIn>
-          </div>
-        </div>
-      </section>
-
-      {/* ========= SECTION 7: APP PREVIEW ========= */}
-      <section id="preview" className="scroll-mt-20 border-y border-border/50 bg-muted/30 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeIn className="mx-auto mb-12 max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Lihat Kioku dalam Aksi
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Antarmuka yang bersih dan intuitif, dirancang untuk fokus belajar
-            </p>
-          </FadeIn>
-
-          <FadeIn delay={0.2}>
-            <PreviewTabs />
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* ========= SECTION 8: TECH STACK ========= */}
-      <section className="py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeIn className="mb-8 text-center">
-            <p className="text-sm font-medium text-muted-foreground">Dibangun dengan Teknologi Modern</p>
-          </FadeIn>
-          <FadeIn delay={0.1} className="flex flex-wrap justify-center gap-2 sm:gap-3">
-            {TECH.map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-border/50 bg-card px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
-              >
-                {t}
-              </span>
-            ))}
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* ========= SECTION 9: FINAL CTA ========= */}
-      <section className="relative overflow-hidden py-24 sm:py-32">
-        {/* Background */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A3A3A]/5 to-[#0A3A3A]/10 dark:via-[#0A3A3A]/20 dark:to-[#0A3A3A]/40" />
-          <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#C2E959] opacity-[0.04] blur-[150px]" />
-        </div>
-
-        {/* Floating kanji */}
-        <div className="pointer-events-none absolute inset-0 -z-10 select-none overflow-hidden font-jp" aria-hidden="true">
-          <span className="absolute left-[5%] top-[20%] text-8xl text-foreground/[0.02]">{"\u8A18"}</span>
-          <span className="absolute right-[8%] bottom-[15%] text-9xl text-foreground/[0.02]">{"\u61B6"}</span>
-        </div>
-
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <FadeIn>
-            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-              Siap Mulai Perjalanan Bahasa Jepangmu?
-            </h2>
-          </FadeIn>
-          <FadeIn delay={0.1}>
-            <p className="mt-6 text-lg text-muted-foreground">
-              Gratis selamanya. Tanpa iklan. Tanpa batasan.
-            </p>
-          </FadeIn>
-          <FadeIn delay={0.2}>
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Link
-                href="/register"
-                className="flex items-center gap-2 rounded-full bg-[#C2E959] px-8 py-4 text-base font-bold text-[#0A3A3A] transition-[background-color,box-shadow] hover:bg-[#C2E959]/80 hover:shadow-lg hover:shadow-[#C2E959]/20"
-              >
-                Mulai Belajar Sekarang
-                <ArrowRight className="size-4" />
-              </Link>
-              <a
-                href="#fitur"
-                className="flex items-center gap-2 rounded-full border border-border px-6 py-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                Pelajari Lebih Lanjut
-              </a>
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.3}>
-            <InstallTextTrigger />
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* ========= SECTION 10: FOOTER ========= */}
-      <footer className="border-t border-border/50 bg-card">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid gap-10 md:grid-cols-3">
-            {/* Col 1: Logo + description */}
-            <div>
-              <Logo size="md" />
-              <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-                Platform belajar kosakata Jepang gratis untuk penutur Indonesia. Dibangun dengan cinta dan teknologi modern.
-              </p>
-            </div>
-
-            {/* Col 2: Navigation */}
-            <div>
-              <p className="mb-4 text-sm font-semibold text-foreground">Navigasi</p>
-              <div className="flex flex-col gap-2.5">
-                {[
-                  { label: "Fitur", href: "#fitur" },
-                  { label: "Cara Kerja", href: "#cara-kerja" },
-                  { label: "Metode", href: "#metode" },
-                  { label: "Masuk", href: "/login" },
-                  { label: "Daftar", href: "/register" },
-                ].map((l) =>
-                  l.href.startsWith("/") ? (
-                    <Link key={l.label} href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                      {l.label}
-                    </Link>
-                  ) : (
-                    <a key={l.label} href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                      {l.label}
-                    </a>
-                  )
-                )}
+              {/* Col 3: Tech */}
+              <div>
+                <p className="mb-4 text-sm font-semibold text-foreground">
+                  Project
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Dibangun sebagai project portfolio fullstack + AI.
+                </p>
+                <a
+                  href="https://github.com/manrandomside/kioku"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Github className="size-4" />
+                  GitHub
+                </a>
               </div>
             </div>
 
-            {/* Col 3: Tech */}
-            <div>
-              <p className="mb-4 text-sm font-semibold text-foreground">Project</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Dibangun sebagai project portfolio fullstack + AI.
-              </p>
-              <a
-                href="https://github.com/manrandomside/kioku"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Github className="size-4" />
-                GitHub
-              </a>
+            {/* Bottom bar */}
+            <div className="mt-10 border-t border-border/50 pt-6 text-center text-xs text-muted-foreground">
+              &copy; 2026 Kioku. Dibuat dengan cinta untuk pembelajar bahasa
+              Jepang Indonesia.
             </div>
           </div>
+        </footer>
 
-          {/* Bottom bar */}
-          <div className="mt-10 border-t border-border/50 pt-6 text-center text-xs text-muted-foreground">
-            &copy; 2026 Kioku. Dibuat dengan cinta untuk pembelajar bahasa Jepang Indonesia.
-          </div>
-        </div>
-      </footer>
-
-      <InstallBanner variant="landing" />
-    </div>
+        <InstallBanner variant="landing" />
+      </div>
     </LazyMotion>
   );
 }
