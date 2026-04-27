@@ -215,22 +215,18 @@ export async function getDashboardData(
     srsStats,
     totalMasteredWords,
     vocabAndChapterCounts,
-    lastQuizScore,
-    recentAchievementRows,
-    achievementCounts,
+    achievementData,
     mnnRecommendation,
     leechSummary,
     upgradeResult,
   ] = await Promise.all([
     gamificationWithValidationPromise,
     masteryMapPromise,
-    safeQuery("quizStats", () => getQuizStatsForDashboard(internalUserId), { completed: 0, avgScore: 0 }),
+    safeQuery("quizStats", () => getQuizStatsForDashboard(internalUserId), { completed: 0, avgScore: 0, lastScore: null }),
     safeQuery("srsStats", () => getSrsStats(internalUserId), FALLBACK_SRS_STATS),
     safeQuery("totalMasteredWords", () => getTotalQuizMasteredWords(internalUserId), 0),
     safeQuery("vocabAndChapterCounts", () => getVocabAndChapterCounts(), FALLBACK_VOCAB_COUNTS),
-    safeQuery("lastQuizScore", () => getLastQuizScore(internalUserId), null),
-    safeQuery("recentAchievements", () => getRecentAchievements(internalUserId, 5), []),
-    safeQuery("achievementCounts", () => getAchievementCounts(internalUserId), { unlocked: 0, total: 0 }),
+    safeQuery("achievements", () => getAchievementData(internalUserId), { recent: [], counts: { unlocked: 0, total: 0 } }),
     safeQuery(
       "mnnRecommendation",
       () => getRecommendedChapter(internalUserId, currentJlptTarget, masteryMapPromise),
@@ -336,11 +332,11 @@ export async function getDashboardData(
       totalChapters: vocabAndChapterCounts.totalChapters,
       quizCompleted: quizStats.completed,
       quizAvgScore: quizStats.avgScore,
-      lastQuizScore,
+      lastQuizScore: quizStats.lastScore,
     },
     srs: srsStats,
-    recentAchievements: recentAchievementRows,
-    totalAchievements: achievementCounts,
+    recentAchievements: achievementData.recent,
+    totalAchievements: achievementData.counts,
     mnnRecommendation,
     jlptUpgrade,
     leechCount: leechSummary.totalLeechCards,
@@ -349,44 +345,55 @@ export async function getDashboardData(
 }
 
 async function getQuizStatsForDashboard(userId: string) {
-  // Combine count + avg into a single query — same filter, no reason to run twice
-  const [row] = await db
-    .select({
-      count: count(),
-      avg: avg(quizSession.scorePercent),
-    })
-    .from(quizSession)
-    .where(
-      and(eq(quizSession.userId, userId), eq(quizSession.isCompleted, true))
-    );
+  // Fetch count + avg + last score in parallel (2 queries, same connection context)
+  const [[row], [lastRow]] = await Promise.all([
+    db
+      .select({
+        count: count(),
+        avg: avg(quizSession.scorePercent),
+      })
+      .from(quizSession)
+      .where(
+        and(eq(quizSession.userId, userId), eq(quizSession.isCompleted, true))
+      ),
+    db
+      .select({ scorePercent: quizSession.scorePercent })
+      .from(quizSession)
+      .where(
+        and(
+          eq(quizSession.userId, userId),
+          eq(quizSession.isCompleted, true),
+          isNotNull(quizSession.chapterId)
+        )
+      )
+      .orderBy(desc(quizSession.completedAt))
+      .limit(1),
+  ]);
 
   return {
     completed: row?.count ?? 0,
     avgScore: row?.avg ? Math.round(Number(row.avg)) : 0,
+    lastScore: lastRow?.scorePercent != null ? Math.round(lastRow.scorePercent) : null,
   };
 }
 
-async function getRecentAchievements(userId: string, limit: number) {
-  const rows = await db
-    .select({
-      id: achievement.id,
-      name: achievement.name,
-      icon: achievement.icon,
-      badgeColor: achievement.badgeColor,
-      xpReward: achievement.xpReward,
-      unlockedAt: achievementUnlock.unlockedAt,
-    })
-    .from(achievementUnlock)
-    .innerJoin(achievement, eq(achievementUnlock.achievementId, achievement.id))
-    .where(eq(achievementUnlock.userId, userId))
-    .orderBy(desc(achievementUnlock.unlockedAt))
-    .limit(limit);
-
-  return rows;
-}
-
-async function getAchievementCounts(userId: string) {
-  const [[totalResult], [unlockedResult]] = await Promise.all([
+async function getAchievementData(userId: string) {
+  // Combine recent achievements + counts into a single function to reduce connection usage
+  const [recentRows, [totalResult], [unlockedResult]] = await Promise.all([
+    db
+      .select({
+        id: achievement.id,
+        name: achievement.name,
+        icon: achievement.icon,
+        badgeColor: achievement.badgeColor,
+        xpReward: achievement.xpReward,
+        unlockedAt: achievementUnlock.unlockedAt,
+      })
+      .from(achievementUnlock)
+      .innerJoin(achievement, eq(achievementUnlock.achievementId, achievement.id))
+      .where(eq(achievementUnlock.userId, userId))
+      .orderBy(desc(achievementUnlock.unlockedAt))
+      .limit(5),
     db.select({ count: count() }).from(achievement),
     db
       .select({ count: count() })
@@ -395,8 +402,11 @@ async function getAchievementCounts(userId: string) {
   ]);
 
   return {
-    unlocked: unlockedResult.count,
-    total: totalResult.count,
+    recent: recentRows,
+    counts: {
+      unlocked: unlockedResult.count,
+      total: totalResult.count,
+    },
   };
 }
 
@@ -424,23 +434,6 @@ async function getVocabAndChapterCounts() {
     totalChapters: chapters.length,
     chapterVocabMap,
   };
-}
-
-async function getLastQuizScore(userId: string): Promise<number | null> {
-  const [row] = await db
-    .select({ scorePercent: quizSession.scorePercent })
-    .from(quizSession)
-    .where(
-      and(
-        eq(quizSession.userId, userId),
-        eq(quizSession.isCompleted, true),
-        isNotNull(quizSession.chapterId)
-      )
-    )
-    .orderBy(desc(quizSession.completedAt))
-    .limit(1);
-
-  return row?.scorePercent != null ? Math.round(row.scorePercent) : null;
 }
 
 async function getRecommendedChapter(

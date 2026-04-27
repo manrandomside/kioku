@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { LazyMotion, domAnimation, m, useInView } from "framer-motion";
+import { LazyMotion, domAnimation, m, useInView, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
   Layers,
@@ -310,11 +310,49 @@ function Navbar() {
   );
 }
 
+const HERO_VOCAB = [
+  { kanji: null, reading: "\u308F\u305F\u3057", romaji: "watashi", meaning: "Saya (Bab 1)" },
+  { kanji: "\u5148\u751F", reading: "\u305B\u3093\u305B\u3044", romaji: "sensei", meaning: "Guru (Bab 1)" },
+  { kanji: null, reading: "\u3053\u308C", romaji: "kore", meaning: "Ini (Bab 2)" },
+  { kanji: "\u65E5\u672C\u8A9E", reading: "\u306B\u307B\u3093\u3054", romaji: "nihongo", meaning: "Bahasa Jepang (Bab 2)" },
+  { kanji: "\u5B66\u751F", reading: "\u304C\u304F\u305B\u3044", romaji: "gakusei", meaning: "Mahasiswa (Bab 1)" },
+  { kanji: "\u53CB\u9054", reading: "\u3068\u3082\u3060\u3061", romaji: "tomodachi", meaning: "Teman (Bab 1)" },
+];
+
 function FlashcardMockup() {
+  const [vocabIndex, setVocabIndex] = useState(0);
+  const [hasEnteredView, setHasEnteredView] = useState(false);
+  const mockupRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(mockupRef, { once: true, margin: "-100px" });
+
+  // Start cycling after initial entrance animation completes
+  useEffect(() => {
+    if (!inView) return;
+    const entranceTimer = setTimeout(() => setHasEnteredView(true), 2200);
+    return () => clearTimeout(entranceTimer);
+  }, [inView]);
+
+  useEffect(() => {
+    if (!hasEnteredView) return;
+    const interval = setInterval(() => {
+      setVocabIndex((prev) => (prev + 1) % HERO_VOCAB.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [hasEnteredView]);
+
+  const vocab = HERO_VOCAB[vocabIndex];
+
   return (
-    <div className="relative mx-auto w-[280px] sm:w-[320px]">
-      {/* Phone frame */}
-      <div className="overflow-hidden rounded-[2rem] border-2 border-border/50 bg-card p-3 shadow-2xl">
+    <div ref={mockupRef} className="relative mx-auto w-[280px] sm:w-[320px]">
+      {/* Ambient glow behind the phone */}
+      <div className="pointer-events-none absolute -inset-8 -z-10 animate-[glow-pulse_4s_ease-in-out_infinite] rounded-full bg-[#C2E959]/8 blur-3xl" />
+
+      {/* Phone frame with gentle floating */}
+      <m.div
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        className="overflow-hidden rounded-[2rem] border-2 border-border/50 bg-card p-3 shadow-2xl"
+      >
         {/* Status bar */}
         <div className="mb-3 flex items-center justify-between px-2 text-[10px] text-muted-foreground">
           <span>9:41</span>
@@ -325,54 +363,119 @@ function FlashcardMockup() {
         </div>
 
         {/* Card */}
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-background px-4 py-8">
-          <span className="font-jp text-sm text-muted-foreground">
-            {"\u98DF\u3079\u308B"}
-          </span>
-          <span className="font-jp text-4xl font-medium text-foreground">
-            {"\u305F\u3079\u308B"}
-          </span>
-          <span className="font-mono text-xs text-muted-foreground">
-            taberu
-          </span>
-          <div className="mt-2 h-px w-full bg-border" />
-          <span className="text-sm text-muted-foreground">
-            Makan (Kelompok 2)
-          </span>
-        </div>
+        <m.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
+          className="relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl border border-border/50 bg-background px-4 py-8"
+        >
+          {/* Shimmer sweep */}
+          <m.div
+            className="pointer-events-none absolute inset-0 -z-0"
+            initial={{ x: "-100%" }}
+            animate={{ x: "200%" }}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+          >
+            <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-foreground/[0.04] to-transparent" />
+          </m.div>
 
-        {/* Buttons */}
+           {/* Cycling vocabulary content — fixed height to prevent layout shift */}
+          <AnimatePresence mode="wait">
+            <m.div
+              key={vocabIndex}
+              initial={hasEnteredView ? { opacity: 0, y: 20, scale: 0.95 } : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="relative flex h-[100px] flex-col items-center justify-center gap-2"
+            >
+              <span className={`font-jp text-sm ${vocab.kanji ? "text-muted-foreground" : "text-transparent select-none"}`}>
+                {vocab.kanji || "\u3000"}
+              </span>
+              <span className="font-jp text-4xl font-medium text-foreground">
+                {vocab.reading}
+              </span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {vocab.romaji}
+              </span>
+            </m.div>
+          </AnimatePresence>
+
+          <m.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 1.3, duration: 0.6, ease: "easeOut" }}
+            className="mt-2 h-px w-full origin-left bg-border"
+          />
+
+          <AnimatePresence mode="wait">
+            <m.span
+              key={`meaning-${vocabIndex}`}
+              initial={hasEnteredView ? { opacity: 0, y: 10 } : { opacity: 0 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="relative h-5 text-sm text-muted-foreground"
+            >
+              {vocab.meaning}
+            </m.span>
+          </AnimatePresence>
+        </m.div>
+
+        {/* Buttons with staggered entrance and hover glow */}
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-red-500/10 py-2.5 text-center text-xs font-medium text-red-500">
+          <m.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.7, duration: 0.5 }}
+            className="rounded-xl bg-red-500/10 py-2.5 text-center text-xs font-medium text-red-500 transition-shadow hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
             Belum Paham
-          </div>
-          <div className="rounded-xl bg-green-500/10 py-2.5 text-center text-xs font-medium text-green-500">
+          </m.div>
+          <m.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.7, duration: 0.5 }}
+            className="rounded-xl bg-green-500/10 py-2.5 text-center text-xs font-medium text-green-500 transition-shadow hover:shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+          >
             Sudah Paham
-          </div>
+          </m.div>
         </div>
-      </div>
+      </m.div>
 
-      {/* Floating badges */}
+      {/* Floating badges — each with unique floating rhythm */}
       <m.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.8, duration: 0.5 }}
+        initial={{ opacity: 0, scale: 0.6, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+        transition={{
+          opacity: { delay: 0.8, duration: 0.5 },
+          scale: { delay: 0.8, duration: 0.5, type: "spring", stiffness: 200 },
+          y: { delay: 1.3, duration: 3.5, repeat: Infinity, ease: "easeInOut" },
+        }}
         className="absolute -right-4 top-8 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium shadow-lg sm:-right-8"
       >
         <span className="text-[#C2E959]">2900+</span> Kosakata
       </m.div>
       <m.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1.0, duration: 0.5 }}
+        initial={{ opacity: 0, scale: 0.6, x: 20 }}
+        animate={{ opacity: 1, scale: 1, x: [0, -5, 0] }}
+        transition={{
+          opacity: { delay: 1.0, duration: 0.5 },
+          scale: { delay: 1.0, duration: 0.5, type: "spring", stiffness: 200 },
+          x: { delay: 1.5, duration: 4, repeat: Infinity, ease: "easeInOut" },
+        }}
         className="absolute -left-4 top-1/2 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium shadow-lg sm:-left-8"
       >
         JLPT <span className="text-[#248288]">N5-N4</span>
       </m.div>
       <m.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1.2, duration: 0.5 }}
+        initial={{ opacity: 0, scale: 0.6, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: [0, -7, 0] }}
+        transition={{
+          opacity: { delay: 1.2, duration: 0.5 },
+          scale: { delay: 1.2, duration: 0.5, type: "spring", stiffness: 200 },
+          y: { delay: 1.7, duration: 4.5, repeat: Infinity, ease: "easeInOut" },
+        }}
         className="absolute -right-2 bottom-16 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium shadow-lg sm:-right-6"
       >
         <span className="text-purple-500">AI</span> Tutor
@@ -382,12 +485,50 @@ function FlashcardMockup() {
 }
 
 function PreviewTabs() {
-  const [tab, setTab] = useState<"flashcard" | "quiz" | "chat">("flashcard");
+  const tabKeys = ["flashcard", "quiz", "chat"] as const;
+  type TabKey = (typeof tabKeys)[number];
+  const [tab, setTab] = useState<TabKey>("flashcard");
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tabs = [
     { key: "flashcard" as const, label: "Flashcard" },
     { key: "quiz" as const, label: "Quiz" },
     { key: "chat" as const, label: "AI Tutor" },
   ];
+
+  const AUTO_CYCLE_MS = 6000;
+  const TICK_MS = 50;
+
+  // Auto-cycle logic
+  useEffect(() => {
+    setProgress(0);
+    let elapsed = 0;
+
+    timerRef.current = setInterval(() => {
+      elapsed += TICK_MS;
+      setProgress(Math.min((elapsed / AUTO_CYCLE_MS) * 100, 100));
+
+      if (elapsed >= AUTO_CYCLE_MS) {
+        setTab((prev) => {
+          const idx = tabKeys.indexOf(prev);
+          return tabKeys[(idx + 1) % tabKeys.length];
+        });
+        elapsed = 0;
+        setProgress(0);
+      }
+    }, TICK_MS);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
+  const handleTabClick = useCallback((key: TabKey) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTab(key);
+    setProgress(0);
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -397,118 +538,143 @@ function PreviewTabs() {
           <button
             key={t.key}
             type="button"
-            onClick={() => setTab(t.key)}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+            onClick={() => handleTabClick(t.key)}
+            className={`relative overflow-hidden rounded-full px-5 py-2 text-sm font-medium transition-colors ${
               tab === t.key
                 ? "bg-[#C2E959] text-[#0A3A3A]"
                 : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
             {t.label}
+            {tab === t.key && (
+              <span
+                className="absolute bottom-0 left-0 h-0.5 bg-[#0A3A3A]/30 transition-none"
+                style={{ width: `${progress}%` }}
+              />
+            )}
           </button>
         ))}
       </div>
 
-      {/* Mockup container */}
-      <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl">
-        {tab === "flashcard" && (
-          <div className="flex flex-col items-center gap-4 p-6 sm:p-10">
-            <div className="w-full max-w-sm rounded-2xl border border-border/50 bg-background px-6 py-10 text-center">
-              <p className="font-jp text-sm text-muted-foreground">
-                {"\u98DF\u3079\u308B"}
-              </p>
-              <p className="mt-2 font-jp text-5xl font-medium text-foreground">
-                {"\u305F\u3079\u308B"}
-              </p>
-              <p className="mt-2 font-mono text-sm text-muted-foreground">
-                taberu
-              </p>
-              <div className="mx-auto mt-4 h-px w-2/3 bg-border" />
-              <p className="mt-4 text-muted-foreground">Makan (Kelompok 2)</p>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Tap kartu untuk membalik
-            </p>
-            <div className="flex w-full max-w-sm gap-3">
-              <div className="flex-1 rounded-xl bg-red-500/10 py-3 text-center text-sm font-medium text-red-500">
-                Belum Paham
-              </div>
-              <div className="flex-1 rounded-xl bg-green-500/10 py-3 text-center text-sm font-medium text-green-500">
-                Sudah Paham
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "quiz" && (
-          <div className="flex flex-col gap-5 p-6 sm:p-10">
-            {/* Progress */}
-            <div className="flex items-center gap-3">
-              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
-                <div className="h-full w-1/2 rounded-full bg-[#C2E959]" />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground">
-                10/20
-              </span>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Apa arti dari kata ini?
-            </p>
-            <p className="text-center font-jp text-4xl font-medium text-foreground">
-              {"\u304A\u306F\u3088\u3046\u3054\u3056\u3044\u307E\u3059"}
-            </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <div className="rounded-xl border-2 border-green-500 bg-green-500/10 px-4 py-3 text-sm font-medium text-green-600 dark:text-green-400">
-                Selamat pagi (sopan)
-              </div>
-              <div className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
-                Selamat siang
-              </div>
-              <div className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
-                Selamat malam
-              </div>
-              <div className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
-                Terima kasih
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "chat" && (
-          <div className="flex flex-col gap-4 p-6 sm:p-10">
-            {/* User message */}
-            <div className="flex justify-end">
-              <div className="max-w-[80%] rounded-2xl rounded-br-md bg-[#248288] px-4 py-3 text-sm text-white">
-                Sensei, apa bedanya {"\u306F"} dan {"\u304C"}?
-              </div>
-            </div>
-            {/* AI message */}
-            <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                <p className="mb-2 font-medium">Pertanyaan bagus!</p>
-                <p className="text-muted-foreground">
-                  Secara sederhana:{" "}
-                  <span className="font-jp font-medium text-foreground">
-                    {"\u306F"}
-                  </span>{" "}
-                  (wa) menandai <strong>topik</strong> pembicaraan, sedangkan{" "}
-                  <span className="font-jp font-medium text-foreground">
-                    {"\u304C"}
-                  </span>{" "}
-                  (ga) menandai <strong>subjek gramatikal</strong> yang baru
-                  atau ditekankan...
+      {/* Mockup container — fixed min-height prevents layout shift between tabs */}
+      <div className="min-h-[420px] overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl">
+        <AnimatePresence mode="wait" initial={false}>
+          {tab === "flashcard" && (
+            <m.div
+              key="flashcard"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="flex min-h-[420px] flex-col items-center justify-center gap-4 p-6 sm:p-10"
+            >
+              <div className="w-full max-w-sm rounded-2xl border border-border/50 bg-background px-6 py-10 text-center">
+                <p className="font-jp text-sm text-transparent select-none">
+                  {"\u3000"}
                 </p>
+                <p className="mt-2 font-jp text-5xl font-medium text-foreground">
+                  {"\u3042\u306A\u305F"}
+                </p>
+                <p className="mt-2 font-mono text-sm text-muted-foreground">
+                  anata
+                </p>
+                <div className="mx-auto mt-4 h-px w-2/3 bg-border" />
+                <p className="mt-4 text-muted-foreground">Anda (Bab 1)</p>
               </div>
-            </div>
-            {/* Input bar */}
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3">
-              <span className="flex-1 text-sm text-muted-foreground">
-                Ketik pertanyaan...
-              </span>
-              <ArrowRight className="size-4 text-muted-foreground" />
-            </div>
-          </div>
-        )}
+              <p className="text-xs text-muted-foreground">
+                Tap kartu untuk membalik
+              </p>
+              <div className="flex w-full max-w-sm gap-3">
+                <div className="flex-1 rounded-xl bg-red-500/10 py-3 text-center text-sm font-medium text-red-500">
+                  Belum Paham
+                </div>
+                <div className="flex-1 rounded-xl bg-green-500/10 py-3 text-center text-sm font-medium text-green-500">
+                  Sudah Paham
+                </div>
+              </div>
+            </m.div>
+          )}
+
+          {tab === "quiz" && (
+            <m.div
+              key="quiz"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="flex min-h-[420px] flex-col justify-center gap-5 p-6 sm:p-10"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full w-1/2 rounded-full bg-[#C2E959]" />
+                </div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  10/20
+                </span>
+              </div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Apa arti dari kata ini?
+              </p>
+              <p className="text-center font-jp text-4xl font-medium text-foreground">
+                {"\u304A\u306F\u3088\u3046\u3054\u3056\u3044\u307E\u3059"}
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="rounded-xl border-2 border-green-500 bg-green-500/10 px-4 py-3 text-sm font-medium text-green-600 dark:text-green-400">
+                  Selamat pagi (sopan)
+                </div>
+                <div className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
+                  Selamat siang
+                </div>
+                <div className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
+                  Selamat malam
+                </div>
+                <div className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
+                  Terima kasih
+                </div>
+              </div>
+            </m.div>
+          )}
+
+          {tab === "chat" && (
+            <m.div
+              key="chat"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="flex min-h-[420px] flex-col justify-center gap-4 p-6 sm:p-10"
+            >
+              <div className="flex justify-end">
+                <div className="max-w-[80%] rounded-2xl rounded-br-md bg-[#248288] px-4 py-3 text-sm text-white">
+                  Sensei, apa bedanya {"\u306F"} dan {"\u304C"}?
+                </div>
+              </div>
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-border bg-muted px-4 py-3 text-sm text-foreground">
+                  <p className="mb-2 font-medium">Pertanyaan bagus!</p>
+                  <p className="text-muted-foreground">
+                    Secara sederhana:{" "}
+                    <span className="font-jp font-medium text-foreground">
+                      {"\u306F"}
+                    </span>{" "}
+                    (wa) menandai <strong>topik</strong> pembicaraan, sedangkan{" "}
+                    <span className="font-jp font-medium text-foreground">
+                      {"\u304C"}
+                    </span>{" "}
+                    (ga) menandai <strong>subjek gramatikal</strong> yang baru
+                    atau ditekankan...
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3">
+                <span className="flex-1 text-sm text-muted-foreground">
+                  Ketik pertanyaan...
+                </span>
+                <ArrowRight className="size-4 text-muted-foreground" />
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -949,21 +1115,31 @@ export default function LandingPage() {
         </section>
 
         {/* ========= SECTION 10: FOOTER ========= */}
-        <footer className="border-t border-border/50 bg-card">
-          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-            <div className="grid gap-10 md:grid-cols-3">
+        <footer className="relative overflow-hidden border-t border-border/50 bg-card">
+          {/* Main footer content */}
+          <div className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
               {/* Col 1: Logo + description */}
-              <div>
+              <div className="sm:col-span-2 lg:col-span-1">
                 <Logo size="md" />
                 <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
                   Platform belajar kosakata Jepang gratis untuk penutur
                   Indonesia. Dibangun dengan cinta dan teknologi modern.
                 </p>
+                <a
+                  href="https://github.com/manrandomside/kioku"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Github className="size-4" />
+                  GitHub
+                </a>
               </div>
 
-              {/* Col 2: Navigation */}
+              {/* Col 2: Navigasi */}
               <div>
-                <p className="mb-4 text-sm font-semibold text-foreground">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Navigasi
                 </p>
                 <div className="flex flex-col gap-2.5">
@@ -971,55 +1147,85 @@ export default function LandingPage() {
                     { label: "Fitur", href: "#fitur" },
                     { label: "Cara Kerja", href: "#cara-kerja" },
                     { label: "Metode", href: "#metode" },
-                    { label: "Masuk", href: "/login" },
-                    { label: "Daftar", href: "/register" },
-                  ].map((l) =>
-                    l.href.startsWith("/") ? (
-                      <Link
-                        key={l.label}
-                        href={l.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {l.label}
-                      </Link>
-                    ) : (
-                      <a
-                        key={l.label}
-                        href={l.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {l.label}
-                      </a>
-                    ),
-                  )}
+                    { label: "Preview", href: "#preview" },
+                  ].map((l) => (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {l.label}
+                    </a>
+                  ))}
                 </div>
               </div>
 
-              {/* Col 3: Tech */}
+              {/* Col 3: Akun */}
               <div>
-                <p className="mb-4 text-sm font-semibold text-foreground">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Akun
+                </p>
+                <div className="flex flex-col gap-2.5">
+                  {[
+                    { label: "Masuk", href: "/login" },
+                    { label: "Daftar Gratis", href: "/register" },
+                  ].map((l) => (
+                    <Link
+                      key={l.label}
+                      href={l.href}
+                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Col 4: Project */}
+              <div>
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Project
                 </p>
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   Dibangun sebagai project portfolio fullstack + AI.
                 </p>
-                <a
-                  href="https://github.com/manrandomside/kioku"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Github className="size-4" />
-                  GitHub
-                </a>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {["Next.js", "React", "TypeScript", "Supabase", "FSRS"].map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Bottom bar */}
-            <div className="mt-10 border-t border-border/50 pt-6 text-center text-xs text-muted-foreground">
+            <div className="mt-12 border-t border-border/50 pt-6 text-center text-xs text-muted-foreground">
               &copy; 2026 Kioku. Dibuat dengan cinta untuk pembelajar bahasa
               Jepang Indonesia.
             </div>
+          </div>
+
+          {/* Large dimmed logo watermark — positioned behind the text, massive size */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center select-none"
+            aria-hidden="true"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-dark.svg"
+              alt=""
+              className="block w-[150vw] max-w-none opacity-[0.02] dark:hidden sm:w-[90vw] lg:w-[60vw]"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-white.svg"
+              alt=""
+              className="hidden w-[150vw] max-w-none opacity-[0.03] dark:block sm:w-[90vw] lg:w-[60vw]"
+            />
           </div>
         </footer>
 
