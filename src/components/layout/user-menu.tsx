@@ -1,7 +1,10 @@
 "use client";
 
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, BookOpen, Map } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { useTourStore } from "@/stores/tour-store";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -58,6 +61,14 @@ export function UserMenu({ user }: UserMenuProps) {
           Profil
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          render={<a href="/guidebook/kioku-guidebook.pdf" target="_blank" rel="noopener noreferrer" />}
+        >
+          <BookOpen className="mr-2 size-4" />
+          Panduan Penggunaan
+        </DropdownMenuItem>
+        <TourMenuItem />
+        <DropdownMenuSeparator />
         <LogoutButton
           displayName={user.displayName}
           className="relative flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none text-destructive focus:bg-destructive/10 hover:bg-destructive/10 data-disabled:pointer-events-none data-disabled:opacity-50"
@@ -67,5 +78,28 @@ export function UserMenu({ user }: UserMenuProps) {
         </LogoutButton>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function TourMenuItem() {
+  const startTour = useTourStore((s) => s.startTour);
+  const router = useRouter();
+
+  function handleClick() {
+    // Navigate to dashboard first if not already there
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/home")) {
+      router.push("/home");
+      // Delay tour start to allow page transition
+      setTimeout(() => startTour(), 800);
+    } else {
+      startTour();
+    }
+  }
+
+  return (
+    <DropdownMenuItem onClick={handleClick}>
+      <Map className="mr-2 size-4" />
+      Lihat Tour Lagi
+    </DropdownMenuItem>
   );
 }

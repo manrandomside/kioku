@@ -24,6 +24,7 @@ import { ReviewCountdown } from "@/components/gamification/review-countdown";
 import { JlptUpgradeHandler } from "@/components/gamification/jlpt-upgrade-handler";
 import { SmartStudyCard } from "@/components/gamification/smart-study-card";
 import { InstallBanner } from "@/components/pwa/install-banner";
+import { InteractiveTour } from "@/components/dashboard/interactive-tour";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -98,7 +99,9 @@ export default async function HomePage() {
       </div>
 
       {/* Section 2: Belajar Sekarang — Primary CTA */}
-      <SmartStudyCard />
+      <div id="tour-smart-study">
+        <SmartStudyCard />
+      </div>
 
       {/* Overdue warning banner */}
       {data.srs.overdue >= 5 && (
@@ -117,7 +120,7 @@ export default async function HomePage() {
       {/* Section 3: Three small cards — Streak + Due Cards + Leech */}
       <div className="grid gap-4 sm:grid-cols-3">
         {/* Streak Card */}
-        <div className="flex flex-col rounded-2xl border border-border/50 bg-card p-5">
+        <div id="tour-streak" className="flex flex-col rounded-2xl border border-border/50 bg-card p-5">
           <div className="flex items-center gap-4">
             <div
               className={`flex size-12 items-center justify-center rounded-xl ${
@@ -160,6 +163,7 @@ export default async function HomePage() {
 
         {/* Due Cards / Review Breakdown */}
         <Link
+          id="tour-review"
           href="/review"
           className="group flex items-center gap-4 rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:border-[#248288]/40 hover:bg-[#248288]/5"
         >
@@ -220,6 +224,7 @@ export default async function HomePage() {
 
         {/* Leech / Kata Sulit Card */}
         <Link
+          id="tour-leech"
           href="/kata-sulit"
           className="group flex items-center gap-4 rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:border-yellow-500/40 hover:bg-yellow-500/5"
         >
@@ -332,6 +337,9 @@ export default async function HomePage() {
       <JlptUpgradeHandler upgrade={data.jlptUpgrade} />
 
       <InstallBanner variant="dashboard" />
+
+      {/* Interactive Onboarding Tour */}
+      <InteractiveTour />
     </div>
   );
 }
