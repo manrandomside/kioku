@@ -73,12 +73,12 @@ export function InteractiveTour() {
     x: number;
     y: number;
     placement: "top" | "bottom";
-    isMobileCentered: boolean;
+    useMobileInset: boolean;
   }>({
     x: 0,
     y: 0,
     placement: "bottom",
-    isMobileCentered: false,
+    useMobileInset: false,
   });
   const [windowSize, setWindowSize] = useState({ w: 0, h: 0 });
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,7 +116,7 @@ export function InteractiveTour() {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         placement: "bottom",
-        isMobileCentered: false,
+        useMobileInset: false,
       });
       return;
     }
@@ -130,7 +130,7 @@ export function InteractiveTour() {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         placement: "bottom",
-        isMobileCentered: false,
+        useMobileInset: false,
       });
       return;
     }
@@ -156,19 +156,28 @@ export function InteractiveTour() {
       };
       setTargetRect(newRect);
 
-      // Mobile: fixed-position tooltip at bottom or top center
+      // Mobile: use inset-based positioning (left:16, right:16)
+      // Tooltip Y is clamped so it never overflows vertically.
       if (vw < MOBILE_BREAKPOINT) {
-        // Determine if target is in top or bottom half of screen
+        const MARGIN = 16;
         const targetCenterY = rect.top + rect.height / 2;
-        const placement: "top" | "bottom" = targetCenterY < vh / 2 ? "bottom" : "top";
+        const placement: "top" | "bottom" = targetCenterY < vh * 0.45 ? "bottom" : "top";
+
+        let tooltipY: number;
+        if (placement === "bottom") {
+          // Place below the spotlight, clamped to leave 16px from bottom
+          tooltipY = Math.min(rect.bottom + SPOTLIGHT_PADDING + 16, vh - 220);
+          tooltipY = Math.max(MARGIN, tooltipY);
+        } else {
+          // Place above the spotlight, clamped to leave 16px from top
+          tooltipY = Math.max(MARGIN, rect.top - SPOTLIGHT_PADDING - 16);
+        }
 
         setTooltipPosition({
-          x: vw / 2,
-          y: placement === "bottom"
-            ? Math.min(rect.bottom + SPOTLIGHT_PADDING + 20, vh - 200)
-            : Math.max(rect.top - SPOTLIGHT_PADDING - 20, 100),
+          x: 0, // not used in mobile inset mode
+          y: tooltipY,
           placement,
-          isMobileCentered: true,
+          useMobileInset: true,
         });
         return;
       }
@@ -176,22 +185,25 @@ export function InteractiveTour() {
       // Desktop: position near target element
       const tooltipWidth = 380;
       const tooltipHeight = 200;
+      const MARGIN = 16;
 
       const spaceBelow = vh - (rect.bottom + SPOTLIGHT_PADDING);
       const placement: "top" | "bottom" = spaceBelow >= tooltipHeight + 24 ? "bottom" : "top";
 
       let tooltipX = rect.left + rect.width / 2;
-      // Clamp to viewport
-      tooltipX = Math.max(tooltipWidth / 2 + 16, Math.min(vw - tooltipWidth / 2 - 16, tooltipX));
+      // Clamp X so tooltip stays within viewport with margin
+      tooltipX = Math.max(tooltipWidth / 2 + MARGIN, Math.min(vw - tooltipWidth / 2 - MARGIN, tooltipX));
 
       let tooltipY: number;
       if (placement === "bottom") {
-        tooltipY = rect.bottom + SPOTLIGHT_PADDING + 16;
+        tooltipY = rect.bottom + SPOTLIGHT_PADDING + MARGIN;
       } else {
-        tooltipY = rect.top - SPOTLIGHT_PADDING - 16;
+        tooltipY = rect.top - SPOTLIGHT_PADDING - MARGIN;
       }
+      // Clamp Y within viewport
+      tooltipY = Math.max(MARGIN, Math.min(vh - tooltipHeight - MARGIN, tooltipY));
 
-      setTooltipPosition({ x: tooltipX, y: tooltipY, placement, isMobileCentered: false });
+      setTooltipPosition({ x: tooltipX, y: tooltipY, placement, useMobileInset: false });
     }, isFixedElement ? 100 : 350);
   }, [step, isWelcomeStep, resolveTargetId]);
 
@@ -319,31 +331,39 @@ export function InteractiveTour() {
 
           {/* Tooltip Card */}
           <motion.div
-            className="absolute z-[101]"
-            style={{ pointerEvents: "auto" }}
+            className="z-[101]"
+            style={{
+              pointerEvents: "auto",
+              position: "absolute",
+              // Mobile inset mode: pin to left/right edges with margin
+              ...(tooltipPosition.useMobileInset && !isWelcomeStep
+                ? { left: 16, right: 16, width: "auto" }
+                : {}),
+            }}
             initial={false}
             animate={{
-              x: "-50%",
+              // Mobile inset: no x-translate needed since left/right are set
+              // Welcome: center via -50% translate
+              // Desktop: center via -50% translate on computed left
+              x: tooltipPosition.useMobileInset && !isWelcomeStep ? 0 : "-50%",
               y: isWelcomeStep
                 ? "-50%"
-                : tooltipPosition.isMobileCentered
-                  ? "-50%"
+                : tooltipPosition.useMobileInset
+                  ? 0
                   : tooltipPosition.placement === "bottom"
                     ? 0
                     : "-100%",
-              left: tooltipPosition.x,
-              top: isWelcomeStep
-                ? tooltipPosition.y
-                : tooltipPosition.isMobileCentered
-                  ? tooltipPosition.placement === "bottom"
-                    ? tooltipPosition.y
-                    : tooltipPosition.y
-                  : tooltipPosition.y,
+              ...(tooltipPosition.useMobileInset && !isWelcomeStep
+                ? { top: tooltipPosition.y }
+                : {
+                    left: tooltipPosition.x,
+                    top: tooltipPosition.y,
+                  }),
             }}
             transition={{ type: "spring", stiffness: 280, damping: 32 }}
           >
             <motion.div
-              className="mx-4 w-[calc(100vw-2rem)] max-w-[380px] rounded-2xl border border-[#C2E959]/40 bg-card/90 p-5 shadow-2xl backdrop-blur-xl sm:mx-0 sm:w-[380px]"
+              className="max-w-[380px] rounded-2xl border border-[#C2E959]/40 bg-card/90 p-5 shadow-2xl backdrop-blur-xl"
               layout
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
