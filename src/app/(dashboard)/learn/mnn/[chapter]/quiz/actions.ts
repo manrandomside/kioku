@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { after } from "next/server";
 
 import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
@@ -112,6 +113,8 @@ export async function submitVocabQuizResult(
     const isPerfect = correctCount === totalQuestions;
     const xpEarned = correctCount * XP_PER_CORRECT;
 
+    // --- CORE TASK: save quiz data (must be awaited) ---
+
     await db.insert(quizAnswer).values(
       answers.map((a) => ({
         sessionId,
@@ -141,37 +144,63 @@ export async function submitVocabQuizResult(
       .where(eq(quizSession.id, sessionId))
       .returning({ chapterId: quizSession.chapterId });
 
-    // Update chapter progress after quiz completion
+    // Update chapter progress (important for quiz-based mastery)
     if (updatedSession?.chapterId) {
       await updateChapterProgress(userId, updatedSession.chapterId);
     }
 
-    // Award XP and check streak
-    await checkAndUpdateStreak(userId);
-    const xpResult = await awardQuizXp(userId, sessionId, correctCount, scorePercent);
-    const newAchievements = await checkAndUnlockAchievements(userId);
+    // --- GAMIFICATION TASK: deferred via after() ---
+    // These are heavy DB operations (streak, XP, achievements, JLPT upgrade)
+    // that should not block the response to the client.
+    after(async () => {
+      try {
+        await checkAndUpdateStreak(userId);
 
-    // Check JLPT level upgrade
-    const upgradeResult = await checkAndUpgradeJlpt(userId);
+        const [xpResult, newAchievements, upgradeResult] = await Promise.allSettled([
+          awardQuizXp(userId, sessionId, correctCount, scorePercent),
+          checkAndUnlockAchievements(userId),
+          checkAndUpgradeJlpt(userId),
+        ]);
+
+        if (xpResult.status === "rejected") {
+          console.error("[submitVocabQuizResult:after] awardQuizXp failed:", xpResult.reason);
+        }
+        if (newAchievements.status === "rejected") {
+          console.error("[submitVocabQuizResult:after] checkAchievements failed:", newAchievements.reason);
+        }
+        if (upgradeResult.status === "rejected") {
+          console.error("[submitVocabQuizResult:after] checkJlptUpgrade failed:", upgradeResult.reason);
+        }
+      } catch (err) {
+        console.error("[submitVocabQuizResult:after] gamification task failed:", err);
+      }
+    });
+
+    // --- Return optimistic response immediately ---
+    // Provide estimated XP data so the client can show animations instantly.
+    // Actual XP (with bonuses, level-up) will be computed in after().
+    const bonusXp = scorePercent === 100 ? 25 : scorePercent >= 90 ? 15 : scorePercent >= 80 ? 10 : 0;
+    const bonusLabel = scorePercent === 100 ? "Sempurna (100%)" : scorePercent >= 90 ? "Hebat (90%+)" : scorePercent >= 80 ? "Bagus (80%+)" : "";
+    const estimatedTotal = xpEarned + bonusXp;
 
     return {
       success: true,
       data: {
         correctCount,
         scorePercent,
-        xpEarned: xpResult.xpAwarded,
+        xpEarned: estimatedTotal,
         isPerfect,
         xp: {
-          awarded: xpResult.xpAwarded,
-          baseXp: xpResult.baseXp,
-          bonusXp: xpResult.bonusXp,
-          bonusLabel: xpResult.bonusLabel,
-          total: xpResult.totalXp,
-          leveledUp: xpResult.leveledUp,
-          currentLevel: xpResult.currentLevel,
+          awarded: estimatedTotal,
+          baseXp: xpEarned,
+          bonusXp,
+          bonusLabel,
+          total: 0,
+          leveledUp: false,
+          currentLevel: 0,
         },
-        achievements: newAchievements,
-        jlptUpgrade: upgradeResult.upgraded ? { previousLevel: upgradeResult.previousLevel, newLevel: upgradeResult.newLevel } : null,
+        achievements: [],
+        jlptUpgrade: null,
       },
     };
   } catch (error) {
@@ -179,3 +208,4 @@ export async function submitVocabQuizResult(
     return { success: false, error: { code: "INTERNAL_ERROR", message: "Gagal menyimpan hasil quiz" } };
   }
 }
+

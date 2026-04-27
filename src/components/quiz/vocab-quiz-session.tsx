@@ -261,20 +261,35 @@ export function VocabQuizSession({
     const scorePercent = Math.round((correctCount / totalQuestions) * 100);
     const isPerfect = correctCount === totalQuestions && hearts > 0;
 
+    // Optimistic XP calculation (mirrors server-side constants)
+    const baseXp = correctCount * 3;
+    const bonusXp = scorePercent === 100 ? 25 : scorePercent >= 90 ? 15 : scorePercent >= 80 ? 10 : 0;
+    const bonusLabel = scorePercent === 100 ? "Sempurna (100%)" : scorePercent >= 90 ? "Hebat (90%+)" : scorePercent >= 80 ? "Bagus (80%+)" : "";
+    const estimatedXp = baseXp + bonusXp;
+
     const result: VocabQuizResult = {
       totalQuestions,
       correctCount,
       scorePercent,
-      xpEarned: 0,
+      xpEarned: estimatedXp,
       isPerfect,
       timeSpentMs,
       answers,
+      xpBaseXp: baseXp,
+      xpBonusXp: bonusXp,
+      xpBonusLabel: bonusLabel,
     };
     setSessionResult(result);
+
+    // Show XP animation immediately (optimistic)
+    if (estimatedXp > 0) {
+      showXp(estimatedXp);
+    }
 
     if (sessionId) {
       submitVocabQuizResult(sessionId, answers, timeSpentMs).then((res) => {
         if (res.success && res.data?.xp) {
+          // Update with server-confirmed values (may differ slightly)
           setSessionResult((prev) =>
             prev ? {
               ...prev,
@@ -284,9 +299,6 @@ export function VocabQuizSession({
               xpBonusLabel: res.data!.xp!.bonusLabel,
             } : prev
           );
-          if (res.data.xp.awarded > 0) {
-            showXp(res.data.xp.awarded);
-          }
           if (res.data.xp.leveledUp) {
             setLevelUpLevel(res.data.xp.currentLevel);
           }

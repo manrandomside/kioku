@@ -2,6 +2,7 @@
 
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { after } from "next/server";
 
 import { db } from "@/db";
 import { srsCard, reviewLog } from "@/db/schema/srs";
@@ -93,6 +94,8 @@ export async function submitVocabReview(
 
     const result = processReview(cardData, rating);
 
+    // --- CORE TASK: save SRS card update + review log (must be awaited) ---
+
     await db
       .update(srsCard)
       .set({
@@ -127,23 +130,45 @@ export async function submitVocabReview(
       await updateChapterProgress(userId, chapterId);
     }
 
-    // Award XP and check streak
-    await checkAndUpdateStreak(userId);
-    const xpResult = await awardReviewXp(userId, card.id);
-    const newAchievements = await checkAndUnlockAchievements(userId);
+    // --- GAMIFICATION TASK: deferred via after() ---
+    // Streak, XP award, and achievement checks are heavy DB operations.
+    // Run them after the response is sent to avoid Vercel timeout.
+    const cardIdForXp = card.id;
+    after(async () => {
+      try {
+        await checkAndUpdateStreak(userId);
 
+        const [xpResult, achievementsResult] = await Promise.allSettled([
+          awardReviewXp(userId, cardIdForXp),
+          checkAndUnlockAchievements(userId),
+        ]);
+
+        if (xpResult.status === "rejected") {
+          console.error("[submitVocabReview:after] awardReviewXp failed:", xpResult.reason);
+        }
+        if (achievementsResult.status === "rejected") {
+          console.error("[submitVocabReview:after] checkAchievements failed:", achievementsResult.reason);
+        }
+      } catch (err) {
+        console.error("[submitVocabReview:after] gamification task failed:", err);
+      }
+    });
+
+    // --- Return optimistic response immediately ---
+    // XP of 2 per review card is the known constant; level-up detection
+    // will happen asynchronously. Client uses optimistic UI.
     return {
       success: true,
       data: {
         newStatus: result.updatedCard.status,
         isLapse: rating === "again" && cardData.status === "review",
         xp: {
-          awarded: xpResult.xpAwarded,
-          total: xpResult.totalXp,
-          leveledUp: xpResult.leveledUp,
-          currentLevel: xpResult.currentLevel,
+          awarded: 2,
+          total: 0,
+          leveledUp: false,
+          currentLevel: 0,
         },
-        achievements: newAchievements,
+        achievements: [],
       },
     };
   } catch (error) {
@@ -154,3 +179,4 @@ export async function submitVocabReview(
     };
   }
 }
+
