@@ -217,6 +217,7 @@ function Navbar() {
     { label: "Cara Kerja", href: "#cara-kerja" },
     { label: "Metode", href: "#metode" },
     { label: "Preview", href: "#preview" },
+    { label: "Panduan", href: "/guidebook/kioku-guidebook.pdf" },
   ];
 
   return (
@@ -238,6 +239,8 @@ function Navbar() {
             <a
               key={l.href}
               href={l.href}
+              target={l.href.endsWith(".pdf") ? "_blank" : undefined}
+              rel={l.href.endsWith(".pdf") ? "noopener noreferrer" : undefined}
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {l.label}
@@ -283,7 +286,11 @@ function Navbar() {
               <a
                 key={l.href}
                 href={l.href}
-                onClick={() => setOpen(false)}
+                target={l.href.endsWith(".pdf") ? "_blank" : undefined}
+                rel={l.href.endsWith(".pdf") ? "noopener noreferrer" : undefined}
+                onClick={() => {
+                  if (!l.href.endsWith(".pdf")) setOpen(false);
+                }}
                 className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 {l.label}
@@ -1148,10 +1155,13 @@ export default function LandingPage() {
                     { label: "Cara Kerja", href: "#cara-kerja" },
                     { label: "Metode", href: "#metode" },
                     { label: "Preview", href: "#preview" },
+                    { label: "Panduan", href: "/guidebook/kioku-guidebook.pdf" },
                   ].map((l) => (
                     <a
                       key={l.label}
                       href={l.href}
+                      target={l.href.endsWith(".pdf") ? "_blank" : undefined}
+                      rel={l.href.endsWith(".pdf") ? "noopener noreferrer" : undefined}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {l.label}

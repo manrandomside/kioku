@@ -36,12 +36,14 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     target: "tour-learn-hub",
+    mobileTarget: "tour-learn-hub-mobile",
     title: "Pusat Belajar",
     description:
       "Di sini kamu bisa memilih materi HIRAKATA (untuk pemula) atau 50 Bab Minna no Nihongo (MNN) yang mencakup 2.900+ kosakata.",
   },
   {
     target: "tour-ai-tutor",
+    mobileTarget: "tour-ai-tutor-mobile",
     title: "Sensei AI",
     description:
       "Punya pertanyaan grammar? Ingin latihan percakapan? AI Tutor kami siap menjawab dalam Bahasa Indonesia 24/7.",

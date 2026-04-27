@@ -98,7 +98,9 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 - **Activity Heatmap** — 365-day activity visualization (GitHub-style contribution graph)
 - **Daily Goal** — 5 configurable tiers (100 / 300 / 500 / 750 / 1,000 XP) with goal-met bonus
 
-### Smart Navigation
+### Smart Navigation & User Experience
+- **Interactive Landing Page** — A beautifully designed, fully responsive landing page featuring auto-cycling mockups, smooth animations, and a dynamic feature showcase.
+- **Comprehensive Guidebook** — A detailed PDF manual ("Panduan Penggunaan") accessible from both the landing page and user menu, helping learners understand FSRS and maximize the platform.
 - **Redesigned Dashboard** — Prominent "Belajar Sekarang" CTA, review countdown timer with clear labels, leech card indicator with sidebar badge
 - **Dynamic Streak Reminder** — Time-based personalized messages with 5 distinct slots (dini hari, pagi, siang, sore, malam), countdown to midnight, and color-coded borders per time of day
 - **Redesigned Learn Hub** — 3 "Metode Belajar" cards (Belajar Sekarang, Review, Kata Sulit) + 2 "Materi" cards (HIRAKATA, MNN) with gradient styling and dynamic info badges

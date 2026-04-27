@@ -35,6 +35,13 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              id={
+                item.href === "/learn"
+                  ? "tour-learn-hub-mobile"
+                  : item.href === "/chat"
+                    ? "tour-ai-tutor-mobile"
+                    : undefined
+              }
               className={cn(
                 "flex min-w-[3rem] flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-[10px] font-medium transition-colors sm:text-xs",
                 isActive
