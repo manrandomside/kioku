@@ -63,23 +63,19 @@ interface TargetRect {
 
 const SPOTLIGHT_PADDING = 12;
 const MOBILE_BREAKPOINT = 768;
+const SAFE_MARGIN = 16;
+const TOOLTIP_MAX_WIDTH = 350;
+const TOOLTIP_EST_HEIGHT = 220;
 
 export function InteractiveTour() {
   const { isActive, currentStep, hasSeenTour, startTour, nextStep, prevStep, closeTour, completeTour } =
     useTourStore();
 
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{
-    x: number;
-    y: number;
-    placement: "top" | "bottom";
-    useMobileInset: boolean;
-  }>({
-    x: 0,
-    y: 0,
-    placement: "bottom",
-    useMobileInset: false,
-  });
+  // tooltipPos: absolute pixel coordinates for Framer Motion x/y
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  // Computed tooltip width (capped at TOOLTIP_MAX_WIDTH or viewport - 32px)
+  const [tooltipWidth, setTooltipWidth] = useState(TOOLTIP_MAX_WIDTH);
   const [windowSize, setWindowSize] = useState({ w: 0, h: 0 });
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -108,15 +104,19 @@ export function InteractiveTour() {
     [isMobile],
   );
 
-  // Measure target element position
+  // Measure target element position and compute clamped tooltip coordinates
   const measureTarget = useCallback(() => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const tw = Math.min(TOOLTIP_MAX_WIDTH, vw - SAFE_MARGIN * 2);
+    setTooltipWidth(tw);
+
+    // Welcome step or missing step: center on screen
     if (!step || isWelcomeStep) {
       setTargetRect(null);
-      setTooltipPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-        placement: "bottom",
-        useMobileInset: false,
+      setTooltipPos({
+        x: (vw - tw) / 2,
+        y: (vh - TOOLTIP_EST_HEIGHT) / 2,
       });
       return;
     }
@@ -126,16 +126,14 @@ export function InteractiveTour() {
     if (!el) {
       // Element not found — center tooltip as fallback
       setTargetRect(null);
-      setTooltipPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-        placement: "bottom",
-        useMobileInset: false,
+      setTooltipPos({
+        x: (vw - tw) / 2,
+        y: (vh - TOOLTIP_EST_HEIGHT) / 2,
       });
       return;
     }
 
-    // Only scroll dashboard content elements into view; skip fixed elements like sidebar/bottom-nav
+    // Only scroll dashboard content elements into view; skip fixed elements
     const isFixedElement = targetId === "tour-sidebar" || targetId === "tour-bottom-nav" ||
       targetId === "tour-ai-tutor" || targetId === "tour-learn-hub";
     if (!isFixedElement) {
@@ -145,9 +143,12 @@ export function InteractiveTour() {
     // Delay measurement to allow scroll to settle
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
+      const freshVw = window.innerWidth;
+      const freshVh = window.innerHeight;
+      const freshTw = Math.min(TOOLTIP_MAX_WIDTH, freshVw - SAFE_MARGIN * 2);
+      setTooltipWidth(freshTw);
 
+      // Update spotlight rect
       const newRect: TargetRect = {
         x: rect.left - SPOTLIGHT_PADDING,
         y: rect.top - SPOTLIGHT_PADDING,
@@ -156,54 +157,68 @@ export function InteractiveTour() {
       };
       setTargetRect(newRect);
 
-      // Mobile: use inset-based positioning (left:16, right:16)
-      // Tooltip Y is clamped so it never overflows vertically.
-      if (vw < MOBILE_BREAKPOINT) {
-        const MARGIN = 16;
+      // === MOBILE (<768px): tooltip always in safe center area ===
+      if (freshVw < MOBILE_BREAKPOINT) {
+        const mobileX = (freshVw - freshTw) / 2;
         const targetCenterY = rect.top + rect.height / 2;
-        const placement: "top" | "bottom" = targetCenterY < vh * 0.45 ? "bottom" : "top";
+        let mobileY: number;
 
-        let tooltipY: number;
-        if (placement === "bottom") {
-          // Place below the spotlight, clamped to leave 16px from bottom
-          tooltipY = Math.min(rect.bottom + SPOTLIGHT_PADDING + 16, vh - 220);
-          tooltipY = Math.max(MARGIN, tooltipY);
+        if (targetCenterY > freshVh * 0.6) {
+          // Target is in lower portion (e.g. bottom-nav) — tooltip near top
+          mobileY = freshVh * 0.12;
+        } else if (targetCenterY < freshVh * 0.35) {
+          // Target is in upper portion — tooltip below it
+          mobileY = rect.bottom + SPOTLIGHT_PADDING + 20;
         } else {
-          // Place above the spotlight, clamped to leave 16px from top
-          tooltipY = Math.max(MARGIN, rect.top - SPOTLIGHT_PADDING - 16);
+          // Target is in the middle — tooltip near top
+          mobileY = freshVh * 0.08;
         }
+        // Final Y clamp
+        mobileY = Math.max(SAFE_MARGIN, Math.min(mobileY, freshVh - TOOLTIP_EST_HEIGHT - SAFE_MARGIN));
 
-        setTooltipPosition({
-          x: 0, // not used in mobile inset mode
-          y: tooltipY,
-          placement,
-          useMobileInset: true,
-        });
+        setTooltipPos({ x: mobileX, y: mobileY });
         return;
       }
 
-      // Desktop: position near target element
-      const tooltipWidth = 380;
-      const tooltipHeight = 200;
-      const MARGIN = 16;
+      // === DESKTOP: special handling for sidebar (place tooltip to the RIGHT) ===
+      const isSidebarStep = targetId === "tour-sidebar";
 
-      const spaceBelow = vh - (rect.bottom + SPOTLIGHT_PADDING);
-      const placement: "top" | "bottom" = spaceBelow >= tooltipHeight + 24 ? "bottom" : "top";
-
-      let tooltipX = rect.left + rect.width / 2;
-      // Clamp X so tooltip stays within viewport with margin
-      tooltipX = Math.max(tooltipWidth / 2 + MARGIN, Math.min(vw - tooltipWidth / 2 - MARGIN, tooltipX));
-
-      let tooltipY: number;
-      if (placement === "bottom") {
-        tooltipY = rect.bottom + SPOTLIGHT_PADDING + MARGIN;
-      } else {
-        tooltipY = rect.top - SPOTLIGHT_PADDING - MARGIN;
+      if (isSidebarStep) {
+        // Place tooltip to the right of the sidebar
+        const tx = rect.right + SPOTLIGHT_PADDING + SAFE_MARGIN;
+        // Vertically center on the sidebar, clamped to viewport
+        let ty = rect.top + (rect.height / 2) - (TOOLTIP_EST_HEIGHT / 2);
+        ty = Math.max(SAFE_MARGIN, Math.min(ty, freshVh - TOOLTIP_EST_HEIGHT - SAFE_MARGIN));
+        // If tooltip would go off the right edge, fall back to centering below
+        if (tx + freshTw > freshVw - SAFE_MARGIN) {
+          const fallbackX = Math.max(SAFE_MARGIN, (freshVw - freshTw) / 2);
+          const fallbackY = Math.max(SAFE_MARGIN, rect.bottom + SPOTLIGHT_PADDING + SAFE_MARGIN);
+          setTooltipPos({ x: fallbackX, y: Math.min(fallbackY, freshVh - TOOLTIP_EST_HEIGHT - SAFE_MARGIN) });
+        } else {
+          setTooltipPos({ x: tx, y: ty });
+        }
+        return;
       }
-      // Clamp Y within viewport
-      tooltipY = Math.max(MARGIN, Math.min(vh - tooltipHeight - MARGIN, tooltipY));
 
-      setTooltipPosition({ x: tooltipX, y: tooltipY, placement, useMobileInset: false });
+      // === DESKTOP: default — center on target, above or below ===
+      const spaceBelow = freshVh - (rect.bottom + SPOTLIGHT_PADDING);
+      const placeBelow = spaceBelow >= TOOLTIP_EST_HEIGHT + 24;
+
+      // X: center tooltip on target element, then clamp to viewport
+      let tx = rect.left + (rect.width / 2) - (freshTw / 2);
+      tx = Math.max(SAFE_MARGIN, Math.min(tx, freshVw - freshTw - SAFE_MARGIN));
+
+      // Y: position below or above target
+      let ty: number;
+      if (placeBelow) {
+        ty = rect.bottom + SPOTLIGHT_PADDING + SAFE_MARGIN;
+      } else {
+        ty = rect.top - SPOTLIGHT_PADDING - TOOLTIP_EST_HEIGHT - SAFE_MARGIN;
+      }
+      // Final Y clamp
+      ty = Math.max(SAFE_MARGIN, Math.min(ty, freshVh - TOOLTIP_EST_HEIGHT - SAFE_MARGIN));
+
+      setTooltipPos({ x: tx, y: ty });
     }, isFixedElement ? 100 : 350);
   }, [step, isWelcomeStep, resolveTargetId]);
 
@@ -329,41 +344,19 @@ export function InteractiveTour() {
             />
           )}
 
-          {/* Tooltip Card */}
+          {/* Tooltip Card — positioned purely via Framer Motion x/y */}
           <motion.div
-            className="z-[101]"
-            style={{
-              pointerEvents: "auto",
-              position: "absolute",
-              // Mobile inset mode: pin to left/right edges with margin
-              ...(tooltipPosition.useMobileInset && !isWelcomeStep
-                ? { left: 16, right: 16, width: "auto" }
-                : {}),
-            }}
+            className="fixed top-0 left-0 z-[101]"
+            style={{ pointerEvents: "auto", width: tooltipWidth }}
             initial={false}
             animate={{
-              // Mobile inset: no x-translate needed since left/right are set
-              // Welcome: center via -50% translate
-              // Desktop: center via -50% translate on computed left
-              x: tooltipPosition.useMobileInset && !isWelcomeStep ? 0 : "-50%",
-              y: isWelcomeStep
-                ? "-50%"
-                : tooltipPosition.useMobileInset
-                  ? 0
-                  : tooltipPosition.placement === "bottom"
-                    ? 0
-                    : "-100%",
-              ...(tooltipPosition.useMobileInset && !isWelcomeStep
-                ? { top: tooltipPosition.y }
-                : {
-                    left: tooltipPosition.x,
-                    top: tooltipPosition.y,
-                  }),
+              x: tooltipPos.x,
+              y: tooltipPos.y,
             }}
             transition={{ type: "spring", stiffness: 280, damping: 32 }}
           >
             <motion.div
-              className="max-w-[380px] rounded-2xl border border-[#C2E959]/40 bg-card/90 p-5 shadow-2xl backdrop-blur-xl"
+              className="w-full rounded-2xl border border-[#C2E959]/40 bg-card/90 p-5 shadow-2xl backdrop-blur-xl"
               layout
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}

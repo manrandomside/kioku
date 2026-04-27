@@ -39,6 +39,7 @@ export const quizSession = pgTable(
   },
   (table) => [
     index("idx_quiz_session_user_id").on(table.userId),
+    index("idx_quiz_session_user_completed").on(table.userId, table.isCompleted, table.completedAt),
   ]
 );
 
