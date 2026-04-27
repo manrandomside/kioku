@@ -8,6 +8,8 @@ import { useTourStore } from "@/stores/tour-store";
 
 interface TourStep {
   target: string;
+  /** Fallback target for mobile (e.g. bottom-nav instead of sidebar) */
+  mobileTarget?: string;
   title: string;
   description: string;
 }
@@ -17,31 +19,38 @@ const TOUR_STEPS: TourStep[] = [
     target: "tour-welcome",
     title: "Selamat Datang di Kioku!",
     description:
-      "Mari kenali fitur-fitur utama dashboard untuk memaksimalkan belajarmu.",
+      "Platform belajar bahasa Jepang dengan metode saintifik. Mari kami pandu sejenak.",
+  },
+  {
+    target: "tour-sidebar",
+    mobileTarget: "tour-bottom-nav",
+    title: "Menu Navigasi",
+    description:
+      "Akses cepat ke Belajar, Review, AI Tutor, dan Profil kamu. Di Kioku, semua kemajuanmu tersinkronisasi secara real-time.",
   },
   {
     target: "tour-smart-study",
-    title: "Belajar Sekarang",
+    title: "Smart Study",
     description:
-      "Sesi belajar pintar 3 fase. Klik ini setiap hari untuk review dan tambah kosakata baru.",
+      "Fitur unggulan kami. Dalam satu sesi, kamu akan melakukan Review kartu lama, mempelajari Kata Baru, dan diakhiri dengan Quiz interaktif untuk memperkuat ingatan.",
+  },
+  {
+    target: "tour-learn-hub",
+    title: "Pusat Belajar",
+    description:
+      "Di sini kamu bisa memilih materi HIRAKATA (untuk pemula) atau 50 Bab Minna no Nihongo (MNN) yang mencakup 2.900+ kosakata.",
+  },
+  {
+    target: "tour-ai-tutor",
+    title: "Sensei AI",
+    description:
+      "Punya pertanyaan grammar? Ingin latihan percakapan? AI Tutor kami siap menjawab dalam Bahasa Indonesia 24/7.",
   },
   {
     target: "tour-streak",
-    title: "Jaga Streak-mu",
+    title: "Pantau Progres",
     description:
-      "Konsistensi adalah kunci. Jangan sampai api streak ini padam!",
-  },
-  {
-    target: "tour-review",
-    title: "Antrean Review",
-    description:
-      "Cek berapa kartu yang siap di-review hari ini menggunakan algoritma FSRS.",
-  },
-  {
-    target: "tour-leech",
-    title: "Kata Sulit",
-    description:
-      "Sistem AI mendeteksi kata yang sering kamu lupakan. Latih khusus di sini.",
+      "Jaga streak harianmu, kumpulkan XP, dan raih 50+ Achievement badges untuk memotivasi belajarmu.",
   },
 ];
 
@@ -53,54 +62,92 @@ interface TargetRect {
 }
 
 const SPOTLIGHT_PADDING = 12;
+const MOBILE_BREAKPOINT = 768;
 
 export function InteractiveTour() {
   const { isActive, currentStep, hasSeenTour, startTour, nextStep, prevStep, closeTour, completeTour } =
     useTourStore();
 
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number; placement: "top" | "bottom" }>({
+  const [tooltipPosition, setTooltipPosition] = useState<{
+    x: number;
+    y: number;
+    placement: "top" | "bottom";
+    isMobileCentered: boolean;
+  }>({
     x: 0,
     y: 0,
     placement: "bottom",
+    isMobileCentered: false,
   });
+  const [windowSize, setWindowSize] = useState({ w: 0, h: 0 });
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const step = TOUR_STEPS[currentStep];
   const isWelcomeStep = step?.target === "tour-welcome";
   const isLastStep = currentStep === TOUR_STEPS.length - 1;
   const isFirstStep = currentStep === 0;
+  const isMobile = windowSize.w > 0 && windowSize.w < MOBILE_BREAKPOINT;
+
+  // Track window size
+  useEffect(() => {
+    function updateSize() {
+      setWindowSize({ w: window.innerWidth, h: window.innerHeight });
+    }
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  // Resolve the correct target element ID based on device
+  const resolveTargetId = useCallback(
+    (s: TourStep): string => {
+      if (isMobile && s.mobileTarget) return s.mobileTarget;
+      return s.target;
+    },
+    [isMobile],
+  );
 
   // Measure target element position
   const measureTarget = useCallback(() => {
     if (!step || isWelcomeStep) {
       setTargetRect(null);
-      // Center tooltip for welcome step
       setTooltipPosition({
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         placement: "bottom",
+        isMobileCentered: false,
       });
       return;
     }
 
-    const el = document.getElementById(step.target);
+    const targetId = resolveTargetId(step);
+    const el = document.getElementById(targetId);
     if (!el) {
+      // Element not found — center tooltip as fallback
       setTargetRect(null);
       setTooltipPosition({
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         placement: "bottom",
+        isMobileCentered: false,
       });
       return;
     }
 
-    // Scroll element into view
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Only scroll dashboard content elements into view; skip fixed elements like sidebar/bottom-nav
+    const isFixedElement = targetId === "tour-sidebar" || targetId === "tour-bottom-nav" ||
+      targetId === "tour-ai-tutor" || targetId === "tour-learn-hub";
+    if (!isFixedElement) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 
     // Delay measurement to allow scroll to settle
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
       const newRect: TargetRect = {
         x: rect.left - SPOTLIGHT_PADDING,
         y: rect.top - SPOTLIGHT_PADDING,
@@ -109,18 +156,33 @@ export function InteractiveTour() {
       };
       setTargetRect(newRect);
 
-      // Calculate tooltip position
-      const tooltipWidth = 360;
-      const tooltipHeight = 200;
-      const viewportHeight = window.innerHeight;
+      // Mobile: fixed-position tooltip at bottom or top center
+      if (vw < MOBILE_BREAKPOINT) {
+        // Determine if target is in top or bottom half of screen
+        const targetCenterY = rect.top + rect.height / 2;
+        const placement: "top" | "bottom" = targetCenterY < vh / 2 ? "bottom" : "top";
 
-      // Determine vertical placement
-      const spaceBelow = viewportHeight - (rect.bottom + SPOTLIGHT_PADDING);
+        setTooltipPosition({
+          x: vw / 2,
+          y: placement === "bottom"
+            ? Math.min(rect.bottom + SPOTLIGHT_PADDING + 20, vh - 200)
+            : Math.max(rect.top - SPOTLIGHT_PADDING - 20, 100),
+          placement,
+          isMobileCentered: true,
+        });
+        return;
+      }
+
+      // Desktop: position near target element
+      const tooltipWidth = 380;
+      const tooltipHeight = 200;
+
+      const spaceBelow = vh - (rect.bottom + SPOTLIGHT_PADDING);
       const placement: "top" | "bottom" = spaceBelow >= tooltipHeight + 24 ? "bottom" : "top";
 
       let tooltipX = rect.left + rect.width / 2;
       // Clamp to viewport
-      tooltipX = Math.max(tooltipWidth / 2 + 16, Math.min(window.innerWidth - tooltipWidth / 2 - 16, tooltipX));
+      tooltipX = Math.max(tooltipWidth / 2 + 16, Math.min(vw - tooltipWidth / 2 - 16, tooltipX));
 
       let tooltipY: number;
       if (placement === "bottom") {
@@ -129,9 +191,9 @@ export function InteractiveTour() {
         tooltipY = rect.top - SPOTLIGHT_PADDING - 16;
       }
 
-      setTooltipPosition({ x: tooltipX, y: tooltipY, placement });
-    }, 350);
-  }, [step, isWelcomeStep]);
+      setTooltipPosition({ x: tooltipX, y: tooltipY, placement, isMobileCentered: false });
+    }, isFixedElement ? 100 : 350);
+  }, [step, isWelcomeStep, resolveTargetId]);
 
   // Measure on step change
   useEffect(() => {
@@ -149,8 +211,11 @@ export function InteractiveTour() {
     }
 
     window.addEventListener("resize", handleResize);
+    // Also re-measure on orientation change
+    window.addEventListener("orientationchange", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
       if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
     };
   }, [isActive, measureTarget]);
@@ -158,7 +223,6 @@ export function InteractiveTour() {
   // Auto-start tour on first visit
   useEffect(() => {
     if (!hasSeenTour) {
-      // Small delay to let the dashboard render
       const timer = setTimeout(() => {
         startTour();
       }, 1200);
@@ -192,10 +256,19 @@ export function InteractiveTour() {
   function buildSpotlightClipPath() {
     if (!targetRect) return "";
     const r = 16;
+    const vw = windowSize.w || window.innerWidth;
+    const vh = windowSize.h || window.innerHeight;
     const { x, y, width, height } = targetRect;
+    // Clamp values to prevent negative coordinates
+    const cx = Math.max(0, x);
+    const cy = Math.max(0, y);
+    const cw = Math.min(width, vw - cx);
+    const ch = Math.min(height, vh - cy);
     // SVG path: full viewport rect, then inner rounded rect (cut-out via even-odd)
-    return `M 0 0 H ${window.innerWidth} V ${window.innerHeight} H 0 Z M ${x + r} ${y} H ${x + width - r} Q ${x + width} ${y} ${x + width} ${y + r} V ${y + height - r} Q ${x + width} ${y + height} ${x + width - r} ${y + height} H ${x + r} Q ${x} ${y + height} ${x} ${y + height - r} V ${y + r} Q ${x} ${y} ${x + r} ${y} Z`;
+    return `M 0 0 H ${vw} V ${vh} H 0 Z M ${cx + r} ${cy} H ${cx + cw - r} Q ${cx + cw} ${cy} ${cx + cw} ${cy + r} V ${cy + ch - r} Q ${cx + cw} ${cy + ch} ${cx + cw - r} ${cy + ch} H ${cx + r} Q ${cx} ${cy + ch} ${cx} ${cy + ch - r} V ${cy + r} Q ${cx} ${cy} ${cx + r} ${cy} Z`;
   }
+
+  const totalSteps = TOUR_STEPS.length;
 
   return (
     <AnimatePresence>
@@ -209,19 +282,17 @@ export function InteractiveTour() {
         >
           {/* Overlay */}
           {isWelcomeStep ? (
-            // Full dark overlay for welcome step
             <motion.div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={closeTour}
             />
           ) : (
-            // Spotlight overlay with SVG cutout
             <svg
               className="absolute inset-0 h-full w-full"
               onClick={closeTour}
             >
               <motion.path
-                d={buildSpotlightClipPath() || `M 0 0 H ${typeof window !== "undefined" ? window.innerWidth : 1920} V ${typeof window !== "undefined" ? window.innerHeight : 1080} H 0 Z`}
+                d={buildSpotlightClipPath() || `M 0 0 H ${windowSize.w || 1920} V ${windowSize.h || 1080} H 0 Z`}
                 fill="rgba(0, 0, 0, 0.65)"
                 fillRule="evenodd"
                 initial={{ opacity: 0 }}
@@ -252,19 +323,27 @@ export function InteractiveTour() {
             style={{ pointerEvents: "auto" }}
             initial={false}
             animate={{
-              x: isWelcomeStep ? "-50%" : "-50%",
+              x: "-50%",
               y: isWelcomeStep
                 ? "-50%"
-                : tooltipPosition.placement === "bottom"
-                  ? 0
-                  : "-100%",
+                : tooltipPosition.isMobileCentered
+                  ? "-50%"
+                  : tooltipPosition.placement === "bottom"
+                    ? 0
+                    : "-100%",
               left: tooltipPosition.x,
-              top: tooltipPosition.y,
+              top: isWelcomeStep
+                ? tooltipPosition.y
+                : tooltipPosition.isMobileCentered
+                  ? tooltipPosition.placement === "bottom"
+                    ? tooltipPosition.y
+                    : tooltipPosition.y
+                  : tooltipPosition.y,
             }}
             transition={{ type: "spring", stiffness: 280, damping: 32 }}
           >
             <motion.div
-              className="w-[340px] rounded-2xl border border-[#C2E959]/40 bg-card/90 p-5 shadow-2xl backdrop-blur-xl sm:w-[380px]"
+              className="mx-4 w-[calc(100vw-2rem)] max-w-[380px] rounded-2xl border border-[#C2E959]/40 bg-card/90 p-5 shadow-2xl backdrop-blur-xl sm:mx-0 sm:w-[380px]"
               layout
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -314,27 +393,32 @@ export function InteractiveTour() {
                 {step.description}
               </motion.p>
 
-              {/* Step indicator + buttons */}
+              {/* Step counter + dots + buttons */}
               <div className="mt-5 flex items-center justify-between">
-                {/* Step dots */}
-                <div className="flex items-center gap-1.5">
-                  {TOUR_STEPS.map((_, idx) => (
-                    <motion.div
-                      key={idx}
-                      className={`h-1.5 rounded-full transition-colors ${
-                        idx === currentStep
-                          ? "w-5 bg-[#C2E959]"
-                          : idx < currentStep
-                            ? "w-1.5 bg-[#C2E959]/50"
-                            : "w-1.5 bg-muted-foreground/30"
-                      }`}
-                      layout
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  ))}
+                {/* Left: dots + step counter */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    {TOUR_STEPS.map((_, idx) => (
+                      <motion.div
+                        key={idx}
+                        className={`h-1.5 rounded-full transition-colors ${
+                          idx === currentStep
+                            ? "w-5 bg-[#C2E959]"
+                            : idx < currentStep
+                              ? "w-1.5 bg-[#C2E959]/50"
+                              : "w-1.5 bg-muted-foreground/30"
+                        }`}
+                        layout
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground/60">
+                    Langkah {currentStep + 1} dari {totalSteps}
+                  </span>
                 </div>
 
-                {/* Navigation buttons */}
+                {/* Right: navigation buttons */}
                 <div className="flex items-center gap-2">
                   {!isFirstStep && (
                     <button
