@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 import { useTourStore } from "@/stores/tour-store";
+import { getTourCompletedStatus, markTourCompleted } from "@/app/actions/tour";
 
 interface TourStep {
   target: string;
@@ -19,40 +20,52 @@ const TOUR_STEPS: TourStep[] = [
     target: "tour-welcome",
     title: "Selamat Datang di Kioku!",
     description:
-      "Platform belajar bahasa Jepang dengan metode saintifik. Mari kami pandu sejenak.",
+      "Kioku menggunakan FSRS \u2014 algoritma spaced repetition yang sama dengan Anki, terbukti 20-30% lebih efisien. Mari kami pandu fitur utama dalam 30 detik.",
   },
   {
     target: "tour-sidebar",
     mobileTarget: "tour-bottom-nav",
     title: "Menu Navigasi",
     description:
-      "Akses cepat ke Belajar, Review, AI Tutor, dan Profil kamu. Di Kioku, semua kemajuanmu tersinkronisasi secara real-time.",
+      "Akses cepat ke Belajar, Review, AI Tutor, dan Profil. Semua progres tersinkronisasi real-time di semua perangkat kamu.",
   },
   {
     target: "tour-smart-study",
-    title: "Smart Study",
+    title: "Belajar Sekarang",
     description:
-      "Fitur unggulan kami. Dalam satu sesi, kamu akan melakukan Review kartu lama, mempelajari Kata Baru, dan diakhiri dengan Quiz interaktif untuk memperkuat ingatan.",
+      "Satu klik, satu sesi optimal: Review kartu lama \u2192 Pelajari kata baru \u2192 Quiz untuk memperkuat. Sistem memilih bab dan kartu otomatis sesuai progress kamu.",
+  },
+  {
+    target: "tour-review",
+    title: "Review Harian",
+    description:
+      "Lihat kartu yang jatuh tempo hari ini di sini. Algoritma FSRS mengingatkan kamu tepat waktu agar memori jangka panjang tetap kuat. Skip review = lupa lebih cepat.",
   },
   {
     target: "tour-learn-hub",
     mobileTarget: "tour-learn-hub-mobile",
     title: "Pusat Belajar",
     description:
-      "Di sini kamu bisa memilih materi HIRAKATA (untuk pemula) atau 50 Bab Minna no Nihongo (MNN) yang mencakup 2.900+ kosakata.",
+      "214 karakter Hiragana & Katakana untuk pemula, atau 50 bab Minna no Nihongo dengan 2.909 kosakata MNN lengkap audio dan contoh kalimat.",
   },
   {
     target: "tour-ai-tutor",
     mobileTarget: "tour-ai-tutor-mobile",
     title: "Sensei AI",
     description:
-      "Punya pertanyaan grammar? Ingin latihan percakapan? AI Tutor kami siap menjawab dalam Bahasa Indonesia 24/7.",
+      "Bingung grammar? Mau latihan percakapan? AI Tutor menjawab dalam Bahasa Indonesia, sadar level kamu, dan tersedia 24/7.",
   },
   {
     target: "tour-streak",
     title: "Pantau Progres",
     description:
-      "Jaga streak harianmu, kumpulkan XP, dan raih 50+ Achievement badges untuk memotivasi belajarmu.",
+      "Streak harian, XP yang naik tiap belajar, level 1-60, dan 50 achievement badge. Konsistensi mengalahkan intensitas.",
+  },
+  {
+    target: "tour-user-menu",
+    title: "Profil & Panduan",
+    description:
+      "Klik avatar kamu untuk akses Profil, Panduan Penggunaan PDF lengkap, atau ulang tour ini kapan saja. Semua kontrol akun ada di sini.",
   },
 ];
 
@@ -70,7 +83,7 @@ const TOOLTIP_MAX_WIDTH = 350;
 const TOOLTIP_EST_HEIGHT = 220;
 
 export function InteractiveTour() {
-  const { isActive, currentStep, hasSeenTour, startTour, nextStep, prevStep, closeTour, completeTour } =
+  const { isActive, currentStep, hasSeenTour, startTour, nextStep, prevStep, closeTour, completeTour, syncCompletedFromServer } =
     useTourStore();
 
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
@@ -137,7 +150,8 @@ export function InteractiveTour() {
 
     // Only scroll dashboard content elements into view; skip fixed elements
     const isFixedElement = targetId === "tour-sidebar" || targetId === "tour-bottom-nav" ||
-      targetId === "tour-ai-tutor" || targetId === "tour-learn-hub";
+      targetId === "tour-ai-tutor" || targetId === "tour-learn-hub" ||
+      targetId === "tour-user-menu";
     if (!isFixedElement) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -249,15 +263,56 @@ export function InteractiveTour() {
     };
   }, [isActive, measureTarget]);
 
-  // Auto-start tour on first visit
+  // Auto-start tour on first visit (with server-side completion check)
   useEffect(() => {
-    if (!hasSeenTour) {
-      const timer = setTimeout(() => {
-        startTour();
-      }, 1200);
-      return () => clearTimeout(timer);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    async function bootstrap() {
+      try {
+        const result = await getTourCompletedStatus();
+        if (cancelled) return;
+
+        const serverCompleted = result.success && result.data?.tourCompleted === true;
+
+        // Server says completed -> sync local cache, do not start tour
+        if (serverCompleted) {
+          syncCompletedFromServer(true);
+          return;
+        }
+
+        // Local says seen but server does not -> backfill server, do not start tour
+        if (hasSeenTour && !serverCompleted) {
+          markTourCompleted().catch((e) => {
+            console.warn("[interactive-tour] backfill markTourCompleted failed:", e);
+          });
+          return;
+        }
+
+        // Both say not seen -> start the tour
+        if (!hasSeenTour && !serverCompleted) {
+          timer = setTimeout(() => {
+            if (!cancelled) startTour();
+          }, 1500);
+        }
+      } catch (e) {
+        // Network failure: fall back to localStorage-only behavior
+        console.warn("[interactive-tour] bootstrap failed, falling back to local cache:", e);
+        if (!hasSeenTour && !cancelled) {
+          timer = setTimeout(() => {
+            if (!cancelled) startTour();
+          }, 1500);
+        }
+      }
     }
-  }, [hasSeenTour, startTour]);
+
+    bootstrap();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [hasSeenTour, startTour, syncCompletedFromServer]);
 
   // Handle keyboard
   useEffect(() => {

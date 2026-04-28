@@ -276,6 +276,17 @@ src/
 - [x] Skeleton loading update: dashboard + learn + profile pages match new layouts
 - [x] Lighthouse optimization: Performance 63→86 (font preload, lazy motion, dynamic imports, image dimensions, accessibility fixes)
 
+### Onboarding Tour Enhancement (Selesai)
+
+- [x] Tambah 2 step baru: "Review Harian" (target tour-review, sisip setelah Smart Study) + "Profil & Panduan" (target tour-user-menu, step terakhir). Total 8 step.
+- [x] Polish copy 6 step existing: lebih punchy + spesifik (FSRS 20-30% efisien, 214 kana, 2.909 MNN, level 1-60, 50 achievement, dst).
+- [x] Tag `id="tour-user-menu"` di DropdownMenuTrigger user-menu.tsx (element selalu visible di topbar).
+- [x] Persistence ke DB: kolom `tour_completed` di tabel user. Migration 0013_add_tour_completed.sql.
+- [x] Server actions: `markTourCompleted()` + `getTourCompletedStatus()` di src/app/actions/tour.ts. Graceful fallback jika kolom belum ada.
+- [x] Tour store: `syncCompletedFromServer()` action + `completeTour()` fire-and-forget panggil server. localStorage tetap sebagai fast cache.
+- [x] Interactive tour bootstrap: fetch server status saat mount, sync down (server→local) atau backfill up (local→server) untuk legacy users. Auto-start delay 1500ms.
+- [x] Cross-device sync: user yang complete tour di device A tidak akan lihat tour lagi di device B.
+
 ---
 
 ## Catatan Teknis (Diupdate Seiring Development)

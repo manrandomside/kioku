@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { markTourCompleted } from "@/app/actions/tour";
+
 interface TourState {
   hasSeenTour: boolean;
   isActive: boolean;
@@ -11,6 +13,7 @@ interface TourState {
   prevStep: () => void;
   closeTour: () => void;
   completeTour: () => void;
+  syncCompletedFromServer: (completed: boolean) => void;
 }
 
 export const useTourStore = create<TourState>()(
@@ -34,8 +37,17 @@ export const useTourStore = create<TourState>()(
       closeTour: () =>
         set({ isActive: false, currentStep: 0 }),
 
-      completeTour: () =>
-        set({ isActive: false, currentStep: 0, hasSeenTour: true }),
+      completeTour: () => {
+        set({ isActive: false, currentStep: 0, hasSeenTour: true });
+        // Fire-and-forget: persist to server, do not block UI
+        markTourCompleted().catch((e) => {
+          console.warn("[tour-store] markTourCompleted failed:", e);
+        });
+      },
+
+      syncCompletedFromServer: (completed: boolean) => {
+        if (completed) set({ hasSeenTour: true });
+      },
     }),
     {
       name: "kioku-tour-storage",

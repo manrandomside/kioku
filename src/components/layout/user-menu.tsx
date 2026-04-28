@@ -35,7 +35,10 @@ export function UserMenu({ user }: UserMenuProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      <DropdownMenuTrigger
+        id="tour-user-menu"
+        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <Avatar className="size-8">
           {isEmoji ? (
             <AvatarFallback className="bg-primary text-base text-primary-foreground">
