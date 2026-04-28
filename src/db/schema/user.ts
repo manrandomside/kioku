@@ -24,6 +24,7 @@ export const user = pgTable("user", {
   theme: themeEnum("theme").notNull().default("system"),
   onboardingDone: boolean("onboarding_done").notNull().default(false),
   hirakataKnown: boolean("hirakata_known").notNull().default(false),
+  tourCompleted: boolean("tour_completed").notNull().default(false),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
