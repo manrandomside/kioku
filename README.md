@@ -10,9 +10,9 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000?logo=vercel)](https://kioku-learn.vercel.app)
 
-A fullstack web platform combining spaced repetition (FSRS), interactive quizzes, and an AI tutor to help Indonesian speakers learn Japanese vocabulary — completely free.
+A fullstack web platform combining the FSRS spaced repetition algorithm, an AI tutor, an interactive guided tour, and a comprehensive 36-page user guide to help Indonesian speakers learn Japanese vocabulary. Built end-to-end on free-tier infrastructure, Kioku ships 2,909 vocabulary words, 214 kana characters, and 3,085 pre-generated audio files. 100% free, no ads, no upsell.
 
-[Live Demo](https://kioku-learn.vercel.app) · [Security Audit](./SECURITY-AUDIT.md) · [Project Spec](./designs/kioku-project-spec.md)
+[Live Demo](https://kioku-learn.vercel.app) · [User Guide (PDF)](./public/guidebook/kioku-guidebook.pdf) · [Security Audit](./SECURITY-AUDIT.md) · [Project Spec](./designs/kioku-project-spec.md)
 
 ![Landing Page](./public/screenshots/landing-kioku.png)
 
@@ -22,12 +22,26 @@ A fullstack web platform combining spaced repetition (FSRS), interactive quizzes
 
 ## Why Kioku?
 
-- **Scientific** — Uses the FSRS algorithm (same as Anki v23.10+), 20-30% more efficient than SM-2
-- **Comprehensive** — 2,909 vocabulary words, 214 kana characters, 3,085 audio files, 7 quiz types, AI tutor
-- **Free** — Runs entirely on free tiers ($0/month)
-- **Indonesia-first** — All translations and UI in Bahasa Indonesia
+- **Scientific** — FSRS algorithm (Anki v23.10+), 20-30% more efficient than SM-2 SuperMemo
+- **Comprehensive** — 2,909 vocabulary words, 214 kana characters, 3,085 audio files, 7 quiz types, AI tutor, full user guide
+- **Onboarding Done Right** — Forced 3-step onboarding, interactive guided tour for new users, 36-page user guide PDF
+- **Free Forever** — Runs entirely on free tiers ($0/month, no ads, no upsell, no paid tier)
+- **Indonesia-first** — All translations and UI in Bahasa Indonesia, content sourced from Minna no Nihongo Book I (Ch. 1-25, JLPT N5) and Book II (Ch. 26-50, JLPT N4)
 
-Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II (Ch. 26-50, JLPT N4), plus a complete Hiragana & Katakana module for beginners.
+---
+
+## Highlights
+
+- **Smart Study Session** — One-click adaptive session combining due card review, new vocab learning, and quiz validation in 3 phases
+- **Spaced Repetition Engine (FSRS)** — Type-safe TypeScript implementation calculating optimal review intervals per card
+- **AI Tutor with Provider Waterfall** — Gemini → Groq → OpenRouter cascade for high availability on free tier
+- **Interactive Onboarding Tour** — 8-step guided tour with cross-device persistence (synced via Postgres)
+- **Leech Detection** — Automatic identification of difficult cards (lapses ≥4) with dedicated forced-recall practice
+- **JLPT Auto-Upgrade** — Detects N5 mastery and upgrades target to N4 with celebration modal
+- **50 Achievements + 60 Levels** — Gamification system with XP economy and 365-day activity heatmap
+- **Pre-generated Audio Pipeline** — 3,085 MP3 files via Microsoft Edge TTS (NanamiNeural), zero runtime cost
+- **PWA-Ready** — Service worker, offline cache, install banner, mobile-responsive across all 30+ pages
+- **Production-Grade Security** — RLS on 20 tables, rate limiting, Zod validation, security headers, full audit report
 
 ---
 
@@ -38,23 +52,13 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 ### Dashboard
 ![Dashboard](./public/screenshots/full-dashboard-kioku.png)
 
+### Onboarding Tour
+First-time users are welcomed with an interactive 8-step guided tour. Progress is persisted to Postgres so the tour never repeats across devices.
+
+![Onboarding Tour](./public/screenshots/onboarding-tour-kioku.png)
+
 ### Learn Hub
 ![Learn Hub](./public/screenshots/learn-hub-kioku.png)
-
-### Profile & Stats
-![Profile](./public/screenshots/profile-kioku.png)
-
-### Flashcard with Spaced Repetition
-![Flashcard](./public/screenshots/flashcard-mnn-kioku.png)
-
-### Interactive Quiz with Explanations
-![Quiz](./public/screenshots/quiz-mnn-kioku.png)
-
-### AI Tutor (Sensei)
-![AI Tutor](./public/screenshots/ai-tutor-kioku.png)
-
-### Hiragana & Katakana Grid
-![Kana Grid](./public/screenshots/kana-grid-kioku.png)
 
 ### Smart Study Session
 ![Smart Study](./public/screenshots/smart-study-session-kioku.png)
@@ -62,13 +66,51 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 ### Session Summary with XP Breakdown
 ![Summary](./public/screenshots/smart-study-summary-kioku.png)
 
-### Kata Sulit (Leech Detection)
-![Kata Sulit](./public/screenshots/kata-sulit-kioku.png)
+### Flashcard with Spaced Repetition
+![Flashcard](./public/screenshots/flashcard-mnn-kioku.png)
+
+### Interactive Quiz with Explanations
+![Quiz](./public/screenshots/quiz-mnn-kioku.png)
+
+### Hiragana & Katakana Grid
+![Kana Grid](./public/screenshots/kana-grid-kioku.png)
 
 ### Review Summary
 ![Review](./public/screenshots/review-summary-kioku.png)
 
+### Kata Sulit (Leech Detection)
+![Kata Sulit](./public/screenshots/kata-sulit-kioku.png)
+
+### AI Tutor (Sensei)
+![AI Tutor](./public/screenshots/ai-tutor-kioku.png)
+
+### Profile & Stats
+![Profile](./public/screenshots/profile-kioku.png)
+
 </div>
+
+---
+
+## Documentation
+
+Kioku ships with a comprehensive 36-page user guide that covers everything from first signup to advanced features.
+
+[Download User Guide (PDF)](./public/guidebook/kioku-guidebook.pdf)
+
+The guide includes:
+
+- **Chapter 1** — Welcome to Kioku and the science behind spaced repetition
+- **Chapter 2** — Getting started: account creation and onboarding
+- **Chapter 3** — Learning content: HIRAKATA module and Minna no Nihongo
+- **Chapter 4** — Study methods: Smart Study, Flashcard, Review, Quiz, Kata Sulit
+- **Chapter 5** — Using the AI Tutor effectively
+- **Chapter 6** — Gamification: XP, levels, streaks, achievements
+- **Chapter 7** — Profile and settings
+- **Chapter 8** — Tips and tricks for effective learning
+- **Chapter 9** — Troubleshooting common issues
+- **Chapter 10** — About Kioku, tech stack, and privacy
+
+The guide is also accessible from within the app via the profile dropdown menu.
 
 ---
 
@@ -78,47 +120,54 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 - **Smart Study Session** — One-click optimal study session ("Belajar Sekarang") with 3 phases: review due cards, learn new words, and quiz. Adaptive chapter selection based on JLPT target and user progress
 - **HIRAKATA Module** — Learn 214 hiragana & katakana characters with an interactive color-coded grid, flashcards, and quizzes
 - **MNN Vocabulary** — 2,909 words from Minna no Nihongo Ch. 1-50 (JLPT N5 & N4), with Indonesian translations
-- **Vocabulary Flashcard** — 2-button design (Don't Know / Know) with retry queue (max 3x), simpler than Anki's 4-button approach
-- **SRS Review** — 4-button FSRS rating (Again / Hard / Good / Easy) with re-queue for failed cards (max 3x)
-- **Leech Detection ("Kata Sulit")** — Automatic detection of frequently forgotten words (lapses >= 4) and confused word pairs from quiz history. Specialized training with intensive flashcard (5x retry) and forced recall quiz
-- **Duolingo-style Quiz** — 7 question types: multiple choice (JP-ID, ID-JP), audio recognition, type hiragana, fill-in-the-blank, matching, speaking. 20 questions per session with answer explanations
-- **Kanji/Kana Toggle** — Switch between kanji and kana-only display across flashcards, quizzes, and reviews
-- **Native Audio** — 3,085 pre-generated audio files using Microsoft Edge TTS (ja-JP-NanamiNeural voice)
+- **FSRS Spaced Repetition** — ts-fsrs v5 calculates optimal review intervals per card; review uses 4-button rating (Again / Hard / Good / Easy) with re-queue for failed cards (max 3x)
+- **2-Button Flashcards** — Don't Know / Know with retry queue (max 3x), simpler than Anki's 4-button approach for the learning phase
+- **7 Quiz Types** — Multiple choice (JP-ID, ID-JP), audio recognition, type hiragana, fill-in-the-blank, matching, speaking. 20 questions per session with answer explanations
+- **Kata Sulit / Leech Detection** — Automatic detection of frequently forgotten words (lapses ≥4) and confused word pairs from quiz history. Specialized training with intensive flashcard (5x retry) and forced recall quiz
+- **JLPT Auto-Upgrade** — Automatically advances from N5 to N4 when all Book 1 chapters are mastered via quiz, with a celebration modal
 
-### AI Features
-- **AI Tutor "Sensei"** — Context-aware chatbot that adapts to the user's JLPT level, with streaming responses and conversation history
-- **Multi-Provider Waterfall** — Gemini 2.5 Flash-Lite → Groq (Llama 3.3 70B) → OpenRouter, auto-fallback on rate limits
-- **Pronunciation Check** — Web Speech API integration with accuracy scoring (Levenshtein distance + kanji-to-hiragana mapping)
-- **Response Caching** — SHA-256 prompt hashing to reduce redundant API calls
+### Documentation & Onboarding
+- **Forced Onboarding Flow** — 3-step wizard (display name + JLPT target + Hirakata assessment) blocks dashboard until completed
+- **Interactive Guided Tour** — 8-step product tour for first-time users with spotlight + tooltip, cross-device persisted via Postgres `tour_completed` column
+- **36-Page User Guide PDF** — Comprehensive documentation accessible from the profile dropdown and the landing page footer
+- **Restart Tour Anytime** — "Lihat Tour Lagi" option in the profile dropdown menu replays the tour on demand
 
 ### Gamification
-- **XP & Levels** — Earn XP from flashcards (2 XP), quizzes (3 XP/correct + tier bonus), and achievements. Level 1-60 with progressive formula
-- **Daily Streak** — Streak counter with freeze protection and milestone rewards (7, 14, 30, 60, 90, 180, 365 days)
+- **XP & Level System** — Earn XP from flashcards, quizzes, and achievements. Level 1-60 with progressive formula (50 × level²)
+- **Streak System** — Daily streak counter with freeze protection and milestone rewards (7, 14, 30, 60, 90, 180, 365 days). Validates without auto-resetting on missed days
+- **Dynamic Streak Reminder** — Time-of-day-aware personalized messages with 5 distinct slots (dini hari, pagi, siang, sore, malam), countdown to midnight, and color-coded borders per time of day
 - **50 Achievements** — Badges for streaks, words learned, quiz scores, speed runs, chapter completion, time-of-day activity, and more
-- **Activity Heatmap** — 365-day activity visualization (GitHub-style contribution graph)
+- **365-Day Activity Heatmap** — GitHub-style contribution graph visualizing daily activity over the past year
 - **Daily Goal** — 5 configurable tiers (100 / 300 / 500 / 750 / 1,000 XP) with goal-met bonus
 
-### Smart Navigation & User Experience
-- **Interactive Landing Page** — A beautifully designed, fully responsive landing page featuring auto-cycling mockups, smooth animations, and a dynamic feature showcase.
-- **Comprehensive Guidebook** — A detailed PDF manual ("Panduan Penggunaan") accessible from both the landing page and user menu, helping learners understand FSRS and maximize the platform.
-- **Redesigned Dashboard** — Prominent "Belajar Sekarang" CTA, review countdown timer with clear labels, leech card indicator with sidebar badge
-- **Dynamic Streak Reminder** — Time-based personalized messages with 5 distinct slots (dini hari, pagi, siang, sore, malam), countdown to midnight, and color-coded borders per time of day
-- **Redesigned Learn Hub** — 3 "Metode Belajar" cards (Belajar Sekarang, Review, Kata Sulit) + 2 "Materi" cards (HIRAKATA, MNN) with gradient styling and dynamic info badges
-- **JLPT-Aware** — Dashboard recommends chapters matching the user's target level
-- **Auto-upgrade** — Automatically advances from N5 to N4 when all Book 1 chapters are mastered via quiz
-- **Progress Tracking** — Quiz-based mastery: a word is "mastered" when answered correctly in a quiz
-- **Forced Onboarding** — New users must complete onboarding before accessing the dashboard
+### AI
+- **AI Tutor "Sensei"** — Context-aware chatbot with provider waterfall (Gemini 2.5 Flash-Lite → Groq Llama 3.3 70B → OpenRouter), streaming responses, conversation history, and 4 categorized suggested prompts
+- **Pronunciation Check** — Web Speech API integration with accuracy scoring (Levenshtein distance + ~1,766 kanji-to-hiragana mappings)
+- **Auto-Generate Quiz Questions** — Build-time pipeline generates question bank with SHA-256 prompt hashing for cache deduplication
 
-### Profile & Personalization
-- **9-Stat Grid** — 3 highlight cards (Total XP with progress bar, Level with XP-to-next, Streak with longest) + 6 detail cards (Kata Dikuasai, Quiz Selesai, Akurasi, Hari Aktif, Total Review, Bergabung Sejak)
-- **Emoji Avatar Picker** — 16 Japanese-themed preset emoji avatars with gradient ring (lime-to-teal) and rotation animation, plus initial-letter fallback
-- **Change Password** — Real-time validation modal for email/password users with strength requirements
-- **Google OAuth Integration** — Clear explanation and direct link to Google Account settings for OAuth users
-- **Safe Account Deletion** — Multi-step confirmation: warning with real data counts, type "HAPUS AKUN" + 5-second countdown timer to prevent accidental clicks. Cascade delete across all tables + Supabase Auth
-- **Real-time Stats** — Force-dynamic ensures fresh data on every navigation
+### UX
+- **Profile Customization** — 16 Japanese-themed emoji avatars with gradient ring (lime-to-teal) and rotation animation, plus inline display name editing
+- **Account Security** — Change password modal with real-time validation (email/password users), Google OAuth info panel for OAuth users, multi-step delete account with type-to-confirm + 5-second countdown timer
+- **Display Mode Toggle** — Switch between Kanji and Kana-only display across flashcards, quizzes, and reviews; setting persisted per user with per-page Zustand override
+- **Dark / Light Mode** — System-aware theme toggle with full dark mode coverage
+- **PWA Install** — Service worker + manifest + offline cache + floating install banner
+- **Auto-play Audio Toggle** — Global preference auto-plays Japanese audio across flashcard, quiz, review, and kana grid
+- **Responsive Design** — Desktop sidebar + content layout, tablet bottom-nav + hamburger, mobile bottom-nav + stacked, fullscreen immersive flashcard/quiz screens
+
+### Security & Performance
+- **Lighthouse Score** — Performance 86, Accessibility 94, Best Practices 96, SEO 100
+- **RLS on 20 Tables** — Row Level Security enforced on every table; user data scoped to `auth.uid()`, content tables public-read
+- **Rate Limiting** — In-memory sliding window (AI chat 20/min, pronunciation 30/min, search 30/min, daily-check 10/min)
+- **Zod Validation** — Runtime + compile-time validation on all API routes and Server Actions
+- **Security Headers** — HSTS, X-Frame-Options, CSP, X-Content-Type-Options
+- **Cascade Account Deletion** — Removes all user data across tables + Supabase Auth via service role
+- **Real-time Stats** — Force-dynamic ensures fresh dashboard and profile data on every navigation
 
 ### Data Quality
 - **Verified Kana Data** — All 214 hiragana & katakana characters verified and corrected (12 romaji errors fixed: ぢ→ji, づ→zu, を→o, etc.)
+- **Curated MNN Vocabulary** — 2,909 published words synced from Minna no Nihongo PDFs; entries not present in the textbook are hidden via `is_published = false`
+- **Indonesian Translations** — All vocabulary `meaning_id` translated from MNN PDF Ch. 1-50 (2,016 rows updated)
+- **WIB Timezone** — All date calculations use Asia/Jakarta via centralized `timezone.ts` utility
 
 ---
 
@@ -133,7 +182,7 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 | **Tailwind CSS 4** | Utility-first styling |
 | **shadcn/ui** | Accessible, customizable component library |
 | **Framer Motion** | Animations (3D card flip, page transitions, micro-interactions) |
-| **Zustand** | Client state (quiz/flashcard sessions, display mode) |
+| **Zustand** | Client state (quiz / flashcard / tour sessions, display mode) |
 | **TanStack Query v5** | Server state, caching, background refetch |
 
 ### Backend & Database
@@ -191,8 +240,11 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 - **AI Waterfall** — Gemini (primary) → Groq → OpenRouter, each provider tried in sequence on failure/rate-limit
 - **Audio** — Pre-generated at build time via Edge TTS, stored in Supabase Storage, zero runtime cost
 - **Timezone** — All date calculations use WIB (Asia/Jakarta) via centralized utility
+- **Tour Persistence** — Onboarding tour completion synced to Postgres `user.tour_completed` with localStorage fast cache
 
-### Database
+---
+
+## Database
 
 20 tables with Row Level Security (RLS) on all tables:
 
@@ -200,7 +252,9 @@ Content sourced from **Minna no Nihongo** Book I (Ch. 1-25, JLPT N5) and Book II
 - **User Data** (RLS protected): `user`, `srs_card`, `review_log`, `quiz_session`, `quiz_answer`, `user_gamification`, `xp_transaction`, `achievement_unlock`, `user_chapter_progress`, `daily_activity`
 - **AI** (RLS protected): `ai_chat_session`, `ai_chat_message`, `ai_response_cache`, `pronunciation_attempt`
 
-### Security
+---
+
+## Security
 
 Full security audit completed — see [SECURITY-AUDIT.md](./SECURITY-AUDIT.md).
 
@@ -214,6 +268,24 @@ Full security audit completed — see [SECURITY-AUDIT.md](./SECURITY-AUDIT.md).
 | SQL Injection | Protected (Drizzle ORM parameterized queries) |
 | XSS | Protected (React auto-escape) |
 | CSRF | Protected (Next.js Server Actions) |
+
+---
+
+## Project Status
+
+All planned phases are complete. Project is in production at https://kioku-learn.vercel.app.
+
+| Phase | Description | Status |
+|---|---|---|
+| **P0** | Setup & Foundation | Complete |
+| **P1** | Core Features (Flashcard, Quiz, Review, Search) | Complete |
+| **P2** | Gamification & Polish (XP, Streak, Achievements, PWA) | Complete |
+| **P3** | AI Features (Chatbot, Pronunciation, Quiz Generation) | Complete |
+| **P4** | UX Improvements (Landing, Auth, Security Audit, JLPT Upgrade) | Complete |
+| **P5** | Smart Study & Leech Detection | Complete |
+| **P6** | Profile Enhancement & Documentation | Complete |
+
+Total: 70+ features shipped, 30+ pages, 20 database tables, 8 onboarding tour steps, 36-page user guide.
 
 ---
 
@@ -270,82 +342,42 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ---
 
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── (auth)/            # Login, register, magic link
-│   ├── (onboarding)/      # Forced onboarding flow
-│   ├── (dashboard)/       # Dashboard, learn, review, quiz, chat, profile, smart-study, kata-sulit
-│   └── api/               # API routes (auth, v1/*)
-├── components/
-│   ├── flashcard/         # Flashcard components (3D flip)
-│   ├── quiz/              # Quiz components (7 question types)
-│   ├── review/            # SRS review session
-│   ├── chat/              # AI tutor interface
-│   ├── kana/              # Kana grid & detail modal
-│   ├── gamification/      # XP bar, streak, achievements, heatmap
-│   ├── pwa/               # PWA install banner
-│   └── ui/                # shadcn/ui + custom components
-├── lib/
-│   ├── srs/               # FSRS engine (ts-fsrs wrapper)
-│   ├── ai/                # AI provider waterfall + system prompt
-│   ├── audio/             # Audio playback + pronunciation scoring
-│   ├── gamification/      # XP, streak, achievement services
-│   ├── smart-study/       # Smart Study session service
-│   ├── leech/             # Leech detection + confused pairs
-│   ├── progress/          # Chapter progress + quiz mastery
-│   ├── rate-limit/        # In-memory sliding window rate limiter
-│   ├── supabase/          # Supabase client helpers
-│   └── utils/             # Timezone (WIB) utilities
-├── db/
-│   ├── schema/            # Drizzle ORM schema (20 tables)
-│   └── migrations/        # SQL migrations
-├── stores/                # Zustand stores
-└── types/                 # Shared TypeScript types
-```
-
----
-
-## Key Technical Decisions
-
-| Decision | Rationale |
-|---|---|
-| **Flashcard: 2 buttons** vs Review: 4 FSRS buttons | Simpler UX for learning; full FSRS control only during review sessions |
-| **Quiz-based mastery** instead of SRS-based | More intuitive — users understand "answered correctly in quiz" better than SRS status |
-| **AI waterfall** (multi-provider) | Maximizes reliability on free tiers; no single point of failure |
-| **WIB timezone** for all dates | Target audience is Indonesian; avoids UTC date boundary confusion. Centralized via `timezone.ts` |
-| **Pre-generated audio** (3,085 files) | Zero runtime cost, instant playback, no TTS API dependency at runtime |
-| **2,909 published** out of 2,692 total vocab | Unpublished entries (`is_published = false`) are words not in the MNN textbook PDFs |
-| **Smart Study adaptive selection** | New words chosen based on actual user progress, not just JLPT target (target is only the starting point for new users) |
-| **Leech detection** (lapses >= 4) | Automatically identifies frequently forgotten words; confused pairs from quiz history (>= 2 occurrences) |
-
----
-
-## Running Costs
-
-| Service | Free Tier Limit | Kioku Usage |
-|---|---|---|
-| Vercel | 100 GB bandwidth | Hosting + CDN |
-| Supabase | 500 MB database, 1 GB storage, 50K MAU | PostgreSQL + Auth + Audio storage |
-| Gemini | 1,000 req/day | AI chatbot (primary) |
-| Groq | ~500K tokens/day | AI fallback #1 |
-| OpenRouter | 50 req/day | AI fallback #2 |
-| **Total** | | **$0/month** |
-
----
-
 ## License
 
-This project is created for educational and portfolio purposes.
+This project uses a dual licensing approach to clearly separate the source code (which is fully open) from the educational content (which originates from copyrighted material).
+
+### Source Code
+
+The source code in this repository is released under the **MIT License**. You are free to study, fork, modify, and use the code for any purpose, including commercial use, with proper attribution.
+
+See [LICENSE](./LICENSE) for the full MIT License text.
+
+### Content & Educational Materials
+
+Vocabulary content is sourced from **Minna no Nihongo** (copyrighted by 3A Corporation, Tokyo) and is included here for **personal educational use only**. Indonesian translations, example sentence adaptations, and the structured database schema are derivative works created specifically for this learning platform.
+
+You may **not**:
+
+- Redistribute the vocabulary database for commercial purposes
+- Republish Minna no Nihongo content outside the context of personal learning
+- Train AI models on the curated vocabulary dataset without explicit permission
+
+For commercial licensing of the vocabulary content, please contact 3A Corporation directly.
+
+### Trademark & Branding
+
+The "Kioku" name, logo, color palette, and design system are personal project assets. Please do not reuse them for derivative products or services in ways that may cause confusion with the original platform.
+
+### Inquiries
+
+For licensing questions, partnership requests, or contributions: [GitHub Issues](https://github.com/manrandomside/kioku/issues)
 
 ---
 
 <div align="center">
 
-**Kioku** (記憶) — Built for Indonesian learners of Japanese
+Built with care by [@manrandomside](https://github.com/manrandomside) — A portfolio project demonstrating fullstack + AI engineering capabilities.
 
-[Live Demo](https://kioku-learn.vercel.app)
+[Live Demo](https://kioku-learn.vercel.app) · [User Guide](./public/guidebook/kioku-guidebook.pdf) · [GitHub Issues](https://github.com/manrandomside/kioku/issues)
 
 </div>

@@ -287,6 +287,16 @@ src/
 - [x] Interactive tour bootstrap: fetch server status saat mount, sync down (server→local) atau backfill up (local→server) untuk legacy users. Auto-start delay 1500ms.
 - [x] Cross-device sync: user yang complete tour di device A tidak akan lihat tour lagi di device B.
 
+### [P6] Documentation & Polish
+
+- [x] README.md restructured with comprehensive documentation, onboarding tour, and guidebook sections (14 sections total: Header, Why Kioku, Highlights, Screenshots, Documentation, Features, Tech Stack, Architecture, Database, Security, Project Status, Getting Started, License, Footer).
+- [x] Highlights section baru: 10 fitur unggulan untuk recruiter (Smart Study, FSRS, AI Waterfall, Tour, Leech, JLPT Auto-Upgrade, Achievements, Audio Pipeline, PWA, Security).
+- [x] Documentation section baru: link ke 36-page guidebook PDF + ToC 10 chapter.
+- [x] Project Status section baru: tabel P0-P6 lengkap dengan status Complete + summary line (70+ features, 30+ pages, 20 tables, 8 tour steps, 36-page guide).
+- [x] Features restructured: tambah sub-header "Documentation & Onboarding" + refresh items (Profile Customization, Account Security, Dynamic Streak Reminder, JLPT Auto-Upgrade).
+- [x] License + Footer dirombak: include MNN copyright disclaimer + portfolio context untuk recruiter.
+- [x] Screenshot order ditata ulang sesuai user-journey: Dashboard → Onboarding Tour → Learn Hub → Smart Study → Summary → Flashcard → Quiz → Kana Grid → Review → Kata Sulit → AI Tutor → Profile.
+
 ---
 
 ## Catatan Teknis (Diupdate Seiring Development)
