@@ -44,6 +44,8 @@ ai_chat_message: id, session_id(FK), role(user/assistant/system), content, provi
 ai_response_cache: id, prompt_hash(SHA256), response_text, provider, hit_count
 pronunciation_attempt: id, user_id(FK), vocab/kana_id, expected_text, recognized_text, accuracy_score
 ai_question_template: id, vocabulary_id(FK), question_type, question_text, correct_answer, wrong_answers(JSONB)
+feedback: id, user_id?(FK nullable), type(enum: bug/feature/general/rating), title?, content, rating?(1-5), page_url?, screenshot_url?, show_publicly(default false), public_approved(default false), status(enum: new/reviewing/in_progress/resolved/wontfix), admin_notes?, created_at, updated_at
+public_stats_cache: id(serial), key(unique), value(jsonb), updated_at — Denormalized cache untuk public stats page (refresh via cron 5 menit)
 ```
 
 RLS: user data tables → `user_id = auth.uid()`. Content tables (vocabulary, kana, book, chapter) → public read. All 20 tables verified with RLS + correct policies.
@@ -296,6 +298,41 @@ src/
 - [x] Features restructured: tambah sub-header "Documentation & Onboarding" + refresh items (Profile Customization, Account Security, Dynamic Streak Reminder, JLPT Auto-Upgrade).
 - [x] License + Footer dirombak: include MNN copyright disclaimer + portfolio context untuk recruiter.
 - [x] Screenshot order ditata ulang sesuai user-journey: Dashboard → Onboarding Tour → Learn Hub → Smart Study → Summary → Flashcard → Quiz → Kana Grid → Review → Kata Sulit → AI Tutor → Profile.
+
+### [P7] Community & Feedback System (Konsep — Belum Implementasi)
+
+Status: Konsep finalized, UI akan di-prototype di Claude Design dulu sebelum implementasi.
+
+**Public Stats Page** — Halaman publik yang showcase metrics komunitas Kioku:
+- Hero section dengan tagline komunitas
+- Big numbers grid: total users, total reviews, total quiz answered, total words mastered (animated count-up)
+- Activity highlights: avg quiz accuracy, longest streak record, most active today
+- Visualization: aggregated activity heatmap atau growth chart (anonymized)
+- Content stats: vocabulary count, kana count, audio files, chapters count
+- Trust signals: FSRS algorithm, 100% free, no ads
+- CTA: Bergabung dengan Kioku
+- Privacy: fully aggregated, no individual user data exposed
+- Cache: 5 menit (in-memory atau public_stats_cache table)
+- Route: /community
+
+**Feedback System** — Modal feedback dengan 4 kategori:
+- Trigger: floating button kanan bawah + menu item di profile dropdown
+- Tab Bug: page URL (auto-detect), deskripsi, steps to reproduce, screenshot upload (optional)
+- Tab Saran: judul, deskripsi detail, kategori (UI/fitur baru/performance/lainnya)
+- Tab Pendapat: rating 1-5 stars, free text comment, opt-in show publicly
+- Tab Rating: just stars 1-5 + optional 1-line comment
+- Anonymous mode supported untuk user belum login (rate limited)
+- Public testimonial wall (Phase 8) — opt-in approval flow
+
+**Admin Analytics** (Phase 8 — Future, tidak akan diimplementasi sekarang):
+- Growth metrics (D1, D7, D30 retention)
+- Engagement metrics (DAU, WAU, MAU)
+- Feature adoption rates
+- Funnel analysis
+- Feedback inbox + bug tracker
+- Feature request voting
+
+UI/UX direncanakan di Claude Design (claude.ai/design). Setelah prototype approved, akan di-handoff ke Claude Code untuk implementasi.
 
 ---
 

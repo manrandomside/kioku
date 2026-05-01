@@ -88,6 +88,9 @@ Konten utama bersumber dari buku **Minna no Nihongo (MNN)** Buku I (Bab 1–25) 
 | 18 | **Pembelajaran Kanji** | Kanji dengan dekomposisi radikal, stroke order, terinspirasi WaniKani |
 | 19 | **Leaderboard** | Peringkat pengguna berdasarkan XP, streak, akurasi |
 | 20 | **Mode Offline (PWA)** | Service worker untuk cache kosakata, audio, dan state kartu. Sync saat online |
+| 21 | **Public Stats Page** | Halaman publik (/community) yang showcase metrics komunitas: total users, reviews, quiz answers, words mastered. Activity highlights, content stats, trust signals. Privacy-respecting (fully aggregated, anonymized). Cache 5 menit. Animated count-up. CTA bergabung. |
+| 22 | **Feedback System** | Modal feedback dengan 4 kategori (Bug/Saran/Pendapat/Rating). Floating button kanan bawah + profile dropdown menu. Bug reports include page URL + screenshot upload. Public testimonial wall opt-in (Phase 8). Anonymous submission supported dengan rate limiting. |
+| 23 | **Admin Analytics** (Phase 8) | Private dashboard untuk founder: growth metrics (D1/D7/D30 retention), engagement (DAU/WAU/MAU), feature adoption, funnel analysis, feedback inbox dengan filter, bug tracker dengan priority, feature request voting. |
 
 ## Hal yang Perlu Dipertimbangkan
 
@@ -310,6 +313,23 @@ CREATE TYPE xp_source AS ENUM (
 -- Provider AI
 CREATE TYPE ai_provider AS ENUM (
   'gemini', 'groq', 'openrouter', 'cloudflare', 'webllm', 'cache'
+);
+
+-- Tipe feedback
+CREATE TYPE feedback_type AS ENUM (
+  'bug',          -- Bug report
+  'feature',      -- Feature request / saran fitur baru
+  'general',      -- General feedback / pendapat umum
+  'rating'        -- Quick star rating
+);
+
+-- Status feedback
+CREATE TYPE feedback_status AS ENUM (
+  'new',          -- Belum direview
+  'reviewing',    -- Sedang direview admin
+  'in_progress',  -- Sedang dikerjakan
+  'resolved',     -- Sudah selesai
+  'wontfix'       -- Tidak akan dikerjakan
 );
 ```
 
@@ -795,6 +815,49 @@ CREATE INDEX idx_template_vocab ON ai_question_template(vocabulary_id);
 CREATE INDEX idx_template_type ON ai_question_template(question_type);
 ```
 
+### 21. Tabel `feedback` (Feedback dari User)
+
+```sql
+CREATE TABLE feedback (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID REFERENCES "user"(id) ON DELETE SET NULL,
+  type            feedback_type NOT NULL,
+
+  title           VARCHAR(200),                   -- Judul singkat (untuk bug/saran)
+  content         TEXT NOT NULL,                  -- Deskripsi utama
+  rating          SMALLINT CHECK (rating BETWEEN 1 AND 5),  -- Untuk tipe rating/pendapat
+  page_url        TEXT,                            -- URL halaman tempat bug terjadi
+  screenshot_url  TEXT,                            -- URL screenshot di Supabase Storage
+
+  show_publicly   BOOLEAN DEFAULT false,          -- User opt-in untuk tampil di public wall
+  public_approved BOOLEAN DEFAULT false,          -- Admin approval untuk public wall
+  status          feedback_status NOT NULL DEFAULT 'new',
+  admin_notes     TEXT,                            -- Catatan internal admin
+
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_feedback_user ON feedback(user_id);
+CREATE INDEX idx_feedback_type_status ON feedback(type, status);
+CREATE INDEX idx_feedback_public ON feedback(show_publicly, public_approved)
+  WHERE show_publicly = true;
+CREATE INDEX idx_feedback_created ON feedback(created_at DESC);
+```
+
+### 22. Tabel `public_stats_cache` (Cache Stats Publik)
+
+```sql
+CREATE TABLE public_stats_cache (
+  id              SERIAL PRIMARY KEY,
+  key             VARCHAR(100) UNIQUE NOT NULL,    -- e.g. "total_users", "total_reviews"
+  value           JSONB NOT NULL,                  -- Cached value (number, object, atau array)
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_stats_cache_updated ON public_stats_cache(updated_at);
+```
+
 ### Row Level Security (RLS) — Contoh Kritis
 
 ```sql
@@ -818,6 +881,22 @@ CREATE POLICY vocab_read_policy ON vocabulary
 
 ALTER TABLE kana ENABLE ROW LEVEL SECURITY;
 CREATE POLICY kana_read_policy ON kana
+  FOR SELECT USING (true);
+
+-- Feedback: user bisa create + read feedback mereka sendiri
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+CREATE POLICY feedback_user_insert_policy ON feedback
+  FOR INSERT WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+CREATE POLICY feedback_user_read_policy ON feedback
+  FOR SELECT USING (user_id = auth.uid());
+
+-- Public testimonial wall: siapa saja bisa baca yang sudah approved
+CREATE POLICY feedback_public_read_policy ON feedback
+  FOR SELECT USING (show_publicly = true AND public_approved = true);
+
+-- Public stats cache: bisa diakses semua orang (read-only)
+ALTER TABLE public_stats_cache ENABLE ROW LEVEL SECURITY;
+CREATE POLICY stats_cache_read_policy ON public_stats_cache
   FOR SELECT USING (true);
 ```
 
@@ -1090,6 +1169,93 @@ CREATE POLICY kana_read_policy ON kana
     +-----------------------------------+
 ```
 
+## Flow 8: Public Stats Page (Tanpa Login)
+
+```
+[Visitor masuk ke kioku-learn.vercel.app]
+     |
+     v
+[Klik footer link "Komunitas" / "Stats" atau ke /community]
+     |
+     v
+[/community page loads — public, no auth required]
+  - Hero section: "Komunitas Kioku" + tagline
+  - Big numbers grid (4 cards animated count-up):
+    - Total Users
+    - Total Reviews Done
+    - Total Quiz Answered
+    - Total Words Mastered
+  - Activity highlights (3 cards):
+    - Average Quiz Accuracy
+    - Longest Streak Record
+    - Most Active Today
+  - Visualization section:
+    - Aggregated activity heatmap (last 90 days, anonymized)
+    - ATAU growth chart (signup over time)
+  - Content stats grid:
+    - 2.909 vocabulary words
+    - 214 kana characters
+    - 3.085 audio files
+    - 50 chapters across N5 + N4
+  - Trust signals row:
+    - "Built with FSRS — same algorithm as Anki"
+    - "100% free, no ads"
+    - "Privacy-first, data minimization"
+  - CTA: "Bergabung dengan Kioku" -> /register
+  - (Phase 8) Public testimonial carousel
+     |
+     v
+[Klik CTA -> Redirect ke register / sign up flow]
+```
+
+## Flow 9: Memberikan Feedback
+
+```
+[User di halaman manapun] -> Klik floating feedback button (kanan bawah)
+                              ATAU klik "Berikan Feedback" di profile dropdown
+     |
+     v
+[Feedback Modal Opens]
+  - 4 tab navigation: Bug | Saran | Pendapat | Rating
+  - Default tab: berdasarkan trigger context (default Saran)
+     |
+     +-- Tab Bug:
+     |   - Halaman tempat bug (auto-detected dari current URL, editable)
+     |   - Deskripsi singkat (textarea, required)
+     |   - Steps to reproduce (textarea, optional)
+     |   - Screenshot upload (drag-drop atau klik, optional, max 2MB)
+     |
+     +-- Tab Saran:
+     |   - Judul singkat (input, required)
+     |   - Deskripsi detail (textarea, required)
+     |   - Kategori (radio: UI/UX, Fitur Baru, Performance, Lainnya)
+     |
+     +-- Tab Pendapat:
+     |   - Rating 1-5 stars (interactive)
+     |   - Free text comment (textarea, optional)
+     |   - Checkbox: "Boleh tampilkan komentar saya di halaman publik"
+     |
+     +-- Tab Rating:
+         - Just stars 1-5 (large, interactive)
+         - Optional 1-line comment (input)
+     |
+     v
+[Klik Submit]
+  - Validation: minimal content tidak boleh kosong (kecuali Rating tab)
+  - Send POST /api/v1/feedback
+  - Loading state pada button
+     |
+     v
+[Success State]
+  - Replace form dengan thank you message
+  - "Terima kasih! Feedback kamu sangat berarti."
+  - "Kami akan tinjau dan respons jika perlu."
+  - Tombol [Tutup] dan [Kirim Feedback Lain]
+     |
+     v
+[Modal close — kembali ke halaman sebelumnya]
+```
+
 ## Yang Dilihat Pengguna di Dashboard
 
 ```
@@ -1217,6 +1383,31 @@ CREATE POLICY kana_read_policy ON kana
 | GET | `/api/v1/progress/chapters/:id` | Progres detail satu bab | auth | `{ progress, vocab_breakdown }` |
 | GET | `/api/v1/progress/jlpt/:level` | Progres per JLPT level | auth | `{ total, learned, percentage }` |
 | GET | `/api/v1/progress/daily` | Aktivitas harian (30 hari) | auth | `{ daily_activities[] }` |
+
+## Public Stats Endpoints
+
+| Method | Path | Deskripsi | Middleware | Response |
+|--------|------|-----------|------------|----------|
+| GET | `/api/v1/stats/public` | Public stats untuk /community page (cached 5 min) | - | `{ stats: { total_users, total_reviews, total_quiz, total_words_mastered, avg_accuracy, longest_streak, most_active_today, content_stats } }` |
+
+## Feedback Endpoints
+
+| Method | Path | Deskripsi | Middleware | Request Body | Response |
+|--------|------|-----------|------------|-------------|----------|
+| POST | `/api/v1/feedback` | Submit feedback (user atau anonymous) | auth optional, rateLimit | `{ type, title?, content, rating?, page_url?, screenshot_url?, show_publicly? }` | `{ success, feedback_id }` |
+| GET | `/api/v1/feedback/public` | Public testimonials (Phase 8 — approved only) | - | - | `{ testimonials[] }` |
+| POST | `/api/v1/feedback/upload-screenshot` | Upload screenshot ke Supabase Storage | auth, rateLimit | FormData with image | `{ url }` |
+
+## Admin Endpoints (Phase 8 — Belum Diimplementasi)
+
+| Method | Path | Deskripsi |
+|--------|------|-----------|
+| GET | `/api/v1/admin/analytics/growth` | User growth + retention metrics |
+| GET | `/api/v1/admin/analytics/engagement` | DAU/WAU/MAU metrics |
+| GET | `/api/v1/admin/analytics/funnel` | Conversion funnel analysis |
+| GET | `/api/v1/admin/feedback` | All feedback dengan filter (type, status, date range) |
+| PATCH | `/api/v1/admin/feedback/:id` | Update status / admin_notes |
+| POST | `/api/v1/admin/feedback/:id/approve-public` | Approve untuk public testimonial wall |
 
 ---
 
@@ -1398,6 +1589,25 @@ WORD TYPE BADGE COLORS
 - `Toaster` — Toast notification
 - `ProgressRing` — Circular progress indicator
 - `FuriganaText` — Render teks dengan furigana (HTML ruby)
+
+**Stats & Feedback Components (Phase 7):**
+- `PublicStatsHero` — Hero section halaman /community dengan tagline + animated entry
+- `BigNumberCard` — Kartu angka besar dengan count-up animation (untuk total users, reviews, dll)
+- `ActivityHighlightCard` — Kartu highlight kecil (avg accuracy, longest streak, most active today)
+- `AggregatedHeatmap` — Heatmap aktivitas semua user dalam 90 hari (anonim, denormalized)
+- `GrowthChart` — Line chart user growth over time (Recharts)
+- `ContentStatsGrid` — Grid stats konten (2.909 vocab, 214 kana, 3.085 audio, 50 chapters)
+- `TrustSignalsRow` — Row dengan trust indicators (FSRS, free, privacy-first)
+- `TestimonialCarousel` — Carousel komentar user yang opt-in + approved (Phase 8)
+- `FeedbackButton` — Floating button kanan bawah dengan tooltip "Berikan Feedback"
+- `FeedbackModal` — Modal container dengan 4 tab navigation
+- `FeedbackTabBug` — Form khusus bug report
+- `FeedbackTabSuggestion` — Form khusus saran fitur
+- `FeedbackTabOpinion` — Form pendapat dengan rating + opt-in public
+- `FeedbackTabRating` — Quick rating only (stars + optional comment)
+- `FeedbackSuccessState` — Thank you state setelah submit
+- `ScreenshotUploader` — Component upload screenshot dengan drag-drop preview
+- `StarRating` — Interactive 1-5 star rating component (reusable)
 
 ### Layout Responsive
 

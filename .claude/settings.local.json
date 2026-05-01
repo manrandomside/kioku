@@ -105,7 +105,8 @@
       "Bash(__NEW_LINE_5bd9ef50468be01a__ echo:*)",
       "Bash(__NEW_LINE_680d53ad307928c7__ echo:*)",
       "Bash(sed -n '79,92p' /c/Users/Manrandomside/ProjectWebDev/next/kioku/src/lib/supabase/middleware.ts)",
-      "Bash(sed -n '32,52p' /c/Users/Manrandomside/ProjectWebDev/next/kioku/src/app/\\\\\\(dashboard\\\\\\)/layout.tsx)"
+      "Bash(sed -n '32,52p' /c/Users/Manrandomside/ProjectWebDev/next/kioku/src/app/\\\\\\(dashboard\\\\\\)/layout.tsx)",
+      "Bash(git *)"
     ]
   }
 }
