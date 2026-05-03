@@ -92,3 +92,18 @@ export const chatRoleEnum = pgEnum("chat_role", [
   "assistant",
   "system",
 ]);
+
+export const feedbackTypeEnum = pgEnum("feedback_type", [
+  "bug",
+  "feature",
+  "general",
+  "rating",
+]);
+
+export const feedbackStatusEnum = pgEnum("feedback_status", [
+  "new",
+  "reviewing",
+  "in_progress",
+  "resolved",
+  "wontfix",
+]);

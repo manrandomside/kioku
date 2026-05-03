@@ -5,3 +5,4 @@ export * from "./srs";
 export * from "./quiz";
 export * from "./gamification";
 export * from "./ai";
+export * from "./feedback";
