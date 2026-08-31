@@ -12,7 +12,7 @@
 
 A fullstack web platform combining the FSRS spaced repetition algorithm, an AI tutor, an interactive guided tour, and a comprehensive 36-page user guide to help Indonesian speakers learn Japanese vocabulary. Built end-to-end on free-tier infrastructure, Kioku ships 2,909 vocabulary words, 214 kana characters, and 3,085 pre-generated audio files. 100% free, no ads, no upsell.
 
-[Live Demo](https://kioku-learn.vercel.app) · [User Guide (PDF)](./public/guidebook/kioku-guidebook.pdf) · [Security Audit](./SECURITY-AUDIT.md) · [Project Spec](./designs/kioku-project-spec.md)
+[Live Demo](https://kioku-learn.vercel.app) · [User Guide (PDF)](./public/guidebook/kioku-guidebook.pdf) · [Project Spec](./designs/kioku-project-spec.md)
 
 ![Landing Page](./public/screenshots/landing-kioku.png)
 
@@ -256,11 +256,11 @@ The guide is also accessible from within the app via the profile dropdown menu.
 
 ## Security
 
-Full security audit completed — see [SECURITY-AUDIT.md](./SECURITY-AUDIT.md).
+A full internal security audit (Levels 1-3) was completed across RLS policies, per-endpoint authentication, input validation, rate limiting, and security headers. The detailed report is kept private; the summary below reflects its outcome.
 
 | Area | Status |
 |---|---|
-| Row Level Security (RLS) | 20/20 tables |
+| Row Level Security (RLS) | 22/22 tables |
 | API Authentication | All endpoints verified |
 | Input Validation (Zod) | All forms and API routes |
 | Rate Limiting | AI chat (20/min), pronunciation (30/min), search (30/min) |
