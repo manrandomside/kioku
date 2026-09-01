@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useCountUp } from "@/hooks/use-count-up";
 
-import type { QuizSessionResult } from "@/types/quiz";
+import type { QuizSessionResult, XpStatus } from "@/types/quiz";
 
 interface QuizSummaryProps {
   result: QuizSessionResult;
   script: string;
   filter: string;
   onRestart: () => void;
+  xpStatus?: XpStatus;
+  onRetryXp?: () => void;
 }
 
 function formatCountedTime(totalSeconds: number): string {
@@ -30,9 +32,17 @@ function getGrade(percent: number): { label: string; color: string; message: str
   return { label: "D", color: "text-red-500", message: "Jangan menyerah, ayo ulangi!" };
 }
 
-export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryProps) {
+export function QuizSummary({
+  result,
+  script,
+  filter,
+  onRestart,
+  xpStatus = "loading",
+  onRetryXp,
+}: QuizSummaryProps) {
   const grade = getGrade(result.scorePercent);
-  const hasXpData = result.xpEarned > 0;
+  const hasXpData = xpStatus === "done" && result.xpEarned > 0;
+  const isXpFailed = xpStatus === "error";
   const totalSeconds = Math.floor(result.timeSpentMs / 1000);
   const wrongAnswers = result.answers.filter((a) => !a.isCorrect);
 
@@ -89,6 +99,16 @@ export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryPr
             label="XP Diperoleh"
             value={`+${xpCount}`}
           />
+        ) : isXpFailed ? (
+          <div className="flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
+            <AlertCircle className="size-5 shrink-0 text-orange-500" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                Gagal dimuat
+              </span>
+              <span className="text-xs text-muted-foreground">XP Diperoleh</span>
+            </div>
+          </div>
         ) : (
           <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
             <Zap className="size-5 text-green-500" />
@@ -130,6 +150,26 @@ export function QuizSummary({ result, script, filter, onRestart }: QuizSummaryPr
             <span className="text-green-600 dark:text-green-400">{result.xpEarned} XP</span>
           </div>
         </motion.div>
+      ) : isXpFailed ? (
+        <div className="flex w-full max-w-sm flex-col gap-2 rounded-lg border border-orange-500/30 bg-orange-500/5 px-4 py-3">
+          <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
+            XP belum bisa ditampilkan
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Jawaban kamu sudah tersimpan. Hanya rincian XP-nya yang gagal dimuat.
+          </p>
+          {onRetryXp && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRetryXp}
+              className="mt-1 self-start"
+            >
+              <RotateCcw className="mr-1.5 size-3.5" />
+              Coba Lagi
+            </Button>
+          )}
+        </div>
       ) : hasXpData ? null : (
         <div className="flex w-full max-w-sm flex-col gap-2 rounded-lg border bg-card px-4 py-3">
           <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />

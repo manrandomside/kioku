@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock, GraduationCap } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trophy, Target, Zap, Clock, GraduationCap, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useCountUp } from "@/hooks/use-count-up";
 
 import type { VocabQuizResult } from "@/types/vocab-quiz";
+import type { XpStatus } from "@/types/quiz";
 
 interface VocabQuizSummaryProps {
   result: VocabQuizResult;
@@ -15,6 +16,8 @@ interface VocabQuizSummaryProps {
   chapterNumber: number;
   onRestart: () => void;
   jlptUpgrade?: { previousLevel: string; newLevel: string } | null;
+  xpStatus?: XpStatus;
+  onRetryXp?: () => void;
 }
 
 function formatTime(ms: number): string {
@@ -44,9 +47,12 @@ export function VocabQuizSummary({
   chapterNumber,
   onRestart,
   jlptUpgrade,
+  xpStatus = "loading",
+  onRetryXp,
 }: VocabQuizSummaryProps) {
   const grade = getGrade(result.scorePercent);
-  const hasXpData = result.xpEarned > 0;
+  const isXpFailed = xpStatus === "error";
+  const hasXpData = !isXpFailed && result.xpEarned > 0;
   const totalSeconds = Math.floor(result.timeSpentMs / 1000);
   const wrongAnswers = result.answers.filter((a) => !a.isCorrect);
 
@@ -103,6 +109,16 @@ export function VocabQuizSummary({
             label="XP Diperoleh"
             value={`+${xpCount}`}
           />
+        ) : isXpFailed ? (
+          <div className="flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/5 p-4">
+            <AlertCircle className="size-5 shrink-0 text-orange-500" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                Gagal dimuat
+              </span>
+              <span className="text-xs text-muted-foreground">XP Diperoleh</span>
+            </div>
+          </div>
         ) : (
           <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
             <Zap className="size-5 text-green-500" />
@@ -120,7 +136,27 @@ export function VocabQuizSummary({
       </motion.div>
 
       {/* XP Breakdown */}
-      {result.xpBaseXp !== undefined ? (
+      {isXpFailed ? (
+        <div className="flex w-full max-w-sm flex-col gap-2 rounded-lg border border-orange-500/30 bg-orange-500/5 px-4 py-3">
+          <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
+            XP belum bisa ditampilkan
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Jawaban kamu sudah tersimpan. Hanya rincian XP-nya yang gagal dimuat.
+          </p>
+          {onRetryXp && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRetryXp}
+              className="mt-1 self-start"
+            >
+              <RotateCcw className="mr-1.5 size-3.5" />
+              Coba Lagi
+            </Button>
+          )}
+        </div>
+      ) : result.xpBaseXp !== undefined ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

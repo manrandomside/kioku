@@ -21,6 +21,10 @@ export interface QuizAnswer {
   isCorrect: boolean;
 }
 
+// Delivery state of the XP payload returned by the quiz submit action.
+// The summary screen renders a skeleton, a value, or a retry prompt from this.
+export type XpStatus = "loading" | "done" | "error";
+
 export interface QuizSessionResult {
   totalQuestions: number;
   correctCount: number;

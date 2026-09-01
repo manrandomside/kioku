@@ -25,6 +25,7 @@ import {
 import { buildQuestion, shuffle } from "@/lib/quiz/vocab-quiz-generator";
 
 import type { VocabQuizQuestion, VocabQuizAnswer, VocabQuizResult, VocabQuestionType } from "@/types/vocab-quiz";
+import type { XpStatus } from "@/types/quiz";
 import type { VocabularyWithSrs, WordType } from "@/types/vocabulary";
 import { WORD_TYPE_CONFIG } from "@/types/vocabulary";
 
@@ -68,8 +69,12 @@ export function VocabQuizSession({
   const [hearts, setHearts] = useState(3);
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const [jlptUpgrade, setJlptUpgrade] = useState<{ previousLevel: string; newLevel: string } | null>(null);
+  const [xpStatus, setXpStatus] = useState<XpStatus>("loading");
   const { events: xpEvents, showXp } = useXpPopup();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Kept so the summary screen can retry a failed submit without replaying the quiz
+  const submitPayloadRef = useRef<{ answers: VocabQuizAnswer[]; timeSpentMs: number } | null>(null);
 
   const isCompleted = currentIndex >= activeQuestions.length || hearts <= 0;
   const currentQuestion = isCompleted ? null : activeQuestions[currentIndex];
@@ -242,6 +247,9 @@ export function VocabQuizSession({
     setSessionResult(null);
     setHearts(3);
     setActiveQuestions(initialQuestions);
+    setXpStatus("loading");
+    setSessionId(null);
+    submitPayloadRef.current = null;
 
     createVocabQuizSession(chapterId, initialQuestions.length).then((res) => {
       if (res.success && res.data) {
@@ -249,6 +257,69 @@ export function VocabQuizSession({
       }
     });
   }, [chapterId, initialQuestions]);
+
+  // Send results to the server and apply the confirmed XP payload
+  const sendResults = useCallback(
+    async (id: string, finalAnswers: VocabQuizAnswer[], timeSpentMs: number) => {
+      setXpStatus("loading");
+      try {
+        const res = await submitVocabQuizResult(id, finalAnswers, timeSpentMs);
+
+        if (!res.success || !res.data?.xp) {
+          console.error("[VocabQuizSession] submit rejected:", res.error);
+          setXpStatus("error");
+          return;
+        }
+
+        const xp = res.data.xp;
+        setSessionResult((prev) =>
+          prev ? {
+            ...prev,
+            xpEarned: xp.awarded,
+            xpBaseXp: xp.baseXp,
+            xpBonusXp: xp.bonusXp,
+            xpBonusLabel: xp.bonusLabel,
+          } : prev
+        );
+        setXpStatus("done");
+
+        if (xp.leveledUp) {
+          setLevelUpLevel(xp.currentLevel);
+        }
+        if (res.data.jlptUpgrade) {
+          setJlptUpgrade(res.data.jlptUpgrade);
+        }
+      } catch (err) {
+        console.error("[VocabQuizSession] submit failed:", err);
+        setXpStatus("error");
+      }
+    },
+    []
+  );
+
+  // Retry a failed submit, re-creating the session if it was never created
+  const handleRetryXp = useCallback(async () => {
+    const payload = submitPayloadRef.current;
+    if (!payload) return;
+
+    setXpStatus("loading");
+    let id = sessionId;
+
+    if (!id) {
+      const created = await createVocabQuizSession(chapterId, payload.answers.length);
+      if (created.success && created.data) {
+        id = created.data.sessionId;
+        setSessionId(id);
+      }
+    }
+
+    if (!id) {
+      setXpStatus("error");
+      return;
+    }
+
+    await sendResults(id, payload.answers, payload.timeSpentMs);
+  }, [sessionId, chapterId, sendResults]);
 
   // Submit results on completion
   useEffect(() => {
@@ -286,29 +357,16 @@ export function VocabQuizSession({
       showXp(estimatedXp);
     }
 
+    submitPayloadRef.current = { answers, timeSpentMs };
+
     if (sessionId) {
-      submitVocabQuizResult(sessionId, answers, timeSpentMs).then((res) => {
-        if (res.success && res.data?.xp) {
-          // Update with server-confirmed values (may differ slightly)
-          setSessionResult((prev) =>
-            prev ? {
-              ...prev,
-              xpEarned: res.data!.xp!.awarded,
-              xpBaseXp: res.data!.xp!.baseXp,
-              xpBonusXp: res.data!.xp!.bonusXp,
-              xpBonusLabel: res.data!.xp!.bonusLabel,
-            } : prev
-          );
-          if (res.data.xp.leveledUp) {
-            setLevelUpLevel(res.data.xp.currentLevel);
-          }
-        }
-        if (res.success && res.data?.jlptUpgrade) {
-          setJlptUpgrade(res.data.jlptUpgrade);
-        }
-      });
+      void sendResults(sessionId, answers, timeSpentMs);
+    } else {
+      // Session creation failed on mount; the summary offers a retry
+      console.error("[VocabQuizSession] no quiz session to submit to");
+      setXpStatus("error");
     }
-  }, [isCompleted, sessionResult, answers, startTime, hearts, sessionId, showXp]);
+  }, [isCompleted, sessionResult, answers, startTime, hearts, sessionId, showXp, sendResults]);
 
   function getOptionState(option: string) {
     if (!isRevealed) return "idle" as const;
@@ -359,6 +417,8 @@ export function VocabQuizSession({
           chapterNumber={chapterNumber}
           onRestart={handleRestart}
           jlptUpgrade={jlptUpgrade}
+          xpStatus={xpStatus}
+          onRetryXp={handleRetryXp}
         />
         <XpPopup events={xpEvents} />
         <LevelUpModal

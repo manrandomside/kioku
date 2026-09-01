@@ -9,7 +9,7 @@ import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
 import { updateChapterProgress } from "@/lib/progress/update-chapter-progress";
-import { awardQuizXp } from "@/lib/gamification/xp-service";
+import { awardQuizXp, getQuizTierBonus } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 import { checkAndUpgradeJlpt } from "@/lib/gamification/jlpt-upgrade-service";
@@ -94,7 +94,14 @@ export async function submitVocabQuizResult(
 
     // Idempotency check: prevent double-submission
     const [existingSession] = await db
-      .select({ isCompleted: quizSession.isCompleted, userId: quizSession.userId })
+      .select({
+        isCompleted: quizSession.isCompleted,
+        userId: quizSession.userId,
+        correctCount: quizSession.correctCount,
+        scorePercent: quizSession.scorePercent,
+        xpEarned: quizSession.xpEarned,
+        isPerfect: quizSession.isPerfect,
+      })
       .from(quizSession)
       .where(eq(quizSession.id, sessionId))
       .limit(1);
@@ -103,8 +110,35 @@ export async function submitVocabQuizResult(
       return { success: false, error: { code: "NOT_FOUND", message: "Sesi quiz tidak ditemukan" } };
     }
 
+    // Already saved: return the stored result instead of failing, so a client
+    // retry after a lost response can still populate the summary screen.
+    // XP is not awarded again.
     if (existingSession.isCompleted) {
-      return { success: false, error: { code: "ALREADY_COMPLETED", message: "Quiz sudah diselesaikan" } };
+      const storedCorrect = existingSession.correctCount ?? 0;
+      const storedScore = existingSession.scorePercent ?? 0;
+      const storedBase = storedCorrect * XP_PER_CORRECT;
+      const storedTier = getQuizTierBonus(storedScore);
+
+      return {
+        success: true,
+        data: {
+          correctCount: storedCorrect,
+          scorePercent: storedScore,
+          xpEarned: existingSession.xpEarned ?? storedBase,
+          isPerfect: existingSession.isPerfect ?? false,
+          xp: {
+            awarded: storedBase + storedTier.amount,
+            baseXp: storedBase,
+            bonusXp: storedTier.amount,
+            bonusLabel: storedTier.label,
+            total: 0,
+            leveledUp: false,
+            currentLevel: 0,
+          },
+          achievements: [],
+          jlptUpgrade: null,
+        },
+      };
     }
 
     const correctCount = answers.filter((a) => a.isCorrect).length;
@@ -149,55 +183,49 @@ export async function submitVocabQuizResult(
       await updateChapterProgress(userId, updatedSession.chapterId);
     }
 
+    // Award XP inline: the summary screen and the level-up modal both need
+    // these exact numbers, so this is the one gamification step worth waiting for.
+    const xpResult = await awardQuizXp(userId, sessionId, correctCount, scorePercent);
+
     // --- GAMIFICATION TASK: deferred via after() ---
-    // These are heavy DB operations (streak, XP, achievements, JLPT upgrade)
-    // that should not block the response to the client.
+    // Streak, achievements and the JLPT upgrade check are heavy DB operations
+    // whose results the summary screen does not display, so they must not block
+    // the response. The dashboard re-checks the JLPT upgrade on load.
     after(async () => {
       try {
         await checkAndUpdateStreak(userId);
-
-        const [xpResult, newAchievements, upgradeResult] = await Promise.allSettled([
-          awardQuizXp(userId, sessionId, correctCount, scorePercent),
-          checkAndUnlockAchievements(userId),
-          checkAndUpgradeJlpt(userId),
-        ]);
-
-        if (xpResult.status === "rejected") {
-          console.error("[submitVocabQuizResult:after] awardQuizXp failed:", xpResult.reason);
-        }
-        if (newAchievements.status === "rejected") {
-          console.error("[submitVocabQuizResult:after] checkAchievements failed:", newAchievements.reason);
-        }
-        if (upgradeResult.status === "rejected") {
-          console.error("[submitVocabQuizResult:after] checkJlptUpgrade failed:", upgradeResult.reason);
-        }
       } catch (err) {
-        console.error("[submitVocabQuizResult:after] gamification task failed:", err);
+        console.error("[submitVocabQuizResult:after] checkAndUpdateStreak failed:", err);
+      }
+
+      const [newAchievements, upgradeResult] = await Promise.allSettled([
+        checkAndUnlockAchievements(userId),
+        checkAndUpgradeJlpt(userId),
+      ]);
+
+      if (newAchievements.status === "rejected") {
+        console.error("[submitVocabQuizResult:after] checkAchievements failed:", newAchievements.reason);
+      }
+      if (upgradeResult.status === "rejected") {
+        console.error("[submitVocabQuizResult:after] checkJlptUpgrade failed:", upgradeResult.reason);
       }
     });
-
-    // --- Return optimistic response immediately ---
-    // Provide estimated XP data so the client can show animations instantly.
-    // Actual XP (with bonuses, level-up) will be computed in after().
-    const bonusXp = scorePercent === 100 ? 25 : scorePercent >= 90 ? 15 : scorePercent >= 80 ? 10 : 0;
-    const bonusLabel = scorePercent === 100 ? "Sempurna (100%)" : scorePercent >= 90 ? "Hebat (90%+)" : scorePercent >= 80 ? "Bagus (80%+)" : "";
-    const estimatedTotal = xpEarned + bonusXp;
 
     return {
       success: true,
       data: {
         correctCount,
         scorePercent,
-        xpEarned: estimatedTotal,
+        xpEarned: xpResult.xpAwarded,
         isPerfect,
         xp: {
-          awarded: estimatedTotal,
-          baseXp: xpEarned,
-          bonusXp,
-          bonusLabel,
-          total: 0,
-          leveledUp: false,
-          currentLevel: 0,
+          awarded: xpResult.xpAwarded,
+          baseXp: xpResult.baseXp,
+          bonusXp: xpResult.bonusXp,
+          bonusLabel: xpResult.bonusLabel,
+          total: xpResult.totalXp,
+          leveledUp: xpResult.leveledUp,
+          currentLevel: xpResult.currentLevel,
         },
         achievements: [],
         jlptUpgrade: null,

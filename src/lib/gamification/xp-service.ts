@@ -239,7 +239,7 @@ export async function awardReviewXp(
 }
 
 // Calculate quiz tier bonus based on score percentage
-function getQuizTierBonus(scorePercent: number): { amount: number; label: string } {
+export function getQuizTierBonus(scorePercent: number): { amount: number; label: string } {
   if (scorePercent === 100) return { amount: XP_QUIZ_BONUS_PERFECT, label: "Sempurna (100%)" };
   if (scorePercent >= 90) return { amount: XP_QUIZ_BONUS_GREAT, label: "Hebat (90%+)" };
   if (scorePercent >= 80) return { amount: XP_QUIZ_BONUS_GOOD, label: "Bagus (80%+)" };

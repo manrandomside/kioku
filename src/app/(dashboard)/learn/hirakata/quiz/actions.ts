@@ -1,12 +1,14 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { after } from "next/server";
 
 import { db } from "@/db";
 import { quizSession, quizAnswer } from "@/db/schema/quiz";
 import { createClient } from "@/lib/supabase/server";
 import { getInternalUserId } from "@/lib/supabase/get-internal-user-id";
-import { awardQuizXp } from "@/lib/gamification/xp-service";
+import { awardQuizXp, getQuizTierBonus } from "@/lib/gamification/xp-service";
 import { checkAndUpdateStreak } from "@/lib/gamification/streak-service";
 import { checkAndUnlockAchievements } from "@/lib/gamification/achievement-service";
 
@@ -95,9 +97,15 @@ export async function submitQuizResult(
     }
 
     // Idempotency check: prevent double-submission
-    const { eq } = await import("drizzle-orm");
     const [existingSession] = await db
-      .select({ isCompleted: quizSession.isCompleted, userId: quizSession.userId })
+      .select({
+        isCompleted: quizSession.isCompleted,
+        userId: quizSession.userId,
+        correctCount: quizSession.correctCount,
+        scorePercent: quizSession.scorePercent,
+        xpEarned: quizSession.xpEarned,
+        isPerfect: quizSession.isPerfect,
+      })
       .from(quizSession)
       .where(eq(quizSession.id, sessionId))
       .limit(1);
@@ -106,8 +114,34 @@ export async function submitQuizResult(
       return { success: false, error: { code: "NOT_FOUND", message: "Sesi quiz tidak ditemukan" } };
     }
 
+    // Already saved: return the stored result instead of failing, so a client
+    // retry after a lost response can still populate the summary screen.
+    // XP is not awarded again.
     if (existingSession.isCompleted) {
-      return { success: false, error: { code: "ALREADY_COMPLETED", message: "Quiz sudah diselesaikan" } };
+      const storedCorrect = existingSession.correctCount ?? 0;
+      const storedScore = existingSession.scorePercent ?? 0;
+      const storedBase = storedCorrect * XP_PER_CORRECT;
+      const storedTier = getQuizTierBonus(storedScore);
+
+      return {
+        success: true,
+        data: {
+          correctCount: storedCorrect,
+          scorePercent: storedScore,
+          xpEarned: existingSession.xpEarned ?? storedBase,
+          isPerfect: existingSession.isPerfect ?? false,
+          xp: {
+            awarded: storedBase + storedTier.amount,
+            baseXp: storedBase,
+            bonusXp: storedTier.amount,
+            bonusLabel: storedTier.label,
+            total: 0,
+            leveledUp: false,
+            currentLevel: 0,
+          },
+          achievements: [],
+        },
+      };
     }
 
     const correctCount = answers.filter((a) => a.isCorrect).length;
@@ -146,10 +180,25 @@ export async function submitQuizResult(
       })
       .where(eq(quizSession.id, sessionId));
 
-    // Award XP and check streak
-    await checkAndUpdateStreak(userId);
+    // Award XP inline: the summary screen and the level-up modal both need
+    // these exact numbers, so this is the one gamification step worth waiting for.
     const xpResult = await awardQuizXp(userId, sessionId, correctCount, scorePercent);
-    const newAchievements = await checkAndUnlockAchievements(userId);
+
+    // Streak and achievements are heavy DB work whose result the summary screen
+    // does not display. Running them inline used to push the whole action past
+    // the serverless response window, which lost the XP payload entirely.
+    after(async () => {
+      try {
+        await checkAndUpdateStreak(userId);
+      } catch (err) {
+        console.error("[submitQuizResult:after] checkAndUpdateStreak failed:", err);
+      }
+      try {
+        await checkAndUnlockAchievements(userId);
+      } catch (err) {
+        console.error("[submitQuizResult:after] checkAndUnlockAchievements failed:", err);
+      }
+    });
 
     return {
       success: true,
@@ -167,7 +216,7 @@ export async function submitQuizResult(
           leveledUp: xpResult.leveledUp,
           currentLevel: xpResult.currentLevel,
         },
-        achievements: newAchievements,
+        achievements: [],
       },
     };
   } catch (error) {
