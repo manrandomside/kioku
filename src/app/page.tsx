@@ -185,7 +185,7 @@ const STATS = [
 ];
 
 const TECH = [
-  "Next.js 15",
+  "Next.js 16",
   "React 19",
   "TypeScript",
   "Tailwind CSS",

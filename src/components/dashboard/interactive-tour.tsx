@@ -46,7 +46,7 @@ const TOUR_STEPS: TourStep[] = [
     mobileTarget: "tour-learn-hub-mobile",
     title: "Pusat Belajar",
     description:
-      "214 karakter Hiragana & Katakana untuk pemula, atau 50 bab Minna no Nihongo dengan 2.909 kosakata MNN lengkap audio dan contoh kalimat.",
+      "214 karakter Hiragana & Katakana untuk pemula, atau 50 bab Minna no Nihongo dengan 2.909 kosakata MNN yang semuanya dilengkapi audio.",
   },
   {
     target: "tour-ai-tutor",
