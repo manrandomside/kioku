@@ -284,9 +284,15 @@ export async function awardQuizXp(
     };
   }
 
-  // Award daily goal bonus if just completed
+  // Award daily goal bonus if just completed. This bonus can be what crosses a
+  // level boundary, so its level-up must be folded into the returned result.
   if (result.dailyGoalJustCompleted) {
-    await awardDailyGoalXp(userId);
+    const goalResult = await awardDailyGoalXp(userId);
+    result = {
+      ...goalResult,
+      leveledUp: result.leveledUp || goalResult.leveledUp,
+      currentLevel: Math.max(result.currentLevel, goalResult.currentLevel),
+    };
   }
 
   return {
@@ -299,8 +305,8 @@ export async function awardQuizXp(
 }
 
 // Award daily goal bonus XP
-async function awardDailyGoalXp(userId: string): Promise<void> {
-  await awardXpInternal(
+async function awardDailyGoalXp(userId: string): Promise<AwardXpResult> {
+  return awardXpInternal(
     userId,
     XP_DAILY_GOAL_BONUS,
     "daily_bonus",

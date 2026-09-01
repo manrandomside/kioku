@@ -10,6 +10,7 @@ import { playCorrectSound, playIncorrectSound } from "@/lib/audio/sound-effects"
 import { playAudio } from "@/lib/audio/play-audio";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { QuizSummary } from "@/components/quiz/quiz-summary";
+import { useLevelUpWatcher } from "@/hooks/use-level-up-watcher";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
 import { LevelUpModal } from "@/components/gamification/level-up-modal";
 import { createQuizSession, submitQuizResult } from "@/app/(dashboard)/learn/hirakata/quiz/actions";
@@ -35,6 +36,7 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const [xpStatus, setXpStatus] = useState<XpStatus>("loading");
   const { events: xpEvents, showXp } = useXpPopup();
+  const watchForLevelUp = useLevelUpWatcher(setLevelUpLevel);
 
   // Kept so the summary screen can retry a failed submit without replaying the quiz
   const submitPayloadRef = useRef<{ answers: QuizAnswer[]; timeSpentMs: number } | null>(null);
@@ -148,13 +150,16 @@ export function KanaQuizSession({ questions, script, filter, category }: KanaQui
         }
         if (xp.leveledUp) {
           setLevelUpLevel(xp.currentLevel);
+        } else {
+          // Deferred streak and achievement XP may still trigger a level-up
+          watchForLevelUp(xp.currentLevel);
         }
       } catch (err) {
         console.error("[KanaQuizSession] submit failed:", err);
         setXpStatus("error");
       }
     },
-    [showXp]
+    [showXp, watchForLevelUp]
   );
 
   // Retry a failed submit, re-creating the session if it was never created

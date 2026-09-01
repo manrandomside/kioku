@@ -15,6 +15,7 @@ import { DisplayModeToggle } from "@/components/ui/display-mode-toggle";
 import { useDisplayMode } from "@/hooks/use-display-mode";
 import { QuizOption } from "@/components/quiz/quiz-option";
 import { VocabQuizSummary } from "@/components/quiz/vocab-quiz-summary";
+import { useLevelUpWatcher } from "@/hooks/use-level-up-watcher";
 import { XpPopup, useXpPopup } from "@/components/gamification/xp-popup";
 import { LevelUpModal } from "@/components/gamification/level-up-modal";
 import {
@@ -71,6 +72,7 @@ export function VocabQuizSession({
   const [jlptUpgrade, setJlptUpgrade] = useState<{ previousLevel: string; newLevel: string } | null>(null);
   const [xpStatus, setXpStatus] = useState<XpStatus>("loading");
   const { events: xpEvents, showXp } = useXpPopup();
+  const watchForLevelUp = useLevelUpWatcher(setLevelUpLevel);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Kept so the summary screen can retry a failed submit without replaying the quiz
@@ -285,6 +287,9 @@ export function VocabQuizSession({
 
         if (xp.leveledUp) {
           setLevelUpLevel(xp.currentLevel);
+        } else {
+          // Deferred streak and achievement XP may still trigger a level-up
+          watchForLevelUp(xp.currentLevel);
         }
         if (res.data.jlptUpgrade) {
           setJlptUpgrade(res.data.jlptUpgrade);
@@ -294,7 +299,7 @@ export function VocabQuizSession({
         setXpStatus("error");
       }
     },
-    []
+    [watchForLevelUp]
   );
 
   // Retry a failed submit, re-creating the session if it was never created
