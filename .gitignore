@@ -44,3 +44,6 @@ next-env.d.ts
 
 # security audit (internal, not published)
 SECURITY-AUDIT.md
+
+# claude code local settings (per-machine permissions, not shared)
+.claude/settings.local.json
