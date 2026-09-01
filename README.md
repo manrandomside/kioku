@@ -4,13 +4,13 @@
 
 **AI-Powered Japanese Learning Platform for Indonesian Speakers**
 
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000?logo=vercel)](https://kioku-learn.vercel.app)
 
-A fullstack web platform combining the FSRS spaced repetition algorithm, an AI tutor, an interactive guided tour, and a comprehensive 36-page user guide to help Indonesian speakers learn Japanese vocabulary. Built end-to-end on free-tier infrastructure, Kioku ships 2,909 vocabulary words, 214 kana characters, and 3,085 pre-generated audio files. 100% free, no ads, no upsell.
+A fullstack web platform combining the FSRS spaced repetition algorithm, an AI tutor, an interactive guided tour, and a comprehensive 36-page user guide to help Indonesian speakers learn Japanese vocabulary. Built end-to-end on free-tier infrastructure, Kioku ships 2,909 vocabulary words, 214 kana characters, and 3,123 pre-generated audio files. 100% free, no ads, no upsell.
 
 [Live Demo](https://kioku-learn.vercel.app) · [User Guide (PDF)](./public/guidebook/kioku-guidebook.pdf) · [Project Spec](./designs/kioku-project-spec.md)
 
@@ -23,7 +23,7 @@ A fullstack web platform combining the FSRS spaced repetition algorithm, an AI t
 ## Why Kioku?
 
 - **Scientific** — FSRS algorithm (Anki v23.10+), 20-30% more efficient than SM-2 SuperMemo
-- **Comprehensive** — 2,909 vocabulary words, 214 kana characters, 3,085 audio files, 7 quiz types, AI tutor, full user guide
+- **Comprehensive** — 2,909 vocabulary words, 214 kana characters, 3,123 audio files, 7 quiz types, AI tutor, full user guide
 - **Onboarding Done Right** — Forced 3-step onboarding, interactive guided tour for new users, 36-page user guide PDF
 - **Free Forever** — Runs entirely on free tiers ($0/month, no ads, no upsell, no paid tier)
 - **Indonesia-first** — All translations and UI in Bahasa Indonesia, content sourced from Minna no Nihongo Book I (Ch. 1-25, JLPT N5) and Book II (Ch. 26-50, JLPT N4)
@@ -39,9 +39,9 @@ A fullstack web platform combining the FSRS spaced repetition algorithm, an AI t
 - **Leech Detection** — Automatic identification of difficult cards (lapses ≥4) with dedicated forced-recall practice
 - **JLPT Auto-Upgrade** — Detects N5 mastery and upgrades target to N4 with celebration modal
 - **50 Achievements + 60 Levels** — Gamification system with XP economy and 365-day activity heatmap
-- **Pre-generated Audio Pipeline** — 3,085 MP3 files via Microsoft Edge TTS (NanamiNeural), zero runtime cost
-- **PWA-Ready** — Service worker, offline cache, install banner, mobile-responsive across all 30+ pages
-- **Production-Grade Security** — RLS on 20 tables, rate limiting, Zod validation, security headers, full audit report
+- **Pre-generated Audio Pipeline** — 3,123 MP3 files via Microsoft Edge TTS (NanamiNeural), zero runtime cost
+- **PWA-Ready** — Service worker, offline cache, install banner, mobile-responsive across all 23 pages
+- **Production-Grade Security** — RLS on 22 tables, rate limiting, Zod validation, security headers, internally audited
 
 ---
 
@@ -156,7 +156,7 @@ The guide is also accessible from within the app via the profile dropdown menu.
 
 ### Security & Performance
 - **Lighthouse Score** — Performance 86, Accessibility 94, Best Practices 96, SEO 100
-- **RLS on 20 Tables** — Row Level Security enforced on every table; user data scoped to `auth.uid()`, content tables public-read
+- **RLS on 22 Tables** — Row Level Security enforced on every table; user data scoped to `auth.uid()`, content tables public-read
 - **Rate Limiting** — In-memory sliding window (AI chat 20/min, pronunciation 30/min, search 30/min, daily-check 10/min)
 - **Zod Validation** — Runtime + compile-time validation on all API routes and Server Actions
 - **Security Headers** — HSTS, X-Frame-Options, CSP, X-Content-Type-Options
@@ -176,14 +176,13 @@ The guide is also accessible from within the app via the profile dropdown menu.
 ### Frontend
 | Technology | Purpose |
 |---|---|
-| **Next.js 15** (App Router) | Fullstack framework with RSC, Server Actions, streaming |
+| **Next.js 16** (App Router) | Fullstack framework with RSC, Server Actions, streaming |
 | **React 19** | UI with Server Components and Suspense |
 | **TypeScript 5** | End-to-end type safety (strict mode) |
 | **Tailwind CSS 4** | Utility-first styling |
 | **shadcn/ui** | Accessible, customizable component library |
 | **Framer Motion** | Animations (3D card flip, page transitions, micro-interactions) |
 | **Zustand** | Client state (quiz / flashcard / tour sessions, display mode) |
-| **TanStack Query v5** | Server state, caching, background refetch |
 
 ### Backend & Database
 | Technology | Purpose |
@@ -200,7 +199,7 @@ The guide is also accessible from within the app via the profile dropdown menu.
 | **Google Gemini 2.5 Flash-Lite** | Primary AI provider (free tier) |
 | **Groq Cloud** | Fallback #1 — Llama 3.3 70B |
 | **OpenRouter** | Fallback #2 |
-| **Microsoft Edge TTS** | Pre-generated audio (ja-JP-NanamiNeural), 3,085 files in Supabase Storage |
+| **Microsoft Edge TTS** | Pre-generated audio (ja-JP-NanamiNeural), 3,123 files in Supabase Storage |
 | **Web Speech API** | Browser-native speech recognition for pronunciation check |
 
 ### Infrastructure
@@ -216,22 +215,22 @@ The guide is also accessible from within the app via the profile dropdown menu.
 
 ```
 +--------------------------------------------------+
-|               CLIENT (Browser / PWA)              |
-|  Next.js 15 + React 19 + TypeScript              |
+|              CLIENT (Browser / PWA)              |
+|  Next.js 16 + React 19 + TypeScript              |
 |  Tailwind CSS 4 + shadcn/ui + Framer Motion      |
-|  Zustand + TanStack Query                         |
+|  Zustand (client state)                          |
 +--------------------------------------------------+
-|              SERVER (Vercel Serverless)            |
-|  Server Components + Server Actions               |
-|  Vercel AI SDK + ts-fsrs v5                       |
-|  Drizzle ORM + Zod validation                     |
+|            SERVER (Vercel Serverless)            |
+|  Server Components + Server Actions              |
+|  Vercel AI SDK + ts-fsrs v5                      |
+|  Drizzle ORM + Zod validation                    |
 +--------------------------------------------------+
-|             BACKEND SERVICES (Free Tier)           |
-|  Supabase PostgreSQL + Auth + Storage              |
-|  Gemini -> Groq -> OpenRouter (AI waterfall)       |
+|           BACKEND SERVICES (Free Tier)           |
+|  Supabase PostgreSQL + Auth + Storage            |
+|  Gemini -> Groq -> OpenRouter (AI waterfall)     |
 +--------------------------------------------------+
-|              DEPLOYMENT & CI/CD                    |
-|  Vercel Hobby + GitHub Actions                     |
+|                DEPLOYMENT & CI/CD                |
+|  Vercel Hobby + GitHub Actions                   |
 +--------------------------------------------------+
 ```
 
@@ -246,11 +245,12 @@ The guide is also accessible from within the app via the profile dropdown menu.
 
 ## Database
 
-20 tables with Row Level Security (RLS) on all tables:
+22 tables with Row Level Security (RLS) on all tables:
 
-- **Content** (public read): `book`, `chapter`, `vocabulary` (2,909 words), `kana` (214 chars), `achievement` (50 badges), `ai_question_template`
+- **Content** (public read): `book`, `chapter`, `vocabulary` (2,909 published words), `kana` (214 chars), `achievement` (50 badges), `ai_question_template`
 - **User Data** (RLS protected): `user`, `srs_card`, `review_log`, `quiz_session`, `quiz_answer`, `user_gamification`, `xp_transaction`, `achievement_unlock`, `user_chapter_progress`, `daily_activity`
 - **AI** (RLS protected): `ai_chat_session`, `ai_chat_message`, `ai_response_cache`, `pronunciation_attempt`
+- **Community** (Phase 7): `feedback` (RLS protected), `public_stats_cache` (public read)
 
 ---
 
@@ -273,7 +273,7 @@ A full internal security audit (Levels 1-3) was completed across RLS policies, p
 
 ## Project Status
 
-All planned phases are complete. Project is in production at https://kioku-learn.vercel.app.
+Phases P0-P6 are complete and live in production at https://kioku-learn.vercel.app. P7 is in the design stage.
 
 | Phase | Description | Status |
 |---|---|---|
@@ -283,9 +283,10 @@ All planned phases are complete. Project is in production at https://kioku-learn
 | **P3** | AI Features (Chatbot, Pronunciation, Quiz Generation) | Complete |
 | **P4** | UX Improvements (Landing, Auth, Security Audit, JLPT Upgrade) | Complete |
 | **P5** | Smart Study & Leech Detection | Complete |
-| **P6** | Profile Enhancement & Documentation | Complete |
+| **P6** | Documentation & Polish (README, Guidebook PDF, Onboarding Tour) | Complete |
+| **P7** | Community & Feedback (Public Stats, Feedback System) | Planned |
 
-Total: 70+ features shipped, 30+ pages, 20 database tables, 8 onboarding tour steps, 36-page user guide.
+Total: 70+ features shipped, 23 pages, 22 database tables, 8 onboarding tour steps, 36-page user guide.
 
 ---
 
