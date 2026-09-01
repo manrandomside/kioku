@@ -3,9 +3,21 @@
 
 > **Versi**: 1.1  
 > **Tanggal**: 20 Maret 2026  
-> **Status**: Brainstorming & Planning Phase  
+> **Status**: Dokumen perencanaan awal (arsip)  
 > **Nama Project**: Kioku (記憶 = Memori / Ingatan)  
 > **Logo**: Wordmark rounded dengan torii gate di huruf "o", aksen lime green di huruf "i"
+
+> **Catatan pembaca.** Dokumen ini merekam rencana awal per 20 Maret 2026, bukan keadaan kode saat ini.
+> Untuk fakta terkini (versi library, daftar endpoint, jumlah tabel), rujuk `CLAUDE.md` di root repo.
+> Bagian yang berbeda dari implementasi akhir:
+>
+> - **TanStack Query tidak jadi dipakai.** Data server diambil lewat Server Components + Server Actions, bukan client-side data fetching. Zustand tetap dipakai untuk client state.
+> - **Arsitektur bukan REST API.** Rencana awal mendaftar ~40 REST endpoint; implementasi memakai 18 REST route (streaming AI, polling, search) dan sisanya Server Actions.
+> - **Next.js naik ke versi 16.2** dari rencana awal versi 15.
+> - **Whisper.cpp WASM dilewati.** Pengucapan hanya memakai Web Speech API.
+> - **GitHub OAuth dihapus.** Hanya Google OAuth + email/password + magic link.
+> - **Contoh kalimat (`example_jp` / `example_id`) belum terisi.** Kolomnya ada di schema, datanya masih kosong.
+> - **Jumlah tabel menjadi 22** (bertambah `feedback` dan `public_stats_cache` di Fase 7).
 
 ---
 
@@ -121,25 +133,25 @@ Konten utama bersumber dari buku **Minna no Nihongo (MNN)** Buku I (Bab 1–25) 
 
 ```
 +----------------------------------------------------------+
-|                      CLIENT (Browser)                     |
-|  Next.js 15 (App Router) + React 19 + TypeScript 5       |
-|  Tailwind CSS 4 + shadcn/ui + Framer Motion               |
-|  Zustand (client state) + TanStack Query v5 (server)      |
-|  Web Speech API + Web Audio API + WebAssembly (Whisper)    |
+|                     CLIENT (Browser)                     |
+|  Next.js 16 (App Router) + React 19 + TypeScript 5       |
+|  Tailwind CSS 4 + shadcn/ui + Framer Motion              |
+|  Zustand (client state) + Server Components (data)       |
+|  Web Speech API + Web Audio API                          |
 +----------------------------------------------------------+
-|                      SERVER (Vercel Edge)                  |
-|  Next.js API Routes + Server Actions + Server Components   |
-|  Vercel AI SDK (streaming) + ts-fsrs v5 (SRS engine)      |
-|  Drizzle ORM (type-safe SQL) + Zod (validation)           |
+|                SERVER (Vercel Serverless)                |
+|  Server Components + Server Actions + API Routes         |
+|  Vercel AI SDK (streaming) + ts-fsrs v5 (SRS engine)     |
+|  Drizzle ORM (type-safe SQL) + Zod (validation)          |
 +----------------------------------------------------------+
-|                    BACKEND SERVICES (Free Tier)            |
-|  Supabase PostgreSQL (500MB) + Auth (50K MAU)             |
-|  Supabase Storage (1GB) + Realtime                        |
-|  Gemini 2.5 Flash-Lite > Groq > OpenRouter > WebLLM       |
+|               BACKEND SERVICES (Free Tier)               |
+|  Supabase PostgreSQL (500MB) + Auth (50K MAU)            |
+|  Supabase Storage (1GB) + Realtime                       |
+|  Gemini 2.5 Flash-Lite > Groq > OpenRouter > WebLLM      |
 +----------------------------------------------------------+
-|                     DEPLOYMENT & CI/CD                     |
-|  Vercel Hobby (100GB BW) + GitHub Actions (cron + CI)     |
-|  Edge TTS (build-time audio gen) + ESLint + Prettier      |
+|                    DEPLOYMENT & CI/CD                    |
+|  Vercel Hobby (100GB BW) + GitHub Actions (cron + CI)    |
+|  Edge TTS (build-time audio gen) + ESLint + Prettier     |
 +----------------------------------------------------------+
 ```
 
@@ -156,7 +168,7 @@ Konten utama bersumber dari buku **Minna no Nihongo (MNN)** Buku I (Bab 1–25) 
 | **shadcn/ui** | Latest | Component library | Accessible, customizable, copy-paste (bukan dependency). Bisa di-theme sesuai design system |
 | **Framer Motion** | 12.x | Animasi | Flip card 3D, page transitions, confetti, progress bar animasi, micro-interactions |
 | **Zustand** | 5.x | Client state | ~3KB, tanpa Provider wrapper, perfect untuk quiz/flashcard session state |
-| **TanStack Query** | 5.x | Server state | Caching, background refetch, optimistic updates, infinite scrolling |
+| ~~**TanStack Query**~~ (tidak jadi dipakai) | — | Server state | Caching, background refetch, optimistic updates, infinite scrolling |
 | **next-themes** | Latest | Dark/Light mode | SSR-safe theme switching, system preference detection |
 | **Lucide React** | Latest | Icons | Konsisten, tree-shakeable, 1000+ ikon |
 
@@ -1195,7 +1207,7 @@ CREATE POLICY stats_cache_read_policy ON public_stats_cache
   - Content stats grid:
     - 2.909 vocabulary words
     - 214 kana characters
-    - 3.085 audio files
+    - 3.123 audio files
     - 50 chapters across N5 + N4
   - Trust signals row:
     - "Built with FSRS — same algorithm as Anki"
@@ -1596,7 +1608,7 @@ WORD TYPE BADGE COLORS
 - `ActivityHighlightCard` — Kartu highlight kecil (avg accuracy, longest streak, most active today)
 - `AggregatedHeatmap` — Heatmap aktivitas semua user dalam 90 hari (anonim, denormalized)
 - `GrowthChart` — Line chart user growth over time (Recharts)
-- `ContentStatsGrid` — Grid stats konten (2.909 vocab, 214 kana, 3.085 audio, 50 chapters)
+- `ContentStatsGrid` — Grid stats konten (2.909 vocab, 214 kana, 3.123 audio, 50 chapters)
 - `TrustSignalsRow` — Row dengan trust indicators (FSRS, free, privacy-first)
 - `TestimonialCarousel` — Carousel komentar user yang opt-in + approved (Phase 8)
 - `FeedbackButton` — Floating button kanan bawah dengan tooltip "Berikan Feedback"
@@ -1914,7 +1926,7 @@ export async function GET(request: Request) {
 |-----------|---------|--------|
 | Nama project | **Kioku** (記憶 = Memori) | Unik, bermakna, mudah dieja, belum ada app besar yang pakai |
 | Logo | Wordmark rounded + torii gate di "o" + lime "i" | Memorable, readable, scalable, on-brand |
-| Framework | Next.js 15 App Router | Ekosistem terbesar, fitur terlengkap, portfolio signal terkuat |
+| Framework | Next.js 16 App Router | Ekosistem terbesar, fitur terlengkap, portfolio signal terkuat |
 | Database | Supabase (PostgreSQL) | All-in-one free tier (DB + Auth + Storage) |
 | SRS Algorithm | FSRS via ts-fsrs | State-of-the-art, sama dengan Anki, 20-30% lebih efisien |
 | AI Primary | Gemini 2.5 Flash-Lite | 1000 RPD gratis, context window terbesar |

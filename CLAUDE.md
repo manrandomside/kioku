@@ -419,7 +419,7 @@ Di luar `src/`: `scripts/` (tooling data & audio), `designs/` (spec, logo, refer
 - [x] Pengucapan: integrasi Web Speech API
 - [x] Pengucapan: scoring (Levenshtein distance)
 - [x] Pengucapan: fallback Whisper.cpp WASM — **DILEWATI**. Web Speech API sudah mencakup ~85% browser; model Whisper WASM ~75MB terlalu berat untuk sekadar fallback. Diganti dengan pesan deteksi browser. Bisa ditambahkan pasca-launch kalau ada permintaan.
-- [x] Generasi soal AI: script pre-generation saat build
+- [x] Generasi soal AI: script pre-generation saat build (`scripts/generate-quiz-questions.ts`) — script selesai, tapi **belum pernah dijalankan**: tabel `ai_question_template` masih kosong
 - [x] Caching respons AI (hash prompt -> Supabase)
 
 ### [P4] Polish & UX Improvements
@@ -561,11 +561,31 @@ Status: konsep sudah final. UI akan di-prototype di Claude Design lebih dulu seb
 
 ### Data & Konten
 
-- `meaningId` pada tabel vocabulary MNN sudah diterjemahkan ke Bahasa Indonesia dari PDF kosakata MNN Bab 1-50 (1942/2692 baris lewat `update-vocabulary-meanings.ts`, + 74 tambahan lewat `sync-vocabulary.ts`). Sumber data: `scripts/data/mnn-vocabulary-indonesian.json`.
-- Kosakata yang tidak ada di PDF MNN Bab 1-50 disembunyikan (`is_published = false`). Total 2.692 baris: **2.026 published, 666 hidden**. Semua query frontend dan API sudah memfilter `is_published = true`. Script: `scripts/sync-vocabulary.ts` (jalankan dry-run dulu, `--apply` untuk mengeksekusi). Migration: 0006.
-- Kana: 214 karakter, di-seed dari `src/db/seed/kana-data.ts`.
+**Angka resmi konten.** Semua nilai di bawah diverifikasi langsung ke database production dan Supabase Storage pada 31 Agustus 2026. Pakai angka ini di README, copy landing page, dan copy tour — jangan mengarang ulang.
+
+| Metrik                                        | Nilai                                    |
+| --------------------------------------------- | ---------------------------------------- |
+| Baris `vocabulary` (total di DB)              | 3.575                                    |
+| Vocabulary tampil (`is_published = true`)     | **2.909**                                |
+| Vocabulary disembunyikan                      | 666                                      |
+| Kana                                          | 214 (semuanya punya audio)               |
+| File audio di Supabase Storage (bucket `audio`) | **3.123** (2.909 vocabulary + 214 kana) |
+| Bab                                           | 50                                       |
+| Buku                                          | 2 (Shokyuu I dan II)                     |
+| Achievement                                   | 50                                       |
+| Tabel di schema `public`                      | 22, semuanya RLS aktif                   |
+
+- Layout audio di Storage: `audio/kana/<uuid>.mp3` dan `audio/vocabulary/<nomor-bab>/<uuid>.mp3`.
+- `meaningId` pada tabel vocabulary MNN sudah diterjemahkan ke Bahasa Indonesia dari PDF kosakata MNN Bab 1-50 (catatan historis: 1942 dari 2692 baris lewat `update-vocabulary-meanings.ts`, + 74 tambahan lewat `sync-vocabulary.ts`; jumlah baris bertambah setelah itu lewat `insert-missing-vocab.ts`). Sumber data: `scripts/data/mnn-vocabulary-indonesian.json`. Saat ini **tidak ada** baris published yang `meaning_id`-nya kosong.
+- Kosakata yang tidak ada di PDF MNN Bab 1-50 disembunyikan lewat `is_published = false`. Semua query frontend dan API sudah memfilter `is_published = true`. Script: `scripts/sync-vocabulary.ts` (jalankan dry-run dulu, `--apply` untuk mengeksekusi). Migration: 0006.
+- Kana di-seed dari `src/db/seed/kana-data.ts`.
+- 919 dari 2.909 kosakata published tidak punya kanji (`kanji` NULL/kosong) — wajar untuk kata yang memang ditulis kana saja. Toggle Kanji/Kana harus tahan terhadap kasus ini.
 - Scoring pengucapan memakai ~1766 pemetaan kanji -> hiragana (dihasilkan otomatis dari PDF MNN Bab 1-50). Kamus: `src/lib/audio/kanji-hiragana-dict.ts`. Sumber data: `scripts/data/kanji-hiragana-dict.ts`.
-- **Diketahui belum sinkron (perlu diperbaiki):** copy di UI menyebut jumlah kosakata yang berbeda dari angka sebenarnya — `interactive-tour.tsx` menulis "2.909 kosakata" dan `src/app/page.tsx` menulis "2900+", sementara yang published sebenarnya 2.026. Landing page (`src/app/page.tsx`, array `TECH`) juga masih menulis "Next.js 15" padahal sudah Next.js 16.2.
+
+**Dua fitur yang schema-nya ada tapi datanya masih kosong:**
+
+- **Contoh kalimat belum ada.** Kolom `vocabulary.example_jp` dan `example_id` ada di schema, tapi **0 baris terisi**. Jangan menjanjikan "contoh kalimat" di copy mana pun sampai datanya diisi. (Copy tour sempat menjanjikan ini dan sudah dikoreksi.)
+- **Bank soal AI belum di-generate.** Tabel `ai_question_template` **kosong (0 baris)** meskipun script `scripts/generate-quiz-questions.ts` sudah ada dan fase P3 ditandai selesai. Quiz saat ini dibangun runtime dari data vocabulary, bukan dari template pre-generated. Script-nya perlu dijalankan kalau fitur ini mau benar-benar aktif.
 
 ### SRS & Belajar
 
